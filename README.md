@@ -16,6 +16,6 @@ The full mathematical groundwork and research paper are available on Zenodo:
 
 ## Демо
 
-- [BaseReal-OS](https://vitalydecoder.github.io/BaseReal-OS/)
+- [Geometric Mass](https://vitalydecoder.github.io/BaseReal-OS/)
 
 - [Distribution of Speeds](https://vitalydecoder.github.io/BaseReal-OS/speed.html) 
