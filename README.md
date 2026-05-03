@@ -14,7 +14,7 @@ The full mathematical groundwork and research paper are available on Zenodo:
 👉 **[The Geometric Inverse 3/2 Law - Zenodo Record 19929621](https://zenodo.org/records/19929621)**
 *Author: Vitalii Colesnicenco*
 
-## 🚀 Live Simulations
-Experience the 3D rendering of the Inverse 3/2 Law:
-*   👉 **[Geometry Engine (The Snail)](https://github.io)** — Visualizing equal-volume shells.
-*   👉 **[Orbital Dynamics (Speeds)](https://github.iospeed.html)** — Demonstrating planetary velocity distribution.
+## Демо
+
+- [BaseReal-OS](https://vitalydecoder.github.io/BaseReal-OS/)
+- [Результаты тестов скорости](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
