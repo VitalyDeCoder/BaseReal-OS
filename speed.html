@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Закон обратных 3/2</title>
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+    overflow: hidden;
+    height: 100vh;
+  }
+  canvas {
+    display: block;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// ============== Настройки ==============
+const numArcs = 12;
+const animationTime = 4000;        // время раскрытия = 4 секунды
+const pauseTime = 1000;            // пауза после раскрытия = 1 секунда
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ============== Анимация ==============
+let startTime = null;
+let isPaused = false;
+let pauseStartTime = null;
+
+function drawArc(n, progress) {
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height * 0.82;
+  
+  const maxRadius = Math.min(canvas.width, canvas.height) * 0.78;
+  const baseRadius = maxRadius * 0.85;
+  const r = n * baseRadius / 6.8;
+
+  const fullAngle = 2 * Math.PI / Math.pow(n, 1.5);
+  const currentAngle = fullAngle * progress;
+
+  ctx.beginPath();
+  ctx.strokeStyle = '#1E88E5';
+  ctx.lineWidth = 4.2;
+  ctx.arc(centerX, centerY, r, -Math.PI/2, -Math.PI/2 + currentAngle);
+  ctx.stroke();
+}
+
+function animate(timestamp) {
+  if (!startTime) startTime = timestamp;
+
+  let progress = 0;
+
+  if (!isPaused) {
+    const elapsed = timestamp - startTime;
+    progress = Math.min(elapsed / animationTime, 1);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height * 0.82;
+
+    // Рисуем дуги
+    for (let n = 1; n <= numArcs; n++) {
+      drawArc(n, progress);
+    }
+
+    // Центральная точка
+    ctx.beginPath();
+    ctx.fillStyle = '#0D47A1';
+    ctx.arc(centerX, centerY, 7, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Если анимация завершилась — начинаем паузу
+    if (progress >= 1) {
+      isPaused = true;
+      pauseStartTime = timestamp;
+    }
+  } 
+  else {
+    // Пауза 1 секунда
+    const pauseElapsed = timestamp - pauseStartTime;
+    
+    if (pauseElapsed >= pauseTime) {
+      // Сбрасываем и запускаем заново
+      startTime = timestamp;
+      isPaused = false;
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// Запуск
+requestAnimationFrame(animate);
+</script>
+
+</body>
+</html>
