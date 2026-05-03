@@ -17,4 +17,5 @@ The full mathematical groundwork and research paper are available on Zenodo:
 ## Демо
 
 - [BaseReal-OS](https://vitalydecoder.github.io/BaseReal-OS/)
-- [Результаты тестов скорости](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
+
+- [Distribution of Speeds](https://vitalydecoder.github.io/BaseReal-OS/speed.html) 
