@@ -16,7 +16,7 @@
 
 ### Demos
 
-- **[Geometric Mass 3D Visualization](index.html)**
+- **[Geometric Mass 3D Visualization](geometric-mass.html)**
 - **[Inverse 3/2 Law (Speed)](speed.html)**
 ## 📚 Scientific Publication & Theoretical Foundation
 
