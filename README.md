@@ -22,7 +22,7 @@
 
 The core mathematical model of BaseReal-OS is formally documented and archived on Zenodo. This work establishes the transition from classical physics to a discrete, simulation-ready architectural framework.
 
-**Title:** [Inverse 3/2 Law: The Geometric Foundation of Discrete Reality and Artificial Intelligence](https://zenodo.org)  
+**Title:** [Inverse 3/2 Law: The Geometric Foundation of Discrete Reality and Artificial Intelligence](https://zenodo.org/records/19929621)  
 **DOI:** `10.5281/zenodo.19929621`
 
 ### Abstract
