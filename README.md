@@ -17,7 +17,7 @@
 ## Interactive Demos
 
 ### 1. Planet Creation Procedure
-**Step-by-step interactive visualization of planet formation**
+**Step-by-step interactive visualization of planet creation**
 
 
 
