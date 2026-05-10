@@ -16,8 +16,19 @@
 
 ### Demos
 
-- **[Geometric Mass 3D Visualization](geometric-mass.html)**
-- **[Inverse 3/2 Law (Speed)](speed.html)**
+**🌍 Planet Creation Sequence**  
+1. Approaching the star  
+2. Setting the power of the gravitational field  
+3. Setting the height of the synchronous orbit  
+4. Press "Create a Planet"
+
+[![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Planets.html)
+
+---
+
+- **[Growth Snail Visualization](https://vitalydecoder.github.io/BaseReal-OS/)** — Main Demo
+- **[Speed Distribution](https://vitalydecoder.github.io/BaseReal-OS/speed.html)** — Inverse 3/2 Law
+- **[Geometric Mass Visualization](https://vitalydecoder.github.io/BaseReal-OS/geometric-mass.html)**
 ## 📚 Scientific Publication & Theoretical Foundation
 
 The core mathematical model of BaseReal-OS is formally documented and archived on Zenodo. This work establishes the transition from classical physics to a discrete, simulation-ready architectural framework.
