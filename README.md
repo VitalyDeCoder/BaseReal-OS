@@ -26,9 +26,10 @@
 ---
 
 ### 2. Geometric Mass - Visualization
+
 **20-layer stimulation growth model with equal volumes**
 
-[![▶ Open Growth Snail](https://img.shields.io/badge/▶_Open_Growth_Snail-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/)
+[![▶ Open Geometric Mass](https://img.shields.io/badge/▶_Open_Geometric_Mass-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/geometric-mass.html)
 
 ---
 
