@@ -5,118 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseReal-OS</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
-
         body {
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: #0a0a0a;
+            background: #0f0f0f;
             color: #e0e0e0;
-            font-family: 'Inter', sans-serif;
             line-height: 1.6;
         }
-
         header {
-            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
-            padding: 70px 20px 50px;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 60px 20px;
             text-align: center;
         }
-
         h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 3.5rem;
+            font-size: 3rem;
             margin: 0;
-            background: linear-gradient(90deg, #00ffcc, #00ccaa);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #00ffcc;
         }
-
         .subtitle {
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: #aaaaaa;
-            margin-top: 12px;
+            margin-top: 10px;
         }
-
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px 20px;
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 20px;
         }
-
+        .demos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
         .demo-card {
-            background: #111118;
-            border-radius: 16px;
+            background: #1a1a2e;
+            border-radius: 12px;
             overflow: hidden;
-            border: 1px solid #222;
-            margin-bottom: 30px;
-            transition: all 0.4s ease;
+            transition: transform 0.3s;
         }
-
         .demo-card:hover {
-            border-color: #00ffcc;
-            box-shadow: 0 15px 35px rgba(0, 255, 204, 0.15);
+            transform: translateY(-8px);
         }
-
         .demo-header {
-            height: 180px;
+            height: 140px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 5rem;
-            background: linear-gradient(45deg, #1a0033, #002211);
+            font-size: 4rem;
+            background: linear-gradient(45deg, #2a0033, #001122);
         }
-
         .card-content {
-            padding: 28px;
+            padding: 20px;
         }
-
         .card-content h3 {
-            margin: 0 0 16px 0;
-            font-size: 1.65rem;
+            margin: 0 0 10px 0;
             color: #00ffcc;
         }
-
-        .steps {
-            background: #1a1a1a;
-            padding: 16px;
-            border-radius: 10px;
-            margin: 18px 0;
-            font-size: 1.02rem;
-        }
-
-        .steps ol {
-            padding-left: 20px;
-        }
-
-        .steps li {
-            margin-bottom: 10px;
-        }
-
         .btn {
-            display: block;
-            width: 100%;
-            padding: 16px;
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
             background: #00ffcc;
             color: #000;
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-align: center;
             text-decoration: none;
-            border-radius: 10px;
-            margin-top: 10px;
-            transition: all 0.3s;
+            border-radius: 6px;
+            font-weight: bold;
         }
-
         .btn:hover {
-            background: #00ddaa;
-            transform: scale(1.03);
+            background: #00ccaa;
         }
-
         footer {
             text-align: center;
             padding: 50px 20px;
-            color: #555;
-            font-size: 0.95rem;
+            color: #666;
+            margin-top: 60px;
         }
     </style>
 </head>
@@ -124,57 +88,50 @@
 
     <header>
         <h1>BaseReal-OS</h1>
-        <p class="subtitle">Exploring Base Reality • Growth Models • Stimulation Theory</p>
+        <p class="subtitle">Exploring Base Reality through Growth and Stimulation Models</p>
     </header>
 
     <div class="container">
+        <h2>Available Demos</h2>
+        
+        <div class="demos">
 
-        <!-- Planet Creation -->
-        <div class="demo-card">
-            <div class="demo-header">🪐</div>
-            <div class="card-content">
-                <h3>Planet Creation Procedure</h3>
-                <p><strong>Step-by-step interactive visualization</strong></p>
-                
-                <div class="steps">
-                    <ol>
-                        <li>Approaching the star so that the year is not too long</li>
-                        <li>Setting the power of the gravitational field (6 kiloseconds)</li>
-                        <li>Setting the height of the synchronous orbit — number of days in a year</li>
-                        <li>Press <strong>"Create a Planet"</strong></li>
-                    </ol>
+            <!-- Growth Snail -->
+            <div class="demo-card">
+                <div class="demo-header" style="background: linear-gradient(45deg, #2a0033, #001122);">🐌</div>
+                <div class="card-content">
+                    <h3>Growth Snail Visualization</h3>
+                    <p>20-layer stimulation growth model with equal volumes</p>
+                    <a href="./" class="btn">▶ Open Demo</a>
                 </div>
-
-                <a href="Creo_Planets.html" class="btn">▶ Open Planet Creator</a>
             </div>
-        </div>
 
-        <!-- Growth Snail -->
-        <div class="demo-card">
-            <div class="demo-header" style="background: linear-gradient(45deg, #2a0033, #001122);">🐌</div>
-            <div class="card-content">
-                <h3>Growth Snail Visualization</h3>
-                <p>20-layer stimulation growth model with equal volumes</p>
-                <a href="./" class="btn">▶ Open Growth Snail Demo</a>
+            <!-- Speed Distribution -->
+            <div class="demo-card">
+                <div class="demo-header" style="background: linear-gradient(45deg, #003322, #001122);">📊</div>
+                <div class="card-content">
+                    <h3>Speed Distribution</h3>
+                    <p>Inverse 3/2 Law — Distribution of Speeds</p>
+                    <a href="speed.html" class="btn">▶ Open Speed Distribution</a>
+                </div>
             </div>
-        </div>
 
-        <!-- Speed Distribution -->
-        <div class="demo-card">
-            <div class="demo-header" style="background: linear-gradient(45deg, #331100, #112200);">📊</div>
-            <div class="card-content">
-                <h3>Speed Distribution</h3>
-                <p>Inverse 3/2 Law — Performance Analysis</p>
-                <a href="speed.html" class="btn">▶ Open Speed Distribution</a>
+            <!-- Geometric Mass -->
+            <div class="demo-card">
+                <div class="demo-header" style="background: linear-gradient(45deg, #331100, #112233);">⚖️</div>
+                <div class="card-content">
+                    <h3>Geometric Mass</h3>
+                    <p>Geometric mass accumulation visualization</p>
+                    <a href="geometric-mass.html" class="btn">▶ Open Geometric Mass</a>
+                </div>
             </div>
-        </div>
 
+        </div>
     </div>
 
     <footer>
-        <p>BaseReal-OS — Experimental Research Platform</p>
-        <p>
-            <a href="https://github.com/vitalydecoder/BaseReal-OS" style="color:#00ffcc;">GitHub Repository</a>
+        <p>BaseReal-OS • 
+            <a href="https://github.com/vitalydecoder/BaseReal-OS" style="color:#00ffcc;">GitHub</a>
         </p>
     </footer>
 
