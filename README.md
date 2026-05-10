@@ -14,21 +14,28 @@
 - **[Essay 3/2 for AI](Essy3_2forAI)**
 - **[Full Essay 3/2 (PDF)](Full%20Essy%203_2%20Eng.pdf)**
 
-### Demos
+## Interactive Demos
 
-**🌍 Planet Creation Sequence**  
-1. Approaching the star  
-2. Setting the power of the gravitational field  
-3. Setting the height of the synchronous orbit  
-4. Press "Create a Planet"
+### 1. Planet Creation Procedure
+**Step-by-step interactive visualization of planet formation**
+
+
 
 [![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Planets.html)
 
 ---
 
-- **[Growth Snail Visualization](https://vitalydecoder.github.io/BaseReal-OS/)** — Main Demo
-- **[Speed Distribution](https://vitalydecoder.github.io/BaseReal-OS/speed.html)** — Inverse 3/2 Law
-- **[Geometric Mass Visualization](https://vitalydecoder.github.io/BaseReal-OS/geometric-mass.html)**
+### 2. Geometric Mass - Visualization
+**20-layer stimulation growth model with equal volumes**
+
+[![▶ Open Growth Snail](https://img.shields.io/badge/▶_Open_Growth_Snail-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/)
+
+---
+
+### 3. Speed Distribution
+**Inverse 3/2 Law — Performance Analysis & Speed Distribution**
+
+[![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
 ## 📚 Scientific Publication & Theoretical Foundation
 
 The core mathematical model of BaseReal-OS is formally documented and archived on Zenodo. This work establishes the transition from classical physics to a discrete, simulation-ready architectural framework.
