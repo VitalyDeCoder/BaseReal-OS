@@ -24,63 +24,43 @@
             color: #00ffcc;
         }
         .subtitle {
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             color: #aaaaaa;
             margin-top: 10px;
         }
         .container {
-            max-width: 1100px;
+            max-width: 1000px;
             margin: 40px auto;
             padding: 0 20px;
         }
-        .demos {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 25px;
-            margin-top: 40px;
-        }
-        .demo-card {
+        .demo {
             background: #1a1a2e;
+            margin: 25px 0;
+            padding: 30px;
             border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s;
         }
-        .demo-card:hover {
-            transform: translateY(-8px);
-        }
-        .demo-header {
-            height: 140px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 4rem;
-            background: linear-gradient(45deg, #2a0033, #001122);
-        }
-        .card-content {
-            padding: 20px;
-        }
-        .card-content h3 {
-            margin: 0 0 10px 0;
+        .demo h2 {
             color: #00ffcc;
+            margin-top: 0;
         }
         .btn {
             display: inline-block;
+            padding: 14px 28px;
             margin-top: 15px;
-            padding: 12px 24px;
             background: #00ffcc;
             color: #000;
             text-decoration: none;
             border-radius: 6px;
             font-weight: bold;
+            font-size: 1.1rem;
         }
         .btn:hover {
             background: #00ccaa;
         }
         footer {
             text-align: center;
-            padding: 50px 20px;
+            padding: 50px;
             color: #666;
-            margin-top: 60px;
         }
     </style>
 </head>
@@ -88,51 +68,39 @@
 
     <header>
         <h1>BaseReal-OS</h1>
-        <p class="subtitle">Exploring Base Reality through Growth and Stimulation Models</p>
+        <p class="subtitle">A conceptual "reality operating system" exploring a new architecture of existence and an alternative geometric model of gravity and mass (Inverse 3/2 Law)</p>
     </header>
 
     <div class="container">
-        <h2>Available Demos</h2>
-        
-        <div class="demos">
 
-            <!-- Growth Snail -->
-            <div class="demo-card">
-                <div class="demo-header" style="background: linear-gradient(45deg, #2a0033, #001122);">🐌</div>
-                <div class="card-content">
-                    <h3>Growth Snail Visualization</h3>
-                    <p>20-layer stimulation growth model with equal volumes</p>
-                    <a href="./" class="btn">▶ Open Demo</a>
-                </div>
-            </div>
+        <h2>Interactive Demos</h2>
 
-            <!-- Speed Distribution -->
-            <div class="demo-card">
-                <div class="demo-header" style="background: linear-gradient(45deg, #003322, #001122);">📊</div>
-                <div class="card-content">
-                    <h3>Speed Distribution</h3>
-                    <p>Inverse 3/2 Law — Distribution of Speeds</p>
-                    <a href="speed.html" class="btn">▶ Open Speed Distribution</a>
-                </div>
-            </div>
-
-            <!-- Geometric Mass -->
-            <div class="demo-card">
-                <div class="demo-header" style="background: linear-gradient(45deg, #331100, #112233);">⚖️</div>
-                <div class="card-content">
-                    <h3>Geometric Mass</h3>
-                    <p>Geometric mass accumulation visualization</p>
-                    <a href="geometric-mass.html" class="btn">▶ Open Geometric Mass</a>
-                </div>
-            </div>
-
+        <!-- 1. Planet Creation -->
+        <div class="demo">
+            <h2>1. Planet Creation Procedure</h2>
+            <p><strong>Step-by-step interactive visualization of planet formation</strong></p>
+            <a href="planet-creation.html" class="btn">▶ Open Planet Creation Demo</a>
         </div>
+
+        <!-- 2. Geometric Mass -->
+        <div class="demo">
+            <h2>2. Geometric Mass - Visualization</h2>
+            <p><strong>20-layer stimulation growth model with equal volumes</strong></p>
+            <a href="geometric-mass.html" class="btn">▶ Open Geometric Mass Demo</a>
+        </div>
+
+        <!-- 3. Speed Distribution -->
+        <div class="demo">
+            <h2>3. Speed Distribution</h2>
+            <p><strong>Inverse 3/2 Law — Performance Analysis & Speed Distribution</strong></p>
+            <a href="speed.html" class="btn">▶ Open Speed Distribution</a>
+        </div>
+
     </div>
 
     <footer>
-        <p>BaseReal-OS • 
-            <a href="https://github.com/vitalydecoder/BaseReal-OS" style="color:#00ffcc;">GitHub</a>
-        </p>
+        BaseReal-OS • 
+        <a href="https://github.com/VitalyDeCoder/BaseReal-OS" style="color:#00ffcc;">GitHub Repository</a>
     </footer>
 
 </body>
