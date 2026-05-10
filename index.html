@@ -5,57 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BaseReal-OS</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+        :root {
+            --accent: #00ffcc;
+        }
+
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background: #0f0f0f;
+            background: #0a0a0a;
             color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
             line-height: 1.6;
         }
+
         header {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 60px 20px;
+            background: linear-gradient(135deg, #1a1a2e, #0f0f1e);
+            padding: 80px 20px 60px;
             text-align: center;
         }
+
         h1 {
-            font-size: 3rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.8rem;
             margin: 0;
-            color: #00ffcc;
+            background: linear-gradient(90deg, #00ffcc, #00ccaa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
+
         .subtitle {
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             color: #aaaaaa;
-            margin-top: 10px;
+            margin-top: 12px;
         }
+
         .container {
-            max-width: 900px;
-            margin: 40px auto;
-            padding: 0 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
         }
-        .demo {
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
             text-align: center;
-            margin: 50px 0;
+            color: var(--accent);
         }
+
+        .demos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .demo-card {
+            background: #111118;
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid #222;
+            transition: all 0.4s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-12px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px rgba(0, 255, 204, 0.15);
+        }
+
+        .demo-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #1a1a2e;
+        }
+
+        .card-content {
+            padding: 24px;
+        }
+
+        .card-content h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .card-content p {
+            color: #999;
+            font-size: 0.98rem;
+            margin-bottom: 20px;
+        }
+
         .btn {
             display: inline-block;
-            padding: 14px 28px;
-            margin: 10px;
-            background: #00ffcc;
+            padding: 12px 28px;
+            background: var(--accent);
             color: #000;
+            font-weight: 600;
+            border-radius: 8px;
             text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1.1rem;
+            transition: all 0.3s;
         }
+
         .btn:hover {
             background: #00ccaa;
+            transform: scale(1.05);
         }
+
         footer {
             text-align: center;
-            padding: 40px;
-            color: #666;
-            font-size: 0.9rem;
+            padding: 60px 20px;
+            color: #555;
+            font-size: 0.95rem;
         }
     </style>
 </head>
@@ -63,32 +125,52 @@
 
     <header>
         <h1>BaseReal-OS</h1>
-        <p class="subtitle">Exploring Base Reality through Growth and Stimulation Models</p>
+        <p class="subtitle">Exploring Base Reality • Growth Models • Stimulation Theory</p>
     </header>
 
     <div class="container">
 
-        <h2>Demo</h2>
-        <p>Stimulation Theory Visualization — "Growth Snail" (20 layers)</p>
+        <h2 class="section-title">Interactive Demos</h2>
 
-        <div class="demo">
-            <a href="geometric-mass.html" class="btn">▶ Open Demo</a>
+        <div class="demos-grid">
 
+            <!-- Main Snail Demo -->
+            <div class="demo-card">
+                <div style="height:200px;background:linear-gradient(45deg,#1a0033,#003322);display:flex;align-items:center;justify-content:center;font-size:4rem;">🐌</div>
+                <div class="card-content">
+                    <h3>Growth Snail</h3>
+                    <p>20-layer stimulation growth visualization with equal volumes.</p>
+                    <a href="./" class="btn">Open Demo →</a>
+                </div>
+            </div>
 
-        <h2>Results</h2>
-        <p>Speed Distribution and Inverse 3/2 Law Testing</p>
-        <div class="demo">
-            <a href="speed.html" class="btn">📊 Speed Distribution</a>
+            <!-- Planet Creator -->
+            <div class="demo-card">
+                <div style="height:200px;background:linear-gradient(45deg,#001122,#220011);display:flex;align-items:center;justify-content:center;font-size:4rem;">🪐</div>
+                <div class="card-content">
+                    <h3>Planet Creator</h3>
+                    <p>Interactive sequence: Star approach → Gravity tuning → Orbit → Planet creation</p>
+                    <a href="Creo_Planets.html" class="btn">Open Planet Creator →</a>
+                </div>
+            </div>
+
+            <!-- Speed Distribution -->
+            <div class="demo-card">
+                <div style="height:200px;background:linear-gradient(45deg,#331100,#113300);display:flex;align-items:center;justify-content:center;font-size:3.5rem;">📊</div>
+                <div class="card-content">
+                    <h3>Speed Distribution</h3>
+                    <p>Inverse 3/2 Law testing and performance analysis</p>
+                    <a href="speed.html" class="btn">Open Speed Distribution →</a>
+                </div>
+            </div>
+
         </div>
-
-        <h2>About the Project</h2>
-        <p>BaseReal-OS is an experimental platform for studying mathematical patterns of growth, stimulation, and base reality.</p>
 
     </div>
 
     <footer>
+        <p>BaseReal-OS — Experimental Research Platform</p>
         <p>
-            BaseReal-OS • 
             <a href="https://github.com/vitalydecoder/BaseReal-OS" style="color:#00ffcc;">GitHub Repository</a>
         </p>
     </footer>
