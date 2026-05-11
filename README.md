@@ -37,6 +37,11 @@
 **Inverse 3/2 Law — Performance Analysis & Speed Distribution**
 
 [![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
+### 4. CodeReality — Fractal Fern
+
+**Fractal Fern Visualization — Classic Barnsley Fern generated from Code Reality**
+
+[![▶ Open CodeReality Fern](https://img.shields.io/badge/▶_Open_CodeReality_Fern-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Codereality.html)
 ## 📚 Scientific Publication & Theoretical Foundation
 
 The core mathematical model of BaseReal-OS is formally documented and archived on Zenodo. This work establishes the transition from classical physics to a discrete, simulation-ready architectural framework.
