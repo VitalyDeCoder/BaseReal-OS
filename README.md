@@ -28,7 +28,7 @@
 ### 2. Galaxy Booster
 **The cosmic cradle where stars are ignited and worlds begin**
 
-[![▶ Open Galaxy Booster](https://shields.io▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://github.io)
+[![▶ Open Galaxy Booster](https://img.shields.io/badge/▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/galaxy_booster.html)
 
 
 ### 3. Geometric Mass - Visualization
