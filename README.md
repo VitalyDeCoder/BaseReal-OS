@@ -13,6 +13,7 @@
 - **[Architecture (Russian)](docs/ARCHITECTURE.ru.md)**
 - **[Essay 3/2 for AI](Essy3_2forAI)**
 - **[Full Essay 3/2 (PDF)](Full%20Essy%203_2%20Eng.pdf)**
+- **[Full Essay 3/2 Rus (PDF)](docs/Essy%203_2%20Rus.pdf)**
 
 ## Interactive Demos
 
