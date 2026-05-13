@@ -24,8 +24,13 @@
 [![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Planets.html)
 
 ---
+### 2. Galaxy Booster
+**The cosmic cradle where stars are ignited and worlds begin**
 
-### 2. Geometric Mass - Visualization
+[![▶ Open Galaxy Booster](https://shields.io▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://github.io)
+
+
+### 3. Geometric Mass - Visualization
 
 **20-layer simulation growth model with equal volumes**
 
@@ -33,11 +38,11 @@
 
 ---
 
-### 3. Speed Distribution
+### 4. Speed Distribution
 **Inverse 3/2 Law — Performance Analysis & Speed Distribution**
 
 [![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
-### 4. CodeReality — Fractal Fern
+### 5. CodeReality — Fractal Fern
 
 **Fractal Fern Visualization — Classic Barnsley Fern generated from Code Reality**
 
