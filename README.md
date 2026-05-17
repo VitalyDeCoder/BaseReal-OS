@@ -31,6 +31,12 @@
 [![▶ Open Galaxy Booster](https://img.shields.io/badge/▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/galaxy_booster.html)
 
 
+### 2.5. Star Creation Procedure
+**Step-by-step interactive visualization of star creation**
+
+
+[![▶ Open Star Creator](https://img.shields.io/badge/▶_Open_Star_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Star.html) 
+
 ### 3. Geometric Mass - Visualization
 
 **20-layer simulation growth model with equal volumes**
