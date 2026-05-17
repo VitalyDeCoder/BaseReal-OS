@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -12,101 +11,100 @@
   canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
   #ui { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
 
-#hud {
-position:absolute; top:24px; left:24px;
-background:rgba(0,0,0,0.78);
-border:1px solid rgba(0,200,255,0.3);
-border-left:3px solid #00c8ff;
-padding:0; min-width:240px;
-font-size:12px; color:#00c8ff;
-letter-spacing:1px;
-text-shadow:0 0 8px rgba(0,200,255,0.4);
-}
-.hrow {
-display:flex; align-items:center;
-padding:6px 12px;
-border-bottom:1px solid rgba(0,200,255,0.1);
-gap:8px;
-opacity:0; transform:translateX(-10px);
-transition:opacity 0.5s, transform 0.5s;
-}
-.hrow:last-child { border-bottom:none; }
-.hrow.on { opacity:1; transform:translateX(0); }
-.hlbl { font-size:9px; color:rgba(0,200,255,0.5); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; flex:1; }
-.hval { font-size:13px; color:#fff; font-weight:bold; white-space:nowrap; }
+  #hud {
+    position:absolute; top:24px; left:24px;
+    background:rgba(0,0,0,0.78);
+    border:1px solid rgba(0,200,255,0.3);
+    border-left:3px solid #00c8ff;
+    padding:0; min-width:240px;
+    font-size:12px; color:#00c8ff;
+    letter-spacing:1px;
+    text-shadow:0 0 8px rgba(0,200,255,0.4);
+  }
+  .hrow {
+    display:flex; align-items:center;
+    padding:6px 12px;
+    border-bottom:1px solid rgba(0,200,255,0.1);
+    gap:8px;
+    opacity:0; transform:translateX(-10px);
+    transition:opacity 0.5s, transform 0.5s;
+  }
+  .hrow:last-child { border-bottom:none; }
+  .hrow.on { opacity:1; transform:translateX(0); }
+  .hlbl { font-size:9px; color:rgba(0,200,255,0.5); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; flex:1; }
+  .hval { font-size:13px; color:#fff; font-weight:bold; white-space:nowrap; }
 
-#gravity-slider::-webkit-slider-thumb {
--webkit-appearance:none; width:16px; height:16px; border-radius:50%;
-background:radial-gradient(circle at 35% 35%,#fff,#00c8ff 50%,#0050a0);
-border:1px solid rgba(0,200,255,0.9);
-box-shadow:0 0 8px rgba(0,200,255,0.7);
-cursor:pointer;
-}
-#color-slider::-webkit-slider-thumb {
--webkit-appearance:none; width:16px; height:16px; border-radius:50%;
-background:#fff;
-border:1px solid rgba(255,255,255,0.8);
-box-shadow:0 0 8px rgba(255,200,100,0.7);
-cursor:pointer;
-}
+  #gravity-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#fff,#00c8ff 50%,#0050a0);
+    border:1px solid rgba(0,200,255,0.9);
+    box-shadow:0 0 8px rgba(0,200,255,0.7);
+    cursor:pointer;
+  }
+  #color-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:#fff;
+    border:1px solid rgba(255,255,255,0.8);
+    box-shadow:0 0 8px rgba(255,200,100,0.7);
+    cursor:pointer;
+  }
 
-@keyframes btnBlink {
-0%,100% { box-shadow:0 0 20px rgba(255,180,50,0.3), inset 0 0 20px rgba(255,180,50,0.05); border-color:rgba(255,180,50,0.9); }
-50% { box-shadow:0 0 50px rgba(255,180,50,0.9), 0 0 80px rgba(255,180,50,0.4), inset 0 0 30px rgba(255,180,50,0.15); border-color:#ffb432; }
-}
-#btn {
-position:absolute; bottom:50px; left:50%;
-transform:translateX(-50%);
-pointer-events:auto;
-background:transparent;
-border:2px solid rgba(255,180,50,0.8);
-color:#ffb432;
-font-family:‘Orbitron’, monospace;
-font-size:13px; letter-spacing:3px;
-padding:13px 34px; cursor:pointer;
-opacity:0; transition:opacity 0.8s, box-shadow 0.3s, background 0.3s;
-text-transform:uppercase;
-text-shadow:0 0 10px rgba(255,180,50,0.8);
-box-shadow:0 0 20px rgba(255,180,50,0.15), inset 0 0 20px rgba(255,180,50,0.05);
-}
-#btn.on { opacity:1; animation:btnBlink 1.4s ease-in-out infinite; }
-#btn:hover { background:rgba(255,180,50,0.15); animation:none; box-shadow:0 0 60px rgba(255,180,50,0.7); }
+  @keyframes btnBlink {
+    0%,100% { box-shadow:0 0 20px rgba(255,180,50,0.3), inset 0 0 20px rgba(255,180,50,0.05); border-color:rgba(255,180,50,0.9); }
+    50% { box-shadow:0 0 50px rgba(255,180,50,0.9), 0 0 80px rgba(255,180,50,0.4), inset 0 0 30px rgba(255,180,50,0.15); border-color:#ffb432; }
+  }
+  #btn {
+    position:absolute; bottom:50px; left:50%;
+    transform:translateX(-50%);
+    pointer-events:auto;
+    background:transparent;
+    border:2px solid rgba(255,180,50,0.8);
+    color:#ffb432;
+    font-family:'Orbitron', monospace;
+    font-size:13px; letter-spacing:3px;
+    padding:13px 34px; cursor:pointer;
+    opacity:0; transition:opacity 0.8s, box-shadow 0.3s, background 0.3s;
+    text-transform:uppercase;
+    text-shadow:0 0 10px rgba(255,180,50,0.8);
+    box-shadow:0 0 20px rgba(255,180,50,0.15), inset 0 0 20px rgba(255,180,50,0.05);
+  }
+  #btn.on { opacity:1; animation:btnBlink 1.4s ease-in-out infinite; }
+  #btn:hover { background:rgba(255,180,50,0.15); animation:none; box-shadow:0 0 60px rgba(255,180,50,0.7); }
 
-#caption {
-position:absolute; top:50%; left:50%;
-transform:translate(-50%,-50%);
-font-family:‘Orbitron’,monospace;
-font-size:18px; letter-spacing:6px; color:rgba(255,255,255,0.0);
-text-align:center; pointer-events:none;
-transition:color 1.5s;
-text-shadow:0 0 30px rgba(255,180,50,0.5);
-}
-#caption.on { color:rgba(255,220,120,0.9); }
+  #caption {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Orbitron',monospace;
+    font-size:18px; letter-spacing:6px; color:rgba(255,255,255,0.0);
+    text-align:center; pointer-events:none;
+    transition:color 1.5s;
+    text-shadow:0 0 30px rgba(255,180,50,0.5);
+  }
+  #caption.on { color:rgba(255,220,120,0.9); }
 
-#info {
-position:absolute; bottom:20px; width:100%; text-align:center;
-font-size:10px; color:rgba(255,255,255,0.2); letter-spacing:3px;
-opacity:0; transition:opacity 1s;
-}
-#info.on { opacity:1; }
+  #info {
+    position:absolute; bottom:20px; width:100%; text-align:center;
+    font-size:10px; color:rgba(255,255,255,0.2); letter-spacing:3px;
+    opacity:0; transition:opacity 1s;
+  }
+  #info.on { opacity:1; }
 
-#restart {
-position:absolute; top:24px; right:24px;
-pointer-events:auto;
-background:rgba(0,0,0,0.6);
-border:2px solid rgba(0,200,255,0.7);
-color:#00c8ff;
-font-family:‘Orbitron’, monospace;
-font-size:12px; letter-spacing:3px;
-padding:10px 22px; cursor:pointer;
-transition:all 0.3s; opacity:0;
-text-shadow:0 0 8px rgba(0,200,255,0.6);
-box-shadow:0 0 16px rgba(0,200,255,0.15);
-}
-#restart.on { opacity:1; }
-#restart:hover { background:rgba(0,200,255,0.15); border-color:#00c8ff; box-shadow:0 0 30px rgba(0,200,255,0.4); }
+  #restart {
+    position:absolute; top:24px; right:24px;
+    pointer-events:auto;
+    background:rgba(0,0,0,0.6);
+    border:2px solid rgba(0,200,255,0.7);
+    color:#00c8ff;
+    font-family:'Orbitron', monospace;
+    font-size:12px; letter-spacing:3px;
+    padding:10px 22px; cursor:pointer;
+    transition:all 0.3s; opacity:0;
+    text-shadow:0 0 8px rgba(0,200,255,0.6);
+    box-shadow:0 0 16px rgba(0,200,255,0.15);
+  }
+  #restart.on { opacity:1; }
+  #restart:hover { background:rgba(0,200,255,0.15); border-color:#00c8ff; box-shadow:0 0 30px rgba(0,200,255,0.4); }
 </style>
-
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -362,21 +360,13 @@ function drawTunnel(){
   if(tunnelT<=0) return;
   const cx=W/2,cy=H/2;
   ctx.save();
-  ctx.globalAlpha=tunnelT;
-  for(let i=0;i<12;i++){
-    const r=W*(0.5-i*0.04)*tunnelT;
-    const a=i/12;
-    const tg=ctx.createRadialGradient(cx,cy,r*0.1,cx,cy,r);
-    tg.addColorStop(0,'rgba(255,150,30,'+a*0.3+')');
-    tg.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=tg;
-    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-  }
-  // dark center
-  const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.3*tunnelT);
-  dg.addColorStop(0,'rgba(0,0,0,1)');
+  // clean dark vignette — no orange, just darkness closing in from center
+  const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.55);
+  dg.addColorStop(0,'rgba(0,0,0,'+tunnelT+')');
+  dg.addColorStop(0.5,'rgba(0,0,0,'+(tunnelT*0.6)+')');
   dg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=dg; ctx.beginPath();ctx.arc(cx,cy,W*0.3*tunnelT,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=dg;
+  ctx.beginPath();ctx.arc(cx,cy,W*0.55,0,Math.PI*2);ctx.fill();
   ctx.restore();
 }
 
@@ -389,40 +379,7 @@ function drawTemplate(){
 
   const ex=TX(),ey=TY(),rx=TRX(),ry=TRY();
 
-  // arm from bottom-left
-  const bx=W*0.05,by=H*0.9;
-  const dx=ex-bx,dy=ey-by;
-  const dist=Math.sqrt(dx*dx+dy*dy);
-  const unx=-dy/dist,uny=dx/dist;
-  const spreadN=80*(1-tplAdvance*0.5),spreadF=8;
-  const frac=0.65;
-
-  ctx.strokeStyle='rgba(0,200,255,0.45)';
-  ctx.lineWidth=1.5;
-  ctx.beginPath();
-  ctx.moveTo(bx+unx*spreadN,by+uny*spreadN);
-  ctx.lineTo(bx+dx*frac+unx*spreadF,by+dy*frac+uny*spreadF);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(bx-unx*spreadN,by-uny*spreadN);
-  ctx.lineTo(bx+dx*frac-unx*spreadF,by+dy*frac-uny*spreadF);
-  ctx.stroke();
-
-  // perspective arcs
-  for(let i=0;i<5;i++){
-    const f=(i+0.5)/5;
-    const sc=1-f*0.8;
-    const ax=bx+dx*f*frac,ay=by+dy*f*frac;
-    const aw=spreadN*sc*2,ah=aw*0.22;
-    const armAngle=Math.atan2(dy,dx);
-    ctx.strokeStyle='rgba(0,200,255,'+(0.12+sc*0.22)+')';
-    ctx.lineWidth=1;
-    ctx.beginPath();
-    ctx.ellipse(ax,ay,aw/2,ah/2,armAngle+Math.PI/2,0,Math.PI*2);
-    ctx.stroke();
-  }
-
-  // ellipse
+  // ellipse only — no arm lines
   ctx.save();
   ctx.translate(ex,ey);
   const eg=ctx.createRadialGradient(0,0,0,0,0,rx);
@@ -618,40 +575,60 @@ function update(dt){
     if(pt>5){ phase=1; pt=0; }
   }
   else if(phase===1){
-    // zoom in, black hole appears
-    const p=clamp(pt/10,0,1);
-    camZoom=easeOut(p);
-    bhAlpha=easeOut(clamp((p-0.3)/0.7,0,1));
-    // black hole grows as we approach
-    bhSize=easeOut(clamp((p-0.3)/0.7,0,1));
-    if(p>=1){ phase=2; pt=0; }
-  }
-  else if(phase===2){
-    // continue zooming — black hole expands to fill screen then darkness
-    const p=clamp(pt/5,0,1);
-    // zoom keeps going past 1
-    camZoom=1+easeOut(p)*4;
-    bhSize=1+easeOut(p)*3; // black hole grows huge
-    bhAlpha=1;
-    tunnelT=easeOut(clamp(p/0.5,0,1));
-    // darkness fills in at the end
-    insideAlpha=easeOut(clamp((p-0.7)/0.3,0,1));
-    if(p>=1){ camZoom=0; phase=3; pt=0; }
+    // continuous zoom: approach → enter → darkness, no break
+    const totalT = 12; // total seconds for full sequence
+    const p = clamp(pt/totalT, 0, 1);
+
+    if(p < 0.55){
+      // approach: zoom in linearly, BH grows
+      const p1 = p/0.55;
+      camZoom = p1 * p1; // easeIn approach
+      bhAlpha = clamp((p1-0.3)/0.7, 0, 1);
+      bhSize  = clamp((p1-0.3)/0.7, 0, 1);
+      insideAlpha = 0;
+    } else {
+      // entry: accelerate, BH fills screen, darkness
+      const p2 = (p-0.55)/0.45;
+      const acc = p2*p2;
+      camZoom  = 1 + acc*8;
+      bhSize   = 1 + acc*5;
+      bhAlpha  = 1;
+      insideAlpha = clamp((p2-0.5)/0.5, 0, 1);
+    }
+
+    if(p>=1){ camZoom=0; tunnelT=0; insideAlpha=1; phase=3; pt=0; }
   }
   else if(phase===3){
-    // inside — darkness, caption
-    const p=clamp(pt/3,0,1);
-    if(p>0.3&&!captionOn){
+    // darkness + caption timing:
+    // 0.0-0.4s: pure darkness
+    // 0.4-1.6s: caption visible
+    // 1.6-2.2s: caption fades
+    // 2.2-4.2s: darkness pause (2 seconds)
+    // 4.2s+: transition to phase 4
+    const totalT=4.2;
+    const t=pt;
+
+    if(t>0.13&&!captionOn){
       captionOn=true;
-      document.getElementById('caption').textContent='You are here';
-      document.getElementById('caption').classList.add('on');
+      const el=document.getElementById('caption');
+      el.textContent='You are here';
+      el.style.opacity='1';
+      el.classList.add('on');
     }
-    if(p>=1){ phase=4; pt=0;
-      document.getElementById('caption').classList.remove('on');
+    // fade caption out
+    if(t>1.6&&t<2.2){
+      const fadeFrac=(t-1.6)/0.6;
+      document.getElementById('caption').style.opacity=String(1-fadeFrac);
     }
+    if(t>2.2&&captionOn){
+      const el=document.getElementById('caption');
+      el.style.opacity='0';
+      el.classList.remove('on');
+    }
+    if(t>=totalT){ phase=4; pt=0; }
   }
   else if(phase===4){
-    // tool appears, gravity slider auto-animates
+    // tool appears immediately (pause already done in phase 3)
     const p=clamp(pt/5,0,1);
     tplAlpha=easeOut(p);
     insideAlpha=1-easeOut(p)*0.6;
@@ -716,7 +693,7 @@ function update(dt){
     camZoom=lerp(1,0,zoomOutT);
     bhAlpha=lerp(1,0,zoomOutT);
     bhSize=lerp(1,0,zoomOutT);
-    tunnelT=lerp(1,0,clamp(zoomOutT*2,0,1));
+    tunnelT=0; // tunnel not used in zoom-out
     insideAlpha=0;
     // star shrinks with perspective — gets tiny as we pull back
     starScale=lerp(1,0.0,easeInOut(zoomOutT));
@@ -790,6 +767,6 @@ function loop(ts){
 }
 requestAnimationFrame(loop);
 </script>
-
 </body>
 </html>
+
