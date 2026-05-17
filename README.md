@@ -1,6 +1,6 @@
 # BaseReal-OS
-#What We Are Building
-BaseReal is a foundation platform for launching custom universes.
+### What We Are Building
+**BaseReal** is a foundation platform for launching custom universes.
 Think of it as an operating system — not for a computer, but for a reality. The platform itself is a finished product. What it runs depends on how you configure it.
 Each specialized universe is defined by a set of instructions for the governing neural network — a kind of "God's Charter": how to distribute resources, what algorithms sustain engagement, how the reward system operates. The full parameter list is still being developed.
 The result of configuration is a universe with a specific purpose:
