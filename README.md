@@ -1,4 +1,18 @@
 # BaseReal-OS
+#What We Are Building
+BaseReal is a foundation platform for launching custom universes.
+Think of it as an operating system — not for a computer, but for a reality. The platform itself is a finished product. What it runs depends on how you configure it.
+Each specialized universe is defined by a set of instructions for the governing neural network — a kind of "God's Charter": how to distribute resources, what algorithms sustain engagement, how the reward system operates. The full parameter list is still being developed.
+The result of configuration is a universe with a specific purpose:
+
+Entertainment — immersive worlds and interactive experiences
+Education — visual environments where physics and math become tangible
+Therapy — calm, controlled spaces for psychological work
+Rehabilitation — structured realities for behavioral correction
+Science — sandboxes for modeling phenomena impossible to observe directly
+Research — environments for testing hypotheses about the nature of reality itself
+
+The underlying law is always the same: T² ∝ R³ — the Inverse 3/2 principle. The universe changes. The geometry does not.
 
 **BaseReal** is a conceptual "reality operating system" exploring a new architecture of existence and an alternative geometric model of gravity and mass (Inverse 3/2 Law).
 
