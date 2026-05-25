@@ -82,3 +82,25 @@ This paper introduces the **Geometric Inverse 3/2 Law** as a fundamental mechani
 *   **Unified Data Scaling:** Replacing standard quadratic models with a 3/2 scaling law to better represent mass-energy distribution in decentralized digital environments.
 
 ---
+
+**Title:** [Black Hole as Galactic Speed Booster: An Alternative to Dark Matter](https://zenodo.org/records/20377051)  
+**DOI:** `10.5281/zenodo.20377051`
+
+### Abstract
+The dark matter hypothesis was constructed to explain the anomalous flat rotation curve of spiral galaxies. This paper proposes a simpler alternative: the supermassive black hole at the galactic centre functions as an active speed booster — a structural mechanism that imparts additional velocity to stars, preventing excessive central mass concentration and maintaining a stable spatial distribution across the galactic disk. The hypothesis is consistent with observed velocity data and requires no undetected mass components.
+
+---
+**Title:** [Adaptive Perceptual Resolution: A Relative Information Scale
+for Living System](https://zenodo.org/records/20376632)
+**DOI:** `10.5281/zenodo.20376632`
+
+### Abstract
+This paper proposes a hierarchical scale of perceptual resolution for living systems,
+based on the principle of relative comparison to the previous signal state rather than
+absolute measurement. The scale ranges from binary impulse detection to fractional
+ratio perception. Each level increases information capacity per unit time while
+simultaneously increasing sensitivity to noise. This framework offers a unified
+description of how biological perception operates and why living systems are inherently
+more robust than fixed-resolution digital channels
+
+---
