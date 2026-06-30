@@ -7,10 +7,22 @@ Geometric Inverse 3/2 Law • Interest-based rendering • Immutable Reality Reg
 
 ## What We Are Building
 
-**BaseReal** is a foundational platform for launching custom universes.
+<h2>BaseReal is the ultimate platform for launching unique universes!</h2>
 
-Think of it as an **operating system for reality** — not for a computer, but for existence itself.  
-The core engine is ready. What kind of universe runs on it depends entirely on the loaded configuration ("God's Charter") — a set of rules for the governing neural network that defines resource distribution, engagement mechanics, and reward systems.
+<p>Imagine an operating system — <strong>for an entire reality</strong>. The platform is fully decentralized: each launch creates an independent, autonomous world. All it takes is setting the mono-cursor of resources <code>R</code> and pressing <code>Enter</code>.</p>
+
+<p>The position of this slider (from <strong>0.1 to 0.9</strong>) sets the fundamental, unique character of the world:</p>
+
+<ul>
+  <li>
+    <strong>Total Unity (Low R):</strong> A space where all egoistic boundaries are erased, and thoughts and resources are shared in a single collective mind. Users will gain a unique experience of complete dissolution in the shared flow and unrepeatable inner exultation!
+  </li>
+  <li>
+    <strong>Absolute Autonomy (High R):</strong> A world of pure individualism, where every inhabitant relies only on themselves, forging a steel will and independence under conditions of sharp scarcity.
+  </li>
+</ul>
+
+<p>You choose the rules of the game, and the Governing Neural Network ensures a flawless decentralized simulation. Where this choice leads and how the superposition unfolds is the main intrigue of your personal adventure!</p>
 
 **The fundamental immutable law remains:**  
 **T² ∝ R³** — the **Inverse 3/2 principle**.  
