@@ -34,7 +34,7 @@ The active real-time generator of experienced reality.
   Registry = Memory & Truth  
   Neural Network = Generation & Experience
 
-- One Registry can support many simulation modes (therapeutic, educational, entertainment, developmental, scientific, etc.).
+
 
 - Computational resources allocation can vary greatly, but the two core components remain mandatory and unchanged.
 
