@@ -1,68 +1,84 @@
 # Adaptive Perceptual Resolution: A Relative Information Scale for Living Systems
 
-**Vitali Colesnicenco** — Independent Researcher, London, United Kingdom
+**Vitaly Colesnicenco**
+*Independent Researcher, London, United Kingdom*
+Version 2 (July 2026) — technical revision, metaphysical content removed
+
+*Status: preprint, not peer-reviewed.*
 
 ---
 
 ## Abstract
 
-This paper proposes a hierarchical scale of perceptual resolution for living systems, based on the principle of relative comparison to the previous signal state rather than absolute measurement. The scale ranges from binary impulse detection to fractional ratio perception. Each level increases information capacity per unit time while simultaneously increasing sensitivity to noise. This framework offers a unified description of how biological perception operates and why living systems are inherently more robust than fixed-resolution digital channels.
+This paper proposes a hierarchical scale of perceptual resolution for living systems, based on relative comparison with a previous signal state rather than absolute measurement. The scale spans a range from binary detection to perception of fractional ratios. The work draws on the well-established Weber-Fechner psychophysical law and Stevens' theory of scales of measurement, proposing a generalization of both as a multi-level discrete model applicable to both biological perception and engineered signal-processing systems.
 
 ---
 
-## The Problem with Absolute Measurement
+## 1. The Problem of Absolute Measurement
 
-Classical information theory, as formalized by Shannon (1948), treats channel capacity in terms of symbol probability distributions. It describes a static channel with a fixed alphabet. It does not address how a system dynamically adjusts its resolution based on the history of incoming signals. Biological perception does not work this way. The eye does not measure absolute brightness — it responds to contrast. The ear does not register absolute volume — it detects change. The skin does not feel constant pressure — only new contact. Living systems do not measure. They compare.
+Classical information theory (Shannon, 1948) describes static channels with fixed resolution. Biological perception works differently:
 
----
+- The eye responds to contrast rather than absolute brightness — the retina encodes signal through lateral inhibition (see work on ganglion cells, e.g. Rodieck et al., 1985).
+- The ear perceives loudness on a logarithmic scale — the decibel itself is a relative unit of measurement.
+- Skin responds primarily to a change in stimulus rather than to its constant presence (sensory adaptation).
 
-## The Relative Information Scale
-
-A hierarchical scale where each level is defined by what the system compares the current impulse to:
-
-### Level 1 — Binary (1 bit per cycle)
-
-Impulse present or absent. Two states. Maximum noise immunity, minimum information. This is the operating level of the simplest sensory systems and the baseline of all perception.
-
-### Level 2 — Directional (~1.58 bits per cycle)
-
-Current impulse compared to previous: greater, lesser, or equal. Three states. The system now has memory of one step. This is the level of basic emotional and somatic response — better, worse, the same.
-
-### Level 3 — Proportional (variable, higher capacity)
-
-Current impulse compared to previous by ratio: twice as strong, half as strong, one third. The system perceives relative magnitude. Information capacity increases significantly. Sensitivity to external interference increases proportionally. This is the level of trained perception — the musician, the craftsman, the experienced diagnostician.
-
-| Level | Operation | Information per cycle |
-|-------|-----------|----------------------|
-| 1 | Impulse present / absent | 1 bit |
-| 2 | Greater / lesser / equal to previous | ~1.58 bits |
-| 3 | By what ratio — double, half, third | Variable, higher |
+This is consistent with the Weber-Fechner law (Weber, 1834; Fechner, 1860): the just-noticeable difference (JND) in a stimulus is proportional to the stimulus's baseline magnitude, rather than being a fixed absolute quantity.
 
 ---
 
-## Stability Through Relative Comparison
+## 2. A Relative Information Scale
 
-A critical property of this architecture is its inherent stability. Because the system measures change relative to the previous state rather than against a fixed reference, sudden external disturbances are absorbed across multiple cycles. A sharp reduction in signal amplitude does not destabilize the system — it registers as a change across several fast cycles and is processed smoothly. This is why biological perception is robust to environmental noise in ways that fixed-threshold digital systems are not. The reference point moves with the signal.
+| Level | Name | Comparison | Theoretical capacity | Noise robustness |
+| --- | --- | --- | --- | --- |
+| 1   | Binary | Present / Absent | 1 bit | Maximum |
+| 2   | Directional | Greater / Less / Equal | log₂(3) ≈ 1.58 bits | High |
+| 3   | Proportional | Twice as strong, one-third as weak, etc. | Variable, grows with number of distinguishable gradations | Medium |
+
+**Caveat:** the capacity values in this table are a theoretical combinatorial ceiling (log₂ of the number of distinguishable outcomes), not an empirically measured throughput of any particular sensory system. Real channel capacity is constrained by noise, integration time, and receptor physiology, and is typically lower than the theoretical limit.
+
+The scale relates to Stevens' classification of measurement scales (Stevens, 1946: nominal, ordinal, interval, ratio) — levels 1–3 above correspond roughly to the ordinal and interval scales in that classification.
+
+### Level 1 — Binary
+
+The simplest level: a pulse is either present or not.
+
+### Level 2 — Directional
+
+Comparison with the previous state: better / worse / unchanged.
+
+### Level 3 — Proportional
+
+Perception of relative magnitudes (twice as much, one-third as much, etc.).
 
 ---
 
-## Adaptive Resolution
+## 3. Key Implications
 
-The scale is not fixed. A living system dynamically selects its operating level based on context and accumulated experience. Under stress or unfamiliar conditions, the system drops to lower levels — binary or directional — trading information richness for stability. In familiar, safe, or highly trained contexts, it operates at higher levels, extracting finer distinctions from the same input stream. This adaptive switching is the mechanism behind what is commonly described as intuition, expertise, or heightened awareness.
-
----
-
-## Distinction from Delta Coding
-
-Differential and delta coding in engineering transmit the difference between successive values to compress data. This is a technical encoding strategy applied to a fixed-resolution signal. The scale proposed here is fundamentally different: it describes the resolution of the perceptual apparatus itself — not how data is encoded for transmission, but how a living system constructs its model of reality from incoming signals. The reference is not subtracted for compression; it is the basis of meaning.
+- Robustness to external perturbation is higher than in systems using absolute measurement, since noise that does not exceed the current discrimination threshold is filtered out automatically.
+- The system can adaptively shift its operating level: under load or stress, it can shift to coarser levels (faster, less precise); under calm conditions, to finer levels.
 
 ---
 
-## Conclusion
+## 4. Relationship to Delta Encoding
 
-Living systems do not measure reality. They track its change relative to what came before. The proposed scale — from binary detection through directional comparison to fractional ratio perception — describes a universal architecture of biological perception. Higher resolution yields more information per cycle at the cost of increased noise sensitivity. The system adapts its operating level to context. This framework provides a foundation for understanding perception, expertise, and the robustness of living intelligence.
+To be candid: the mechanism described above is essentially equivalent to delta encoding in computer science — encoding via the difference from a previous state, widely used in video compression, file versioning, and network protocols. The difference lies not in the underlying principle but in the context of application: in living systems this is not an engineered solution designed to save bandwidth, but a property of receptor physiology. In other words, it is the same mathematical technique, implemented biologically rather than designed.
 
 ---
 
-*Repository: https://github.com/VitalyDeCoder/BaseReal-OS*
-*Zenodo: search Colesnicenco*
+## 5. Conclusion
+
+Living systems track change relative to a previous state rather than measuring absolute quantities. The proposed scale formalizes this observation as a set of discrete levels that can serve as a starting point for engineered systems (see the companion paper on adaptive rendering). Empirical validation — comparison against actual psychophysical experiments — has not yet been carried out and remains a subject for future work.
+
+---
+
+## References
+
+- Weber, E.H. (1834). *De Pulsu, Resorptione, Auditu et Tactu*.
+- Fechner, G.T. (1860). *Elemente der Psychophysik*.
+- Stevens, S.S. (1946). On the theory of scales of measurement. *Science*, 103(2684), 677–680.
+- Shannon, C.E. (1948). A mathematical theory of communication. *Bell System Technical Journal*, 27(3), 379–423.
+- Rodieck, R.W., Binmoeller, K.F., Dineen, J. (1985). Parasol and midget ganglion cells of the human retina. *Journal of Comparative Neurology*, 233(1), 115–132.
+
+---
+
+*An open concept for further research. Preprint, not peer-reviewed.*
