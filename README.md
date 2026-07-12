@@ -40,7 +40,7 @@ The universe can change. The geometry does not.
 
 - **The Duet of Algorithms: A Universal Mechanism of Nonlinear Transitions in Dynamical Systems**  
   Research on a universal mechanism of nonlinear transitions in dynamical systems through the "Duet of Algorithms".  
-  [Zenodo](https://zenodo.org/records/.21285311) | [PDF](https://zenodo.org/records/21285311/files/Duet_Algorithm_Preprint_EN.pdf)
+  [Zenodo](https://zenodo.org/records/.21285311) | [PDF]
 
 ### Documents in `docs/` folder (17 files)
 
