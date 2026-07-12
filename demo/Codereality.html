@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaseReal-OS: Fern Generation</title>
+    <style>
+        body { margin: 0; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: 'Courier New', monospace; }
+        canvas { max-width: 100%; max-height: 100%; }
+        #info { position: absolute; top: 20px; left: 20px; color: #0f6; font-size: 14px; pointer-events: none; text-shadow: 0 0 5px #0f6; }
+        
+        #restartBtn {
+            position: absolute;
+            bottom: 50px;
+            padding: 15px 30px;
+            background: transparent;
+            color: #0f6;
+            border: 2px solid #0f6;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            cursor: pointer;
+            display: none; /* Скрыта по умолчанию */
+            transition: all 0.3s;
+            box-shadow: 0 0 10px #0f6;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        #restartBtn:hover {
+            background: #0f6;
+            color: #000;
+            box-shadow: 0 0 30px #0f6;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">PROTOCOL: GENERATING REALITY...<br>POINTS: <span id="counter">0</span></div>
+    <canvas id="fernCanvas"></canvas>
+    <button id="restartBtn">RESTART UNIVERSE</button>
+
+    <script>
+        const canvas = document.getElementById('fernCanvas');
+        const ctx = canvas.getContext('2d');
+        const counterEl = document.getElementById('counter');
+        const restartBtn = document.getElementById('restartBtn');
+
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
+
+        let x = 0, y = 0;
+        let count = 0;
+        const maxPoints = 500000; // Оптимально для плотности и скорости
+        const scale = h / 11; 
+        const offsetX = w / 2;
+        const offsetY = h - 50;
+
+        function drawPoint() {
+            // Отрисовка пачками по 500 точек для скорости
+            for (let i = 0; i < 500; i++) {
+                let nextX, nextY;
+                let r = Math.random();
+
+                if (r < 0.01) {
+                    nextX = 0;
+                    nextY = 0.16 * y;
+                } else if (r < 0.86) {
+                    nextX = 0.85 * x + 0.04 * y;
+                    nextY = -0.04 * x + 0.85 * y + 1.6;
+                } else if (r < 0.93) {
+                    nextX = 0.2 * x - 0.26 * y;
+                    nextY = 0.23 * x + 0.22 * y + 1.6;
+                } else {
+                    nextX = -0.15 * x + 0.28 * y;
+                    nextY = 0.26 * x + 0.24 * y + 0.44;
+                }
+
+                x = nextX;
+                y = nextY;
+
+                let px = x * scale + offsetX;
+                let py = offsetY - y * scale;
+
+                ctx.fillStyle = `rgba(0, 255, 100, 0.6)`;
+                ctx.fillRect(px, py, 0.8, 0.8);
+            }
+            
+            count += 500;
+            counterEl.innerText = count.toLocaleString();
+
+            if (count < maxPoints) {
+                requestAnimationFrame(drawPoint);
+            } else {
+                // Показываем кнопку, когда плотность достигнута
+                restartBtn.style.display = 'block';
+            }
+        }
+
+        function restart() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            x = 0; y = 0; count = 0;
+            restartBtn.style.display = 'none';
+            drawPoint();
+        }
+
+        restartBtn.addEventListener('click', restart);
+
+        // Первый запуск
+        drawPoint();
+    </script>
+</body>
+</html>
