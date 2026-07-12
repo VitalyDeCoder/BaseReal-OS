@@ -81,7 +81,7 @@ The universe can change. The geometry does not.
 ### 1. Planet Creation
 **Step-by-step interactive visualization of planet creation**
 
-[![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Planets.html)
+[![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Creo_Planets.html)
 
 ### 2. Galaxy Booster
 **The cosmic cradle where stars are ignited and worlds begin**
