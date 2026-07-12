@@ -86,27 +86,27 @@ The universe can change. The geometry does not.
 ### 2. Galaxy Booster
 **The cosmic cradle where stars are ignited and worlds begin**
 
-[![▶ Open Galaxy Booster](https://img.shields.io/badge/▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/galaxy_booster.html)
+[![▶ Open Galaxy Booster](https://img.shields.io/badge/▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy_booster.html)
 
 ### 3. Star Creation
 **Step-by-step interactive visualization of star creation**
 
-[![▶ Open Star Creator](https://img.shields.io/badge/▶_Open_Star_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Creo_Star.html)
+[![▶ Open Star Creator](https://img.shields.io/badge/▶_Open_Star_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Creo_Star.html)
 
 ### 4. Geometric Mass
 **20-layer simulation growth model with equal volumes**
 
-[![▶ Open Geometric Mass](https://img.shields.io/badge/▶_Open_Geometric_Mass-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/geometric-mass.html)
+[![▶ Open Geometric Mass](https://img.shields.io/badge/▶_Open_Geometric_Mass-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/geometric-mass.html)
 
 ### 5. Speed Distribution
 **Inverse 3/2 Law — Performance Analysis & Speed Distribution**
 
-[![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/speed.html)
+[![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/speed.html)
 
 ### 6. CodeReality — Fractal Fern
 **Classic Barnsley Fern generated from Code Reality**
 
-[![▶ Open CodeReality Fern](https://img.shields.io/badge/▶_Open_CodeReality_Fern-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/Codereality.html)
+[![▶ Open CodeReality Fern](https://img.shields.io/badge/▶_Open_CodeReality_Fern-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Codereality.html)
 
 ---
 
