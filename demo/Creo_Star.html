@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BaseReal-OS — Star Creator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#000; overflow:hidden; width:100vw; height:100vh; font-family:'Share Tech Mono',monospace; }
+  canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+  #ui { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
+
+  #hud {
+    position:absolute; top:24px; left:24px;
+    background:rgba(0,0,0,0.78);
+    border:1px solid rgba(0,200,255,0.3);
+    border-left:3px solid #00c8ff;
+    padding:0; min-width:240px;
+    font-size:12px; color:#00c8ff;
+    letter-spacing:1px;
+    text-shadow:0 0 8px rgba(0,200,255,0.4);
+  }
+  .hrow {
+    display:flex; align-items:center;
+    padding:6px 12px;
+    border-bottom:1px solid rgba(0,200,255,0.1);
+    gap:8px;
+    opacity:0; transform:translateX(-10px);
+    transition:opacity 0.5s, transform 0.5s;
+  }
+  .hrow:last-child { border-bottom:none; }
+  .hrow.on { opacity:1; transform:translateX(0); }
+  .hlbl { font-size:9px; color:rgba(0,200,255,0.5); text-transform:uppercase; letter-spacing:2px; white-space:nowrap; flex:1; }
+  .hval { font-size:13px; color:#fff; font-weight:bold; white-space:nowrap; }
+
+  #gravity-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:radial-gradient(circle at 35% 35%,#fff,#00c8ff 50%,#0050a0);
+    border:1px solid rgba(0,200,255,0.9);
+    box-shadow:0 0 8px rgba(0,200,255,0.7);
+    cursor:pointer;
+  }
+  #color-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+    background:#fff;
+    border:1px solid rgba(255,255,255,0.8);
+    box-shadow:0 0 8px rgba(255,200,100,0.7);
+    cursor:pointer;
+  }
+
+  @keyframes btnBlink {
+    0%,100% { box-shadow:0 0 20px rgba(255,180,50,0.3), inset 0 0 20px rgba(255,180,50,0.05); border-color:rgba(255,180,50,0.9); }
+    50% { box-shadow:0 0 50px rgba(255,180,50,0.9), 0 0 80px rgba(255,180,50,0.4), inset 0 0 30px rgba(255,180,50,0.15); border-color:#ffb432; }
+  }
+  #btn {
+    position:absolute; bottom:50px; left:50%;
+    transform:translateX(-50%);
+    pointer-events:auto;
+    background:transparent;
+    border:2px solid rgba(255,180,50,0.8);
+    color:#ffb432;
+    font-family:'Orbitron', monospace;
+    font-size:13px; letter-spacing:3px;
+    padding:13px 34px; cursor:pointer;
+    opacity:0; transition:opacity 0.8s, box-shadow 0.3s, background 0.3s;
+    text-transform:uppercase;
+    text-shadow:0 0 10px rgba(255,180,50,0.8);
+    box-shadow:0 0 20px rgba(255,180,50,0.15), inset 0 0 20px rgba(255,180,50,0.05);
+  }
+  #btn.on { opacity:1; animation:btnBlink 1.4s ease-in-out infinite; }
+  #btn:hover { background:rgba(255,180,50,0.15); animation:none; box-shadow:0 0 60px rgba(255,180,50,0.7); }
+
+  #caption {
+    position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Orbitron',monospace;
+    font-size:18px; letter-spacing:6px; color:rgba(255,255,255,0.0);
+    text-align:center; pointer-events:none;
+    transition:color 1.5s;
+    text-shadow:0 0 30px rgba(255,180,50,0.5);
+  }
+  #caption.on { color:rgba(255,220,120,0.9); }
+
+  #info {
+    position:absolute; bottom:20px; width:100%; text-align:center;
+    font-size:10px; color:rgba(255,255,255,0.2); letter-spacing:3px;
+    opacity:0; transition:opacity 1s;
+  }
+  #info.on { opacity:1; }
+
+  #restart {
+    position:absolute; top:24px; right:24px;
+    pointer-events:auto;
+    background:rgba(0,0,0,0.6);
+    border:2px solid rgba(0,200,255,0.7);
+    color:#00c8ff;
+    font-family:'Orbitron', monospace;
+    font-size:12px; letter-spacing:3px;
+    padding:10px 22px; cursor:pointer;
+    transition:all 0.3s; opacity:0;
+    text-shadow:0 0 8px rgba(0,200,255,0.6);
+    box-shadow:0 0 16px rgba(0,200,255,0.15);
+  }
+  #restart.on { opacity:1; }
+  #restart:hover { background:rgba(0,200,255,0.15); border-color:#00c8ff; box-shadow:0 0 30px rgba(0,200,255,0.4); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="ui">
+  <div id="hud">
+    <div class="hrow" id="c1">
+      <span class="hlbl">Gravitational Field</span>
+      <div class="slider-inner" style="flex:1;display:flex;align-items:center;gap:8px;">
+        <input type="range" id="gravity-slider" min="1" max="10" step="0.1" value="10"
+          oninput="onGravityChange(this.value)"
+          style="flex:1;height:3px;-webkit-appearance:none;appearance:none;background:linear-gradient(to right,rgba(0,200,255,0.8),rgba(255,150,50,0.6));outline:none;cursor:pointer;border-radius:2px;">
+        <span class="hval" id="gravity-val">—</span>
+      </div>
+    </div>
+    <div class="hrow" id="c2">
+      <span class="hlbl">Sync Orbit Height</span>
+      <span class="hval" id="c2v">—</span>
+    </div>
+    <div class="hrow" id="c3">
+      <span class="hlbl">Star Color</span>
+      <div style="flex:1;display:flex;align-items:center;gap:8px;">
+        <input type="range" id="color-slider" min="0" max="100" step="1" value="0"
+          oninput="onColorChange(this.value)"
+          style="flex:1;height:3px;-webkit-appearance:none;appearance:none;outline:none;cursor:pointer;border-radius:2px;">
+        <span class="hval" id="color-val" style="min-width:60px;">—</span>
+      </div>
+    </div>
+  </div>
+  <div id="caption"></div>
+  <button id="btn" onclick="onBtnClick()">Ignite Star</button>
+  <div id="info">BASEREAL-OS · LAW 3/2 · STAR CREATOR</div>
+  <button id="restart" onclick="doRestart()">&#8635; RESTART</button>
+</div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+resize(); window.addEventListener('resize',resize);
+
+function lerp(a,b,t){return a+(b-a)*t;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function easeOut(t){return 1-Math.pow(1-t,3);}
+function easeInOut(t){return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;}
+
+// ---- spherical galaxy — live particle system ----
+let galParticles = [];
+
+function spawnGalParticle(){
+  let cx, cy;
+  // Use actual canvas center
+  cx = W/2; cy = H/2;
+  const jitter = () => (Math.random()-0.5)*50;
+  galParticles.push({
+    x: cx+jitter(), y: cy+jitter(),
+    angle: Math.random()*Math.PI*2,
+    speed: Math.random()*1.2,
+    life: 1,
+    size: Math.random()*1.8+0.4,
+    color: '255, 255, 255'
+  });
+}
+
+// background field stars (static)
+const fieldStars=[];
+for(let i=0;i<200;i++) fieldStars.push({x:Math.random(),y:Math.random(),r:Math.random()*0.8+0.1,b:Math.random()*0.3+0.1});
+
+// ---- state ----
+// phases:
+// 0 = show spherical galaxy, wait
+// 1 = zoom into galaxy center (black hole appears)
+// 2 = enter black hole (tunnel)
+// 3 = inside — darkness, caption "You are here"
+// 4 = tool appears (ellipse) + gravity slider auto-sets
+// 5 = sync orbit counter
+// 6 = color slider auto-sets
+// 7 = blink button, wait for click
+// 8 = ignition swirl + explosion + star born
+// 9 = celebrate + zoom out back to galaxy
+
+let phase=0, pt=0, lastTs=0;
+let camZoom=0;       // 0=far, 1=fully zoomed
+let bhAlpha=0;       // black hole alpha
+let bhSize=0;        // black hole size multiplier 0..1
+let tunnelT=0;       // tunnel effect 0..1
+let insideAlpha=0;   // darkness inside
+let captionOn=false;
+
+// tool
+let tplAlpha=0, tplAdvance=0, tplFadeOut=0;
+let dischargeT=0, dischargeActive=false;
+let sliderAnimT=0, sliderAnimating=false;
+let colorSliderT=0, colorSliderAnimating=false;
+
+// hud
+let c1on=false,c2on=false,c3on=false;
+let btnOn=false, btnShown=false, btnClicked=false;
+let gravityChosen=false, colorChosen=false;
+let gravityT=10, colorT=0;
+
+// star
+let starBorn=false, starAlpha=0, starFlash=0, starScale=1.0;
+let swirlT=0;
+let starColor='hsl(60,100%,80%)';
+let zoomOutT=0;
+
+// ---- helpers ----
+function showC(id,on){ const el=document.getElementById(id); if(el) el.classList.toggle('on',on); }
+function showBtn(on){ document.getElementById('btn').classList.toggle('on',on); }
+
+function getStarColor(t){ // t 0=red, 100=neutron blue-white
+  if(t<25) return 'hsl('+lerp(0,30,t/25).toFixed(0)+',100%,'+lerp(45,55,t/25).toFixed(0)+'%)';
+  if(t<50) return 'hsl('+lerp(30,55,(t-25)/25).toFixed(0)+',100%,'+lerp(55,65,(t-25)/25).toFixed(0)+'%)';
+  if(t<75) return 'hsl('+lerp(55,200,(t-50)/25).toFixed(0)+',90%,'+lerp(65,80,(t-50)/25).toFixed(0)+'%)';
+  if(t<90) return 'hsl('+lerp(200,210,(t-75)/15).toFixed(0)+',85%,'+lerp(80,92,(t-75)/15).toFixed(0)+'%)';
+  // 90-100: neutron star — brilliant sparkling blue-white
+  return 'hsl(210,95%,'+lerp(92,98,(t-90)/10).toFixed(0)+'%)';
+}
+
+function onGravityChange(val){
+  gravityT=parseFloat(val);
+  document.getElementById('gravity-val').textContent='T='+gravityT.toFixed(1);
+  const syncH=(600-Math.round(lerp(300,600,gravityT/10)));
+  document.getElementById('c2v').textContent=syncH+' R';
+  if(!gravityChosen) gravityChosen=true;
+}
+
+function onColorChange(val){
+  colorT=parseFloat(val);
+  starColor=getStarColor(colorT);
+  const names=[
+    [0,'Red Giant'],[25,'Orange'],[50,'Yellow'],
+    [75,'White'],[85,'Blue-White'],[95,'Neutron Star']
+  ];
+  let name='Red Giant';
+  for(let n of names){ if(colorT>=n[0]) name=n[1]; }
+  document.getElementById('color-val').textContent=name;
+  document.getElementById('color-slider').style.background=
+    'linear-gradient(to right,#ff2200,#ff8800,#ffee00,#ffffff,#aaddff)';
+  if(!colorChosen) colorChosen=true;
+}
+
+function onBtnClick(){
+  if(phase!==7||btnClicked) return;
+  btnClicked=true;
+  showBtn(false);
+  phase=8; pt=0;
+}
+
+function doRestart(){
+  phase=0;pt=0;camZoom=0;bhAlpha=0;tunnelT=0;insideAlpha=0;captionOn=false;
+  tplAlpha=0;tplAdvance=0;tplFadeOut=0;
+  dischargeT=0;dischargeActive=false;sliderAnimT=0;sliderAnimating=false;
+  colorSliderT=0;colorSliderAnimating=false;
+  c1on=false;c2on=false;c3on=false;btnOn=false;btnShown=false;btnClicked=false;
+  gravityChosen=false;colorChosen=false;gravityT=10;colorT=0;
+galParticles=[];
+bhSize=0;
+  starBorn=false;starAlpha=0;starFlash=0;swirlT=0;zoomOutT=0;starScale=1.0;
+  document.getElementById('gravity-slider').value=10;
+  document.getElementById('gravity-val').textContent='—';
+  document.getElementById('c2v').textContent='—';
+  document.getElementById('color-slider').value=0;
+  document.getElementById('color-val').textContent='—';
+  document.getElementById('caption').classList.remove('on');
+  document.getElementById('caption').textContent='';
+  document.getElementById('info').classList.remove('on');
+  document.getElementById('restart').classList.remove('on');
+  showC('c1',false);showC('c2',false);showC('c3',false);
+  showBtn(false);
+}
+
+// ---- TOOL (ellipse template) ----
+function TX(){ return W*0.38; } // tool center X
+function TY(){ return H*0.5; }  // tool center Y
+function TRX(){ return lerp(180,75,tplAdvance); }
+function TRY(){ return lerp(56,24,tplAdvance); }
+
+// ---- DRAW ----
+function drawField(){
+  fieldStars.forEach(s=>{
+    ctx.beginPath();
+    ctx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,'+s.b+')';
+    ctx.fill();
+  });
+}
+
+function drawGalaxy(alpha){
+  if(alpha<=0) return;
+  const cx=W/2, cy=H/2;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+
+  // draw live particles (spherical_galaxy style)
+  galParticles.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fillStyle='rgba('+p.color+','+p.life+')';
+    ctx.fill();
+  });
+
+  // soft glow layers — sphere shape
+  for(let i=4;i>=1;i--){
+    const r=W*(0.04+i*0.06);
+    const g=ctx.createRadialGradient(cx,cy,r*0.1,cx,cy,r);
+    g.addColorStop(0,'rgba(200,210,255,'+(0.08/i)+')');
+    g.addColorStop(0.5,'rgba(180,160,255,'+(0.05/i)+')');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  }
+
+  // bright core
+  const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.06);
+  cg.addColorStop(0,'rgba(255,240,200,0.6)');
+  cg.addColorStop(0.5,'rgba(255,200,100,0.2)');
+  cg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=cg;
+  ctx.beginPath();ctx.arc(cx,cy,W*0.06,0,Math.PI*2);ctx.fill();
+
+  ctx.restore();
+}
+
+function drawBlackHole(alpha){
+  if(alpha<=0) return;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  const cx=W/2,cy=H/2;
+  const r=lerp(0,W*0.5,bhSize); // grows from small to screen-filling
+  if(r<=0) return;
+  // accretion disk
+  for(let i=3;i>=1;i--){
+    const ag=ctx.createRadialGradient(cx,cy,r*0.5,cx,cy,r*i);
+    ag.addColorStop(0,'rgba(255,150,30,0.0)');
+    ag.addColorStop(0.5,'rgba(255,120,20,'+0.18/i+')');
+    ag.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ag;
+    ctx.beginPath();ctx.arc(cx,cy,r*i,0,Math.PI*2);ctx.fill();
+  }
+  // black hole core
+  const bg=ctx.createRadialGradient(cx,cy,0,cx,cy,r);
+  bg.addColorStop(0,'rgba(0,0,0,1)');
+  bg.addColorStop(0.7,'rgba(0,0,0,0.95)');
+  bg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=bg;
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawTunnel(){
+  if(tunnelT<=0) return;
+  const cx=W/2,cy=H/2;
+  ctx.save();
+  // clean dark vignette — no orange, just darkness closing in from center
+  const dg=ctx.createRadialGradient(cx,cy,0,cx,cy,W*0.55);
+  dg.addColorStop(0,'rgba(0,0,0,'+tunnelT+')');
+  dg.addColorStop(0.5,'rgba(0,0,0,'+(tunnelT*0.6)+')');
+  dg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=dg;
+  ctx.beginPath();ctx.arc(cx,cy,W*0.55,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawTemplate(){
+  if(tplAlpha<=0) return;
+  const alpha=tplAlpha*(1-tplFadeOut);
+  if(alpha<=0.01) return;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+
+  const ex=TX(),ey=TY(),rx=TRX(),ry=TRY();
+
+  // ellipse only — no arm lines
+  ctx.save();
+  ctx.translate(ex,ey);
+  const eg=ctx.createRadialGradient(0,0,0,0,0,rx);
+  eg.addColorStop(0,'rgba(0,200,255,0.07)');
+  eg.addColorStop(1,'rgba(0,200,255,0.01)');
+  ctx.fillStyle=eg;
+  ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='rgba(0,200,255,0.95)';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,0,rx,ry,0,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(0,200,255,0.2)';
+  ctx.lineWidth=1;
+  ctx.beginPath();ctx.ellipse(0,0,rx*0.45,ry*0.45,0,0,Math.PI*2);ctx.stroke();
+  ctx.strokeStyle='rgba(0,200,255,0.35)';
+  ctx.beginPath();ctx.moveTo(-rx*0.25,0);ctx.lineTo(rx*0.25,0);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(0,-ry*0.6);ctx.lineTo(0,ry*0.6);ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawDischarge(){
+  if(!dischargeActive||dischargeT<=0) return;
+  const ex=TX(),ey=TY(),rx=TRX(),ry=TRY();
+  const fade=dischargeT<0.5?dischargeT*2:1-(dischargeT-0.5)*2;
+  if(fade<=0) return;
+  ctx.save();
+  ctx.globalAlpha=fade*0.9;
+  for(let i=0;i<12;i++){
+    const angle=i/12*Math.PI*2+dischargeT*8;
+    const tx=Math.cos(angle)*rx,ty=Math.sin(angle)*ry;
+    ctx.strokeStyle='hsl('+(30+i*15)+',100%,70%)';
+    ctx.lineWidth=1+Math.random()*1.5;
+    ctx.shadowColor='rgba(255,180,50,0.9)';
+    ctx.shadowBlur=8;
+    ctx.beginPath();ctx.moveTo(ex,ey);
+    for(let s=1;s<=5;s++){
+      const fr=s/5;
+      ctx.lineTo(ex+tx*fr+(Math.random()-0.5)*rx*0.3*(1-fr),
+                 ey+ty*fr+(Math.random()-0.5)*ry*0.3*(1-fr));
+    }
+    ctx.stroke();
+  }
+  const fg=ctx.createRadialGradient(ex,ey,0,ex,ey,rx*0.5);
+  fg.addColorStop(0,'rgba(255,230,150,'+(fade*0.6)+')');
+  fg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=fg;
+  ctx.beginPath();ctx.ellipse(ex,ey,rx*0.5,ry*0.5,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+}
+
+function drawSwirl(){
+  if(swirlT<=0||tplFadeOut>=1) return;
+  const ex=TX(),ey=TY(),rx=TRX(),ry=TRY();
+  ctx.save();
+  ctx.globalAlpha=(1-tplFadeOut)*Math.min(swirlT*2,1);
+  ctx.translate(ex,ey);
+  for(let a=0;a<5;a++){
+    const base=a/5*Math.PI*2+swirlT*8;
+    for(let i=0;i<40;i++){
+      const f=i/40;
+      const angle=base+f*Math.PI*3;
+      const r=f*rx*0.88;
+      const px=Math.cos(angle)*r,py=Math.sin(angle)*r*(ry/rx);
+      ctx.beginPath();ctx.arc(px,py,1.8,0,Math.PI*2);
+      const hue=lerp(0,60,f);
+      ctx.fillStyle='hsla('+hue+',100%,70%,'+(1-f)*0.9+')';
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function starColorAlpha(a){
+  // parse hsl(h,s%,l%) and return hsla
+  const m=starColor.match(/hsl\((\d+),(\d+)%,(\d+)%\)/);
+  if(!m) return 'rgba(255,220,100,'+a+')';
+  return 'hsla('+m[1]+','+m[2]+'%,'+m[3]+'%,'+a+')';
+}
+function starColorDim(){
+  const m=starColor.match(/hsl\((\d+),(\d+)%,(\d+)%\)/);
+  if(!m) return 'hsl(40,80%,40%)';
+  return 'hsl('+m[1]+','+m[2]+'%,'+Math.max(20,parseInt(m[3])-30)+'%)';
+}
+function drawStarObj(){
+  if(!starBorn||starAlpha<=0) return;
+  const ex=TX(),ey=TY();
+  const pr=Math.max(TRX(),28)*0.85;
+  ctx.save();
+  ctx.globalAlpha=starAlpha;
+  ctx.translate(ex,ey);
+  ctx.scale(starScale, starScale);
+
+  // flash
+  if(starFlash>0){
+    const fg=ctx.createRadialGradient(0,0,0,0,0,pr*4*starFlash);
+    fg.addColorStop(0,'rgba(255,255,255,'+(starFlash*0.9)+')');
+    fg.addColorStop(0.3,'rgba(255,220,100,'+(starFlash*0.5)+')');
+    fg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=fg;
+    ctx.beginPath();ctx.arc(0,0,pr*4*starFlash,0,Math.PI*2);ctx.fill();
+  }
+
+  // corona — blue-white intense for neutron star
+  for(let i=3;i>=1;i--){
+    const cg=ctx.createRadialGradient(0,0,0,0,0,pr*i*2.0);
+    cg.addColorStop(0,'rgba(220,240,255,'+(0.3/i)+')');
+    cg.addColorStop(0.3,starColorAlpha(0.15/i));
+    cg.addColorStop(0.7,'rgba(180,220,255,'+(0.05/i)+')');
+    cg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=cg;
+    ctx.beginPath();ctx.arc(0,0,pr*i*2.0,0,Math.PI*2);ctx.fill();
+  }
+
+  // neutron star body — very small, ultra bright
+  const nsr = pr * 0.55; // compact
+  const sg=ctx.createRadialGradient(0,0,0,0,0,nsr);
+  sg.addColorStop(0,'#ffffff');
+  sg.addColorStop(0.15,'#e8f4ff');
+  sg.addColorStop(0.4,starColor);
+  sg.addColorStop(0.75,starColorDim());
+  sg.addColorStop(1,'rgba(0,0,0,0.8)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();ctx.arc(0,0,nsr,0,Math.PI*2);ctx.fill();
+
+  // sparkling rays (rotating)
+  const rayT=Date.now()*0.003;
+  ctx.save();
+  ctx.rotate(rayT);
+  for(let ri=0;ri<6;ri++){
+    const ra=ri/6*Math.PI*2;
+    const rg=ctx.createLinearGradient(0,0,Math.cos(ra)*pr*1.6,Math.sin(ra)*pr*1.6);
+    rg.addColorStop(0,'rgba(200,230,255,0.7)');
+    rg.addColorStop(0.3,'rgba(180,220,255,0.2)');
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.strokeStyle=rg;
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ra)*nsr,Math.sin(ra)*nsr);
+    ctx.lineTo(Math.cos(ra)*pr*1.6,Math.sin(ra)*pr*1.6);
+    ctx.stroke();
+  }
+  // counter-rotating secondary rays
+  ctx.rotate(-rayT*2);
+  for(let ri=0;ri<4;ri++){
+    const ra=ri/4*Math.PI*2+0.4;
+    const rg=ctx.createLinearGradient(0,0,Math.cos(ra)*pr*1.2,Math.sin(ra)*pr*1.2);
+    rg.addColorStop(0,'rgba(255,255,255,0.5)');
+    rg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.strokeStyle=rg;
+    ctx.lineWidth=0.8;
+    ctx.beginPath();
+    ctx.moveTo(Math.cos(ra)*nsr*0.8,Math.sin(ra)*nsr*0.8);
+    ctx.lineTo(Math.cos(ra)*pr*1.2,Math.sin(ra)*pr*1.2);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // bright flicker dots (sparkling surface)
+  const flickT=Math.floor(Date.now()/80);
+  for(let fi=0;fi<8;fi++){
+    const fa=(fi/8*Math.PI*2)+(flickT*0.7+fi*1.3);
+    const fr=nsr*(0.3+Math.abs(Math.sin(fi*2.1+flickT*0.1))*0.5);
+    const fx=Math.cos(fa)*fr, fy=Math.sin(fa)*fr;
+    const fs=Math.abs(Math.sin(fi*3.7+flickT*0.2))*1.5+0.5;
+    ctx.beginPath();ctx.arc(fx,fy,fs,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,'+(0.4+Math.abs(Math.sin(fi+flickT*0.15))*0.6)+')';
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
+// ---- UPDATE ----
+function update(dt){
+  pt+=dt;
+
+  // update galaxy particles drift
+  // update galaxy particles only when galaxy is visible
+  if(phase<=1||phase===9){
+    for(let i=0;i<6;i++) spawnGalParticle();
+    for(let i=galParticles.length-1;i>=0;i--){
+      const p=galParticles[i];
+      p.x+=Math.cos(p.angle)*p.speed;
+      p.y+=Math.sin(p.angle)*p.speed;
+      p.life-=0.004;
+      if(p.life<=0) galParticles.splice(i,1);
+    }
+  }
+
+  if(phase===0){
+    // show galaxy, wait 3s then start zoom
+    if(pt>5){ phase=1; pt=0; }
+  }
+  else if(phase===1){
+    // continuous zoom: approach → enter → darkness, no break
+    const totalT = 12; // total seconds for full sequence
+    const p = clamp(pt/totalT, 0, 1);
+
+    if(p < 0.55){
+      // approach: zoom in linearly, BH grows
+      const p1 = p/0.55;
+      camZoom = p1 * p1; // easeIn approach
+      bhAlpha = clamp((p1-0.3)/0.7, 0, 1);
+      bhSize  = clamp((p1-0.3)/0.7, 0, 1);
+      insideAlpha = 0;
+    } else {
+      // entry: accelerate, BH fills screen, darkness
+      const p2 = (p-0.55)/0.45;
+      const acc = p2*p2;
+      camZoom  = 1 + acc*8;
+      bhSize   = 1 + acc*5;
+      bhAlpha  = 1;
+      insideAlpha = clamp((p2-0.5)/0.5, 0, 1);
+    }
+
+    if(p>=1){ camZoom=0; tunnelT=0; insideAlpha=1; phase=3; pt=0; }
+  }
+  else if(phase===3){
+    // darkness + caption timing:
+    // 0.0-0.4s: pure darkness
+    // 0.4-1.6s: caption visible
+    // 1.6-2.2s: caption fades
+    // 2.2-4.2s: darkness pause (2 seconds)
+    // 4.2s+: transition to phase 4
+    const totalT=4.2;
+    const t=pt;
+
+    if(t>0.13&&!captionOn){
+      captionOn=true;
+      const el=document.getElementById('caption');
+      el.textContent='You are here';
+      el.style.opacity='1';
+      el.classList.add('on');
+    }
+    // fade caption out
+    if(t>1.6&&t<2.2){
+      const fadeFrac=(t-1.6)/0.6;
+      document.getElementById('caption').style.opacity=String(1-fadeFrac);
+    }
+    if(t>2.2&&captionOn){
+      const el=document.getElementById('caption');
+      el.style.opacity='0';
+      el.classList.remove('on');
+    }
+    if(t>=totalT){ phase=4; pt=0; }
+  }
+  else if(phase===4){
+    // tool appears immediately (pause already done in phase 3)
+    const p=clamp(pt/5,0,1);
+    tplAlpha=easeOut(p);
+    insideAlpha=1-easeOut(p)*0.6;
+    if(p>0.2&&!c1on){ c1on=true; showC('c1',true); }
+    if(p>0.5&&!sliderAnimating){ sliderAnimating=true; sliderAnimT=0; }
+    if(sliderAnimating&&sliderAnimT<1){
+      sliderAnimT=clamp(sliderAnimT+0.018,0,1);
+      const tv=lerp(10,3,easeInOut(sliderAnimT));
+      document.getElementById('gravity-slider').value=tv;
+      onGravityChange(tv);
+      if(sliderAnimT>=1&&!dischargeActive){ dischargeActive=true; dischargeT=0; }
+    }
+    if(p>=1){ phase=5; pt=0; }
+  }
+  else if(phase===5){
+    // sync orbit counter + ellipse advances
+    if(dischargeActive) dischargeT=Math.min(dischargeT+0.025,1);
+    const p=clamp(pt/8,0,1);
+    tplAdvance=easeInOut(p);
+    if(p>0.1&&!c2on){ c2on=true; showC('c2',true); }
+    if(p>=1){ phase=6; pt=0; }
+  }
+  else if(phase===6){
+    // color slider auto-animates
+    const p=clamp(pt/5,0,1);
+    if(!c3on){ c3on=true; showC('c3',true); }
+    if(!colorSliderAnimating){ colorSliderAnimating=true; colorSliderT=0; }
+    if(colorSliderT<1){
+      colorSliderT=clamp(colorSliderT+0.015,0,1);
+      const cv=lerp(0,98,easeInOut(colorSliderT));
+      document.getElementById('color-slider').value=cv;
+      onColorChange(cv);
+    }
+    if(p>=1){ phase=7; pt=0; }
+  }
+  else if(phase===7){
+    // button appears, wait for click
+    if(pt>0.8&&!btnShown){ btnShown=true; showBtn(true); }
+  }
+  else if(phase===8){
+    // ignition swirl + explosion
+    const p=clamp(pt/5,0,1);
+    swirlT=p;
+    if(p>0.5){ tplFadeOut=easeOut(clamp((p-0.5)/0.5,0,1)); }
+    if(p>0.55&&!starBorn){ starBorn=true; }
+    if(starBorn){
+      starAlpha=easeOut(clamp((p-0.55)/0.45,0,1));
+      starScale=easeOut(clamp((p-0.55)/0.45,0,1));
+      starFlash=p<0.7?easeOut((p-0.55)/0.15):1-easeOut((p-0.7)/0.3);
+      starFlash=Math.max(0,starFlash);
+    }
+    if(p>=1){
+      phase=9; pt=0;
+      document.getElementById('info').classList.add('on');
+      document.getElementById('restart').classList.add('on');
+    }
+  }
+  else if(phase===9){
+    // celebrate + zoom back out
+    const p=clamp(pt/8,0,1);
+    zoomOutT=easeInOut(p);
+    camZoom=lerp(1,0,zoomOutT);
+    bhAlpha=lerp(1,0,zoomOutT);
+    bhSize=lerp(1,0,zoomOutT);
+    tunnelT=0; // tunnel not used in zoom-out
+    insideAlpha=0;
+    // star shrinks with perspective — gets tiny as we pull back
+    starScale=lerp(1,0.0,easeInOut(zoomOutT));
+    starAlpha=lerp(1,0,clamp((zoomOutT-0.7)*3,0,1));
+    tplAlpha=0;
+  }
+}
+
+// ---- DRAW ----
+function draw(){
+  // trail fade for spherical galaxy
+  if(phase<=1||(phase===9&&zoomOutT<0.8)){
+    ctx.fillStyle='rgba(0,0,0,0.18)';
+    ctx.fillRect(0,0,W,H);
+  } else {
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle='#000';
+    ctx.fillRect(0,0,W,H);
+  }
+
+  // galaxy + zoom
+  const galaxyAlpha = phase===0 ? 1 :
+                      phase===1 ? Math.max(0,1-camZoom*0.8) :
+                      phase===2 ? Math.max(0,0.3-bhSize*0.3) :
+                      phase===9 ? zoomOutT : 0;
+  if(galaxyAlpha>0){
+    ctx.save();
+    // zoom effect: scale canvas from center
+    if(camZoom>0){
+      const s=1+camZoom*8;
+      ctx.translate(W/2,H/2);
+      ctx.scale(s,s);
+      ctx.translate(-W/2,-H/2);
+    }
+    drawField();
+    drawGalaxy(galaxyAlpha);
+    ctx.restore();
+  }
+
+  // black hole
+  if(bhAlpha>0) drawBlackHole(bhAlpha);
+
+  // tunnel
+  if(tunnelT>0) drawTunnel();
+
+  // inside darkness
+  if(insideAlpha>0){
+    ctx.fillStyle='rgba(0,0,0,'+insideAlpha+')';
+    ctx.fillRect(0,0,W,H);
+    // sparse interior stars
+    ctx.save();
+    ctx.globalAlpha=insideAlpha*0.5;
+    fieldStars.forEach(s=>{
+      ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r*0.6,0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,'+s.b*0.4+')';ctx.fill();
+    });
+    ctx.restore();
+  }
+
+  drawTemplate();
+  drawDischarge();
+  drawSwirl();
+  drawStarObj();
+}
+
+function loop(ts){
+  const dt=Math.min((ts-lastTs)/1000,0.05);
+  lastTs=ts;
+  update(dt); draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
