@@ -107,6 +107,10 @@ The universe can change. The geometry does not.
 
 [![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/speed.html)
 
+### 5.1. Seed of Reality
+**A live timeline registry tracking reality "seeds" as they approach, cross, and recede from the present moment**
+[![▶ Open Seed of Reality](https://img.shields.io/badge/▶_Open_Seed_of_Reality-00ff66?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Seed_of_Reality.html)
+
 ### 6. CodeReality — Fractal Fern
 **Classic Barnsley Fern generated from Code Reality**
 
