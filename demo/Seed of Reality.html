@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseReal-OS // Seed of Reality Demo v5.1</title>
+    <title>BaseReal-OS // Seed of Reality Demo v5.2</title>
     <style>
         * {
             box-sizing: border-box;
@@ -243,7 +243,7 @@
         </div>
 
         <div id="registry-flow" style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;">
-            <!-- User Seed -->
+            <!-- User Seed Matrix Node -->
             <div id="my-seed" class="seed user-owned">
                 <div class="hud-tether"></div>
                 <div class="hud-panel">
@@ -282,7 +282,7 @@
     <script>
         const CONFIG = {
             speed: 0.00125,      // Smooth, deliberate simulation pace
-            eventAbsAngle: 55,   // Target angle on radar map
+            eventAbsAngle: 55,   // Target angle on radar matrix
             eventAbsPitch: 10,   
             maxDistance: 250     
         };
@@ -334,11 +334,12 @@
             const cy = radarCanvas.height / 2;
             const r = cx - 12;
             
+            // Fixed spatial event location (0.55r optimized radius allocation)
             const eventRad = CONFIG.eventAbsAngle * (Math.PI / 180);
-            const eventX = cx + Math.cos(eventRad) * (r * 0.75);
-            const eventY = cy + Math.sin(eventRad) * (r * 0.75);
+            const eventX = cx + Math.cos(eventRad) * (r * 0.55);
+            const eventY = cy + Math.sin(eventRad) * (r * 0.55);
 
-            // 1. User Seed Movement
+            // 1. User Seed Core Movement Loop
             mySeedProgress -= CONFIG.speed;
             if (mySeedProgress < -1.05) {
                 mySeedProgress = 1.05; 
@@ -350,54 +351,46 @@
             const timeDiffSeconds = mySeedProgress * 200; 
             hudTimer.textContent = formatMetricTime(timeDiffSeconds);
 
-            // Cinematic Camera Autopilot Loop
+            // Cinematic Camera Autopilot
             let gazeWave = (Math.sin(tick * 0.012) + 1) * 0.5;
             userGaze.yaw = CONFIG.eventAbsAngle + (gazeWave * 50); 
             userGaze.pitch = CONFIG.eventAbsPitch + Math.cos(tick * 0.01) * 3;
 
-            // Tracking and Reset Logic on Arrival
-            let relativeRight = 0;
-            let relativeDown = 0;
-            let distanceString = "0.0 m";
-
+            // Unified Spacetime Trajectory Logic (Continuous Tracking)
             if (mySeedProgress > 0) {
-                // In Transit: Calculate convergence on radar
+                // In Transit: Approaching the event horizon from the center
                 let approachRatio = 1.0 - mySeedProgress; 
                 userPos.x = cx + (eventX - cx) * approachRatio;
                 userPos.y = cy + (eventY - cy) * approachRatio;
-
-                // Physical Distance Calculation
-                let dx = eventX - userPos.x;
-                let dy = eventY - userPos.y;
-                let pixelDist = Math.sqrt(dx*dx + dy*dy);
-                let maxPixelDist = r * 0.75;
-                
-                let realDistance = (pixelDist / maxPixelDist) * CONFIG.maxDistance;
-                distanceString = realDistance < 0.5 ? "0.0 m" : `${realDistance.toFixed(1)} m`;
-
-                // Calculate angular offset relative to gaze direction
-                relativeRight = (CONFIG.eventAbsAngle - userGaze.yaw + 360) % 360;
-                relativeDown = (CONFIG.eventAbsPitch - userGaze.pitch + 360) % 360;
-
-                if (relativeRight > 180) relativeRight -= 360;
-                if (relativeDown > 180) relativeDown -= 360;
             } else {
-                // Arrived / Archived: Lock to target position
-                userPos.x = eventX;
-                userPos.y = eventY;
-                
-                // Absolute Zero Hard Reset
-                relativeRight = 0;
-                relativeDown = 0;
-                distanceString = "0.0 m (On Target)";
+                // Past / Archive: Continuing journey past the waypoint into deep space
+                let escapeRatio = -mySeedProgress; 
+                userPos.x = eventX + (eventX - cx) * escapeRatio * 0.6;
+                userPos.y = eventY + (eventY - cy) * escapeRatio * 0.6;
             }
 
-            // Output data stream to HUD nodes
+            // Real physical distance calculations relative to the historical event
+            let dx = eventX - userPos.x;
+            let dy = eventY - userPos.y;
+            let pixelDist = Math.sqrt(dx*dx + dy*dy);
+            let maxPixelDist = r * 0.55; 
+            
+            let realDistance = (pixelDist / maxPixelDist) * CONFIG.maxDistance;
+            let distanceString = realDistance < 0.5 ? "0.0 m" : `${realDistance.toFixed(1)} m`;
+
+            // Dynamic tracking of relative angular offsets based on current look vector
+            let relativeRight = (CONFIG.eventAbsAngle - userGaze.yaw + 360) % 360;
+            let relativeDown = (CONFIG.eventAbsPitch - userGaze.pitch + 360) % 360;
+
+            if (relativeRight > 180) relativeRight -= 360;
+            if (relativeDown > 180) relativeDown -= 360;
+
+            // Output uninterrupted live data streams to UI nodes
             locDown.textContent = `${relativeDown.toFixed(1)}°`;
             locRight.textContent = `${relativeRight.toFixed(1)}°`;
             locDist.textContent = distanceString;
 
-            // 3. Anonymous Seeds Lifecycle Loop
+            // 3. Anonymous Background Seeds Lifecycle Loop
             anonymousSeeds.forEach((pos, index) => {
                 anonymousSeeds[index] -= CONFIG.speed;
                 if (anonymousSeeds[index] < -1.05) anonymousSeeds[index] = 1.05;
@@ -406,7 +399,7 @@
                 anonElements[index].style.left = `${anonX - 18}px`;
             });
 
-            // 4. Render Canvas Radar Matrix
+            // 4. Render Canvas Radar Space
             renderRadar(cx, cy, r, eventX, eventY);
 
             requestAnimationFrame(updateTick);
@@ -424,7 +417,7 @@
                 ctx.stroke();
             }
 
-            // Field of View Cone
+            // Gaze Field of View Cone
             const gazeRad = userGaze.yaw * (Math.PI / 180);
             const fov = 40 * (Math.PI / 180); 
 
@@ -435,7 +428,7 @@
             ctx.closePath();
             ctx.fill();
 
-            // Direct Vector Gaze Axis
+            // Direct Vector Gaze Axis Line
             ctx.strokeStyle = '#0066ff';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
@@ -443,7 +436,7 @@
             ctx.lineTo(userPos.x + Math.cos(gazeRad) * (r * 0.8), userPos.y + Math.sin(gazeRad) * (r * 0.8));
             ctx.stroke();
 
-            // Cyberpunk Bridge (Target Objective Event)
+            // Cyberpunk Bridge (Fixed Objective Matrix Node)
             ctx.fillStyle = '#00ff66';
             ctx.shadowBlur = 15;
             ctx.shadowColor = '#00ff66';
@@ -452,7 +445,7 @@
             ctx.fill();
             ctx.shadowBlur = 0; 
 
-            // User Profile Matrix Node (White Dot)
+            // User Profile Vector Node (White Matrix Dot)
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = '#0066ff';
             ctx.lineWidth = 3;
