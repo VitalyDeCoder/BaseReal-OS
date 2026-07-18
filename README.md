@@ -78,6 +78,10 @@ The universe can change. The geometry does not.
 
 ## Interactive Demos
 
+### 0. Universe Initialization
+**The single control parameter that launches a virtual universe — from full Collectivism to maximum Individualism**
+[![▶ Open Free Will Core](https://img.shields.io/badge/▶_Open_Free_Will_Core-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/FreeWill.html)
+
 ### 1. Planet Creation
 **Step-by-step interactive visualization of planet creation**
 
