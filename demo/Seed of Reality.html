@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaseReal-OS // Seed of Reality Demo v5.1</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #050505;
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* 50/50 Screen Split */
+        .panel {
+            flex: 1;
+            position: relative;
+        }
+
+        .top-panel {
+            border-bottom: 3px solid #222;
+            background: radial-gradient(circle at 50% 100%, #0d0d0d 0%, #050505 100%);
+        }
+
+        .bottom-panel {
+            background: radial-gradient(circle at 50% 0%, #080808 0%, #050505 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* High-visibility Time Zone Labels */
+        .time-label {
+            position: absolute;
+            top: 20px;
+            font-size: 16px; 
+            letter-spacing: 2px;
+            color: #a0a0a0;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .label-past { left: 30px; }
+        .label-future { right: 30px; }
+
+        /* Timeline Axis */
+        .timeline-axis {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: #333;
+        }
+
+        .present-marker {
+            position: absolute;
+            left: 50%;
+            top: -150vh; 
+            bottom: 0;
+            width: 2px;
+            background: #00ffcc;
+            box-shadow: 0 0 15px #00ffcc;
+            z-index: 10;
+        }
+
+        .present-title {
+            position: absolute;
+            left: 50%;
+            bottom: 35px;
+            transform: translateX(-50%);
+            font-size: 16px; 
+            color: #00ffcc;
+            font-weight: bold;
+            letter-spacing: 3px;
+            background: #050505;
+            padding: 6px 16px;
+            border: 2px solid #00ffcc;
+            border-radius: 4px;
+            z-index: 11;
+            white-space: nowrap;
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+        }
+
+        /* Seeds */
+        .seed {
+            position: absolute;
+            bottom: -18px; 
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            z-index: 5;
+        }
+
+        .seed.anonymous {
+            background: #333;
+            border: 2px solid #555;
+        }
+
+        .seed.user-owned {
+            background: #00ff66;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 25px rgba(0, 255, 102, 0.8);
+        }
+
+        /* Optimized HUD Layout */
+        .hud-panel {
+            position: absolute;
+            bottom: 55px; 
+            left: 50%;
+            transform: translateX(-50%);
+            width: 380px; 
+            background: rgba(10, 10, 10, 0.98);
+            border: 2px solid #00ff66;
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .hud-window {
+            padding: 12px 16px; 
+            border-bottom: 1px solid #222;
+        }
+        .hud-window:last-child {
+            border-bottom: none;
+        }
+
+        .hud-label {
+            color: #666;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 4px;
+        }
+
+        .hud-value {
+            color: #ffffff;
+            font-size: 22px; 
+            font-weight: bold;
+            line-height: 28px;
+            font-variant-numeric: tabular-nums; 
+        }
+
+        .hud-value.highlight {
+            color: #00ff66;
+        }
+
+        /* Structured Coordinate Grid */
+        .loc-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .loc-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: bold;
+            color: #aaa;
+        }
+
+        .loc-line span {
+            color: #ffffff;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Tether Line */
+        .hud-tether {
+            position: absolute;
+            bottom: 34px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 23px;
+            background: #00ff66;
+        }
+
+        /* Radar Setup */
+        .radar-container {
+            position: relative;
+            width: 340px;
+            height: 340px;
+            background: rgba(15, 15, 15, 0.6);
+            border: 2px solid #222;
+            border-radius: 50%;
+        }
+
+        .radar-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .radar-instructions {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #00ffcc;
+            letter-spacing: 1px;
+            white-space: nowrap;
+            text-align: center;
+            width: 100%;
+            animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP PANEL: TIME TRACK -->
+    <div class="panel top-panel">
+        <div class="time-label label-past">← Past</div>
+        <div class="time-label label-future">Future →</div>
+        
+        <div class="present-title">PRESENT TIME</div>
+        
+        <div class="timeline-axis">
+            <div class="present-marker"></div>
+        </div>
+
+        <div id="registry-flow" style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;">
+            <!-- User Seed -->
+            <div id="my-seed" class="seed user-owned">
+                <div class="hud-tether"></div>
+                <div class="hud-panel">
+                    <!-- Window 1: Description -->
+                    <div class="hud-window">
+                        <div class="hud-label">1. Event Description</div>
+                        <div class="hud-value" id="hud-prompt">Cyberpunk Bridge Meeting</div>
+                    </div>
+                    <!-- Window 2: Timer -->
+                    <div class="hud-window">
+                        <div class="hud-label">2. Registry Timer</div>
+                        <div class="hud-value highlight" id="hud-timer">Syncing...</div>
+                    </div>
+                    <!-- Window 3: Position Grid -->
+                    <div class="hud-window">
+                        <div class="hud-label">3. Relative Position</div>
+                        <div class="loc-container">
+                            <div class="loc-line">DOWN:  <span id="loc-down">0.0°</span></div>
+                            <div class="loc-line">RIGHT: <span id="loc-right">0.0°</span></div>
+                            <div class="loc-line">DIST:  <span id="loc-dist" style="color:#00ff66">0.0 m</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM PANEL: ATTENTION RADAR -->
+    <div class="panel bottom-panel">
+        <div class="radar-container">
+            <canvas id="radarCanvas" class="radar-canvas" width="340" height="340"></canvas>
+            <div class="radar-instructions">DEMO MODE: SCANNING HORIZON</div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            speed: 0.00125,      // Smooth, deliberate simulation pace
+            eventAbsAngle: 55,   // Target angle on radar map
+            eventAbsPitch: 10,   
+            maxDistance: 250     
+        };
+
+        let tick = 0;
+        let userGaze = { yaw: 0, pitch: 0 };
+        let userPos = { x: 170, y: 170 };
+        let mySeedProgress = 1.0; 
+
+        let anonymousSeeds = [0.75, 0.45, 0.15, -0.15, -0.45, -0.75];
+
+        const registryFlow = document.getElementById('registry-flow');
+        const mySeedEl = document.getElementById('my-seed');
+        const hudTimer = document.getElementById('hud-timer');
+        const locDown = document.getElementById('loc-down');
+        const locRight = document.getElementById('loc-right');
+        const locDist = document.getElementById('loc-dist');
+        const radarCanvas = document.getElementById('radarCanvas');
+        const ctx = radarCanvas.getContext('2d');
+
+        const anonElements = anonymousSeeds.map(() => {
+            const el = document.createElement('div');
+            el.className = 'seed anonymous';
+            registryFlow.appendChild(el);
+            return el;
+        });
+
+        function formatMetricTime(seconds) {
+            const absSec = Math.abs(seconds);
+            let prefix = seconds >= 0 ? "Until Collapse: " : "Archived: ";
+            
+            if (Math.abs(seconds) < 0.1) return "COLLAPSE (0.00)";
+
+            if (absSec >= 1000) {
+                return `${prefix}${(absSec / 1000).toFixed(2)} ks`;
+            } else if (absSec < 1) {
+                return `${prefix}${(absSec * 1000).toFixed(0)} ms`;
+            } else {
+                return `${prefix}${absSec.toFixed(2)} sec`;
+            }
+        }
+
+        function updateTick() {
+            tick++;
+            const width = window.innerWidth;
+            const centerX = width / 2;
+
+            const cx = radarCanvas.width / 2;
+            const cy = radarCanvas.height / 2;
+            const r = cx - 12;
+            
+            const eventRad = CONFIG.eventAbsAngle * (Math.PI / 180);
+            const eventX = cx + Math.cos(eventRad) * (r * 0.75);
+            const eventY = cy + Math.sin(eventRad) * (r * 0.75);
+
+            // 1. User Seed Movement
+            mySeedProgress -= CONFIG.speed;
+            if (mySeedProgress < -1.05) {
+                mySeedProgress = 1.05; 
+            }
+
+            const mySeedX = centerX + (mySeedProgress * centerX);
+            mySeedEl.style.left = `${mySeedX - 18}px`; 
+
+            const timeDiffSeconds = mySeedProgress * 200; 
+            hudTimer.textContent = formatMetricTime(timeDiffSeconds);
+
+            // Cinematic Camera Autopilot Loop
+            let gazeWave = (Math.sin(tick * 0.012) + 1) * 0.5;
+            userGaze.yaw = CONFIG.eventAbsAngle + (gazeWave * 50); 
+            userGaze.pitch = CONFIG.eventAbsPitch + Math.cos(tick * 0.01) * 3;
+
+            // Tracking and Reset Logic on Arrival
+            let relativeRight = 0;
+            let relativeDown = 0;
+            let distanceString = "0.0 m";
+
+            if (mySeedProgress > 0) {
+                // In Transit: Calculate convergence on radar
+                let approachRatio = 1.0 - mySeedProgress; 
+                userPos.x = cx + (eventX - cx) * approachRatio;
+                userPos.y = cy + (eventY - cy) * approachRatio;
+
+                // Physical Distance Calculation
+                let dx = eventX - userPos.x;
+                let dy = eventY - userPos.y;
+                let pixelDist = Math.sqrt(dx*dx + dy*dy);
+                let maxPixelDist = r * 0.75;
+                
+                let realDistance = (pixelDist / maxPixelDist) * CONFIG.maxDistance;
+                distanceString = realDistance < 0.5 ? "0.0 m" : `${realDistance.toFixed(1)} m`;
+
+                // Calculate angular offset relative to gaze direction
+                relativeRight = (CONFIG.eventAbsAngle - userGaze.yaw + 360) % 360;
+                relativeDown = (CONFIG.eventAbsPitch - userGaze.pitch + 360) % 360;
+
+                if (relativeRight > 180) relativeRight -= 360;
+                if (relativeDown > 180) relativeDown -= 360;
+            } else {
+                // Arrived / Archived: Lock to target position
+                userPos.x = eventX;
+                userPos.y = eventY;
+                
+                // Absolute Zero Hard Reset
+                relativeRight = 0;
+                relativeDown = 0;
+                distanceString = "0.0 m (On Target)";
+            }
+
+            // Output data stream to HUD nodes
+            locDown.textContent = `${relativeDown.toFixed(1)}°`;
+            locRight.textContent = `${relativeRight.toFixed(1)}°`;
+            locDist.textContent = distanceString;
+
+            // 3. Anonymous Seeds Lifecycle Loop
+            anonymousSeeds.forEach((pos, index) => {
+                anonymousSeeds[index] -= CONFIG.speed;
+                if (anonymousSeeds[index] < -1.05) anonymousSeeds[index] = 1.05;
+
+                const anonX = centerX + (anonymousSeeds[index] * centerX);
+                anonElements[index].style.left = `${anonX - 18}px`;
+            });
+
+            // 4. Render Canvas Radar Matrix
+            renderRadar(cx, cy, r, eventX, eventY);
+
+            requestAnimationFrame(updateTick);
+        }
+
+        function renderRadar(cx, cy, r, eventX, eventY) {
+            ctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
+
+            // Radar Tracking Rings Grid
+            ctx.strokeStyle = '#161616';
+            ctx.lineWidth = 1;
+            for(let i = 1; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.arc(cx, cy, (r / 3) * i, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Field of View Cone
+            const gazeRad = userGaze.yaw * (Math.PI / 180);
+            const fov = 40 * (Math.PI / 180); 
+
+            ctx.fillStyle = 'rgba(0, 102, 255, 0.12)';
+            ctx.beginPath();
+            ctx.moveTo(userPos.x, userPos.y);
+            ctx.arc(userPos.x, userPos.y, r * 0.8, gazeRad - fov/2, gazeRad + fov/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Direct Vector Gaze Axis
+            ctx.strokeStyle = '#0066ff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(userPos.x, userPos.y);
+            ctx.lineTo(userPos.x + Math.cos(gazeRad) * (r * 0.8), userPos.y + Math.sin(gazeRad) * (r * 0.8));
+            ctx.stroke();
+
+            // Cyberpunk Bridge (Target Objective Event)
+            ctx.fillStyle = '#00ff66';
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = '#00ff66';
+            ctx.beginPath();
+            ctx.arc(eventX, eventY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; 
+
+            // User Profile Matrix Node (White Dot)
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#0066ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(userPos.x, userPos.y, 7, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        updateTick();
+    </script>
+</body>
+</html>
