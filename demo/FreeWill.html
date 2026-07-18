@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaseReal-OS // Free Will Core Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #444444; 
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* Large presentation panel, centered on screen */
+        .showcase-card {
+            background: rgba(15, 15, 15, 0.95);
+            border: 2px solid #222;
+            border-radius: 16px;
+            padding: 45px 40px;
+            width: 100%;
+            max-width: 650px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 255, 204, 0.03);
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        /* Top labels — made larger and more readable */
+        .top-poles {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 25px;
+            font-size: 22px; 
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: #555;
+        }
+
+        .sys-title {
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: #555;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+        }
+
+        /* Huge current value readout */
+        .main-display {
+            font-size: 84px;
+            font-weight: bold;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
+            color: #00ffcc;
+            transition: color 0.3s ease;
+        }
+
+        .status-badge {
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            color: #00ffcc;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+
+        /* Large slider styling */
+        .huge-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 14px;
+            background: #1a1a1a;
+            border-radius: 7px;
+            outline: none;
+            cursor: pointer;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+
+        .huge-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+            transition: background 0.3s ease, transform 0.1s ease;
+        }
+
+        .huge-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        /* Clean, concise edge labels */
+        .labels-container {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #555;
+            letter-spacing: 1px;
+            margin-top: 10px;
+            padding: 0 5px;
+        }
+
+        .label-edge {
+            transition: color 0.3s ease;
+        }
+
+        .active-edge {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="showcase-card" id="card">
+        <!-- Top pole labels -->
+        <div class="top-poles">
+            <span id="pole-left">COLLECTIVISM</span>
+            <span id="pole-right">INDIVIDUALISM</span>
+        </div>
+
+        <div class="sys-title">BaseReal-OS // Control Loop</div>
+        
+        <!-- Large value readout -->
+        <div class="main-display" id="display-value">0.50</div>
+        <div class="status-badge" id="display-status">Symbiosis</div>
+
+        <!-- Large slider, clamped between 0.10 and 0.90 -->
+        <input type="range" class="huge-slider" id="core-slider" min="0.10" max="0.90" step="0.01" value="0.50">
+
+        <!-- Clear edge navigation labels -->
+        <div class="labels-container">
+            <span class="label-edge" id="label-left">MIN FREE WILL (0.10)</span>
+            <span class="label-edge" id="label-right">MAX FREE WILL (0.90)</span>
+        </div>
+    </div>
+
+    <script>
+        const slider = document.getElementById('core-slider');
+        const displayVal = document.getElementById('display-value');
+        const displayStatus = document.getElementById('display-status');
+        const card = document.getElementById('card');
+        const labelLeft = document.getElementById('label-left');
+        const labelRight = document.getElementById('label-right');
+        const poleLeft = document.getElementById('pole-left');
+        const poleRight = document.getElementById('pole-right');
+
+        // Reference colors
+        const NEUTRAL = [0, 255, 204];   // teal — symbiosis, at center
+        const PURPLE  = [210, 124, 255]; // left edge — environment
+        const RED     = [255, 85, 85];   // right edge — user
+        const GRAY    = [85, 85, 85];    // dim, unfocused label
+        const WHITE   = [255, 255, 255];
+
+        const MIN = 0.10, MAX = 0.90, CENTER = 0.50;
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function lerpColor(c1, c2, t) {
+            return [
+                Math.round(lerp(c1[0], c2[0], t)),
+                Math.round(lerp(c1[1], c2[1], t)),
+                Math.round(lerp(c1[2], c2[2], t))
+            ];
+        }
+
+        // Brighter highlight tones reached only right at the extremes
+        const PURPLE_BRIGHT = lerpColor(PURPLE, WHITE, 0.45);
+        const RED_BRIGHT = lerpColor(RED, WHITE, 0.45);
+
+        // Steeper response curve: brightness ramps up fast even for small
+        // movements away from center, instead of scaling linearly.
+        function ease(t) {
+            return Math.pow(t, 0.55);
+        }
+
+        // Three-stop gradient: neutral -> accent -> bright highlight
+        function edgeColor(t, accent, accentBright) {
+            if (t <= 0.6) {
+                return lerpColor(NEUTRAL, accent, t / 0.6);
+            }
+            return lerpColor(accent, accentBright, (t - 0.6) / 0.4);
+        }
+
+        function toRgb(c) {
+            return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+        }
+
+        function toRgba(c, a) {
+            return `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${a})`;
+        }
+
+        function updateInterface(val) {
+            const num = Number(val);
+            displayVal.textContent = num.toFixed(2);
+
+            // Proximity to each edge: 0 at center, 1 at that edge.
+            // The closer the slider sits to an edge, the brighter that side gets.
+            const leftProximity = ease(num <= CENTER ? (CENTER - num) / (CENTER - MIN) : 0);
+            const rightProximity = ease(num > CENTER ? (num - CENTER) / (MAX - CENTER) : 0);
+            const edgeProximity = Math.max(leftProximity, rightProximity);
+
+            // Main readout blends from neutral teal, through the accent color,
+            // up into a bright highlight tone right at the edge
+            const mainColorArr = num <= CENTER
+                ? edgeColor(leftProximity, PURPLE, PURPLE_BRIGHT)
+                : edgeColor(rightProximity, RED, RED_BRIGHT);
+            const mainColor = toRgb(mainColorArr);
+
+            // Status text still has three named zones, but color stays continuous
+            let statusText;
+            if (num <= 0.35) {
+                statusText = "Environment Mode";
+            } else if (num <= 0.65) {
+                statusText = "Symbiosis";
+            } else {
+                statusText = "User Mode";
+            }
+            displayStatus.textContent = statusText;
+
+            displayVal.style.color = mainColor;
+            displayStatus.style.color = mainColor;
+
+            // Top poles and edge labels brighten in proportion to proximity,
+            // also reaching into the bright highlight tone near the edges
+            poleLeft.style.color = toRgb(edgeColor(leftProximity, PURPLE, PURPLE_BRIGHT));
+            poleRight.style.color = toRgb(edgeColor(rightProximity, RED, RED_BRIGHT));
+
+            labelLeft.style.color = toRgb(lerpColor(GRAY, WHITE, leftProximity));
+            labelRight.style.color = toRgb(lerpColor(GRAY, WHITE, rightProximity));
+
+            // Card border and glow intensify smoothly as the slider nears an edge,
+            // now covering a wider, brighter range
+            const borderAlpha = 0.25 + edgeProximity * 0.45;
+            const glowAlpha = 0.04 + edgeProximity * 0.26;
+            card.style.borderColor = toRgba(mainColorArr, borderAlpha);
+            card.style.boxShadow = `0 20px 50px rgba(0,0,0,0.8), 0 0 40px ${toRgba(mainColorArr, glowAlpha)}`;
+        }
+
+        slider.addEventListener('input', (e) => updateInterface(e.target.value));
+        
+        // Initialize on load
+        updateInterface(slider.value);
+    </script>
+</body>
+</html>
