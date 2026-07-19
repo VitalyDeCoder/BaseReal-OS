@@ -76,10 +76,10 @@
         }
 
         .present-title {
-            position: absolute;
+            position: fixed;
             left: 50%;
-            bottom: 35px;
-            transform: translateX(-50%);
+            top: calc(50% + 22px);
+            transform: translate(-50%, -50%);
             font-size: 16px; 
             color: #00ffcc;
             font-weight: bold;
@@ -88,7 +88,7 @@
             padding: 6px 16px;
             border: 2px solid #00ffcc;
             border-radius: 4px;
-            z-index: 11;
+            z-index: 50;
             white-space: nowrap;
             box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
         }
@@ -235,9 +235,7 @@
     <div class="panel top-panel">
         <div class="time-label label-past">← Past</div>
         <div class="time-label label-future">Future →</div>
-        
-        <div class="present-title">PRESENT TIME</div>
-        
+
         <div class="timeline-axis">
             <div class="present-marker"></div>
         </div>
@@ -278,6 +276,10 @@
             <div class="radar-instructions">DEMO MODE: SCANNING HORIZON</div>
         </div>
     </div>
+
+    <!-- PRESENT TIME marker: straddles the split line between the two panels,
+         so it slightly overlaps the top of the radar circle below it -->
+    <div class="present-title">PRESENT TIME</div>
 
     <script>
         const CONFIG = {
