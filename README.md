@@ -35,14 +35,15 @@ The universe can change. The geometry does not.
 ### New Publications on Zenodo
 
 - **Geometrization of Physical Quantities: A Modification of Bartini's LT-System Based on the Inverse 3/2 Law**  
-  Scientific work on the geometrization of physical quantities using a modified Bartini LT-system and the Inverse 3/2 Law.  
+  The State Controller as an Architectural Condition for Evolution in Systems with Frozen Computational Cores. BaseReal-OS.  
   [Zenodo](https://zenodo.org/records/20788306) | [PDF](https://zenodo.org/records/20788306/files/LT_system_final.pdf)
 
-- **The Duet of Algorithms: A Universal Mechanism of Nonlinear Transitions in Dynamical Systems**  
+- **General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Models**  
   Research on a universal mechanism of nonlinear transitions in dynamical systems through the "Duet of Algorithms".
- [Zenodo](https://zenodo.org/records/21479461) | [PDF](https://zenodo.org/records/21479461/files/Duet_Algorithm_Preprint_EN_v3.pdf)
+ [Zenodo](https://zenodo.org/records/22060040) |  [PDF](https://zenodo.org/records/22060040/files/BaseReal-OS_General_Architecture_4_Layer_v2_EN.pdf)
 
-### Documents in `docs/` folder (17 files)
+
+### Documents in `docs/` folder (19 files)
 
 | File | Type | Description |
 |------|------|-----------|
@@ -61,6 +62,8 @@ The universe can change. The geometry does not.
 | `PerceptualScale_RU.md` | MD | Адаптивное разрешение восприятия (Russian) |
 | `AdaptiveRendering_RU.md` | MD | Adaptive Rendering (Russian) |
 | `Mycelium_Communism_RU_final.md` | MD | Mycelium Communism (Russian) |
+| `BaseReal-OS_General_Architecture_4_Layer_v2_EN.md` | MD | General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model(English) |
+| `BaseReal-OS_General_Architecture_4_Layer_v2_RU.md` | MD | Общая архитектура гибридной четырёхслойной вычислительной модели BaseReal-OS (Russian) |
 | `Full Essy 3_2 Eng.pdf` | PDF | Main Inverse 3/2 Law paper (English) |
 | `Essy 3_2 Rus.pdf` | PDF | Основная работа Inverse 3/2 Law (Russian) |
 
