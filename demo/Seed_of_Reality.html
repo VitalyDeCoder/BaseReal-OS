@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseReal-OS // Seed of Reality Demo v5.2</title>
+    <title>BaseReal-OS // Seed of Reality Demo v6.0 (Normal + Aberration)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -44,7 +44,7 @@
         .time-label {
             position: absolute;
             top: 20px;
-            font-size: 16px; 
+            font-size: 16px;
             letter-spacing: 2px;
             color: #a0a0a0;
             font-weight: bold;
@@ -67,7 +67,7 @@
         .present-marker {
             position: absolute;
             left: 50%;
-            top: -150vh; 
+            top: -150vh;
             bottom: 0;
             width: 2px;
             background: #00ffcc;
@@ -80,7 +80,7 @@
             left: 50%;
             top: calc(50% + 22px);
             transform: translate(-50%, -50%);
-            font-size: 16px; 
+            font-size: 16px;
             color: #00ffcc;
             font-weight: bold;
             letter-spacing: 3px;
@@ -96,7 +96,7 @@
         /* Seeds */
         .seed {
             position: absolute;
-            bottom: -18px; 
+            bottom: -18px;
             width: 36px;
             height: 36px;
             border-radius: 6px;
@@ -112,15 +112,32 @@
             background: #00ff66;
             border: 2px solid #ffffff;
             box-shadow: 0 0 25px rgba(0, 255, 102, 0.8);
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .seed.user-owned.blocked {
+            background: #ff2b2b;
+            box-shadow: 0 0 25px rgba(255, 43, 43, 0.9);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .seed.user-owned.blocked {
+                animation: blinkRed 0.8s steps(1, end) infinite;
+            }
+        }
+
+        @keyframes blinkRed {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0.15; }
         }
 
         /* Optimized HUD Layout */
         .hud-panel {
             position: absolute;
-            bottom: 55px; 
+            bottom: 55px;
             left: 50%;
             transform: translateX(-50%);
-            width: 380px; 
+            width: 380px;
             background: rgba(10, 10, 10, 0.98);
             border: 2px solid #00ff66;
             border-radius: 10px;
@@ -129,10 +146,15 @@
             flex-direction: column;
             overflow: hidden;
             pointer-events: none;
+            transition: border-color 0.3s;
+        }
+
+        .hud-panel.blocked {
+            border-color: #ff2b2b;
         }
 
         .hud-window {
-            padding: 12px 16px; 
+            padding: 12px 16px;
             border-bottom: 1px solid #222;
         }
         .hud-window:last-child {
@@ -149,14 +171,19 @@
 
         .hud-value {
             color: #ffffff;
-            font-size: 22px; 
+            font-size: 22px;
             font-weight: bold;
             line-height: 28px;
-            font-variant-numeric: tabular-nums; 
+            font-variant-numeric: tabular-nums;
+            transition: color 0.3s;
         }
 
         .hud-value.highlight {
             color: #00ff66;
+        }
+
+        .hud-value.danger {
+            color: #ff2b2b;
         }
 
         /* Structured Coordinate Grid */
@@ -188,6 +215,11 @@
             width: 2px;
             height: 23px;
             background: #00ff66;
+            transition: background 0.3s;
+        }
+
+        .hud-tether.blocked {
+            background: #ff2b2b;
         }
 
         /* Radar Setup */
@@ -219,7 +251,12 @@
             white-space: nowrap;
             text-align: center;
             width: 100%;
-            animation: pulse 2.5s infinite ease-in-out;
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+            .radar-instructions {
+                animation: pulse 2.5s infinite ease-in-out;
+            }
         }
 
         @keyframes pulse {
@@ -227,9 +264,50 @@
             50% { opacity: 1; }
             100% { opacity: 0.3; }
         }
+
+        /* Mode toggle */
+        .mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            background: #0a0a0a;
+            border: 2px solid #444;
+            color: #ccc;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 8px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: border-color 0.3s, color 0.3s;
+        }
+
+        .mode-toggle:hover {
+            border-color: #888;
+        }
+
+        .mode-toggle.engaged {
+            border-color: #ff8080;
+            color: #ffb3b3;
+        }
+
+        .mode-toggle.danger {
+            border-color: #ff2b2b;
+            color: #ff8080;
+        }
+
+        .mode-toggle:focus-visible {
+            outline: 2px solid #00ffcc;
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
+
+    <button id="mode-toggle" class="mode-toggle" onclick="toggleAberrationMode()">Aberration Mode</button>
 
     <!-- TOP PANEL: TIME TRACK -->
     <div class="panel top-panel">
@@ -237,27 +315,32 @@
         <div class="time-label label-future">Future →</div>
 
         <div class="timeline-axis">
-            <div class="present-marker"></div>
+            <div id="present-marker" class="present-marker"></div>
         </div>
 
         <div id="registry-flow" style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;">
             <!-- User Seed Matrix Node -->
             <div id="my-seed" class="seed user-owned">
-                <div class="hud-tether"></div>
-                <div class="hud-panel">
+                <div id="hud-tether" class="hud-tether"></div>
+                <div id="hud-panel" class="hud-panel">
                     <!-- Window 1: Description -->
                     <div class="hud-window">
-                        <div class="hud-label">1. Event Description</div>
-                        <div class="hud-value" id="hud-prompt">Cyberpunk Bridge Meeting</div>
+                        <div class="hud-label" id="hud-desc-label">1. Event Description</div>
+                        <div class="hud-value" id="hud-prompt">Fateful Bridge Meeting</div>
                     </div>
-                    <!-- Window 2: Timer -->
+                    <!-- Window 2: Timer / Status -->
                     <div class="hud-window">
-                        <div class="hud-label">2. Registry Timer</div>
+                        <div class="hud-label" id="hud-timer-label">2. Registry Timer</div>
                         <div class="hud-value highlight" id="hud-timer">Syncing...</div>
                     </div>
-                    <!-- Window 3: Position Grid -->
+                    <!-- Window 3: Charge Level (Aberration Mode only) -->
+                    <div class="hud-window" id="hud-charge-window" style="display: none;">
+                        <div class="hud-label">3. Event Charge</div>
+                        <div class="hud-value highlight" id="hud-charge">0.62 / 1.00</div>
+                    </div>
+                    <!-- Window 4: Position Grid -->
                     <div class="hud-window">
-                        <div class="hud-label">3. Relative Position</div>
+                        <div class="hud-label" id="hud-pos-label">3. Relative Position</div>
                         <div class="loc-container">
                             <div class="loc-line">DOWN:  <span id="loc-down">0.0°</span></div>
                             <div class="loc-line">RIGHT: <span id="loc-right">0.0°</span></div>
@@ -273,35 +356,52 @@
     <div class="panel bottom-panel">
         <div class="radar-container">
             <canvas id="radarCanvas" class="radar-canvas" width="340" height="340"></canvas>
-            <div class="radar-instructions">DEMO MODE: SCANNING HORIZON</div>
+            <div class="radar-instructions" id="radar-instructions">DEMO MODE: SCANNING HORIZON</div>
         </div>
     </div>
 
-    <!-- PRESENT TIME marker: straddles the split line between the two panels,
-         so it slightly overlaps the top of the radar circle below it -->
-    <div class="present-title">PRESENT TIME</div>
+    <!-- PRESENT TIME marker -->
+    <div id="present-title" class="present-title">PRESENT TIME</div>
 
     <script>
         const CONFIG = {
-            speed: 0.00125,      // Smooth, deliberate simulation pace
-            eventAbsAngle: 55,   // Target angle on radar matrix
-            eventAbsPitch: 10,   
-            maxDistance: 250     
+            speed: 0.00125,
+            eventAbsAngle: 55,
+            eventAbsPitch: 10,
+            maxDistance: 250,
+            chargeThreshold: 1.00
         };
 
+        const EMERGENCY_PAUSE_MS = 1000; // how long the user freezes at the meeting point
+
         let tick = 0;
+        let appMode = 'normal'; // 'normal' (continuous registry loop) | 'aberration' (collapse + jam + drift)
+        let mode = 'normal'; // aberration sub-state: 'normal' (approaching) | 'emergency' (paused at meeting point) | 'receding' (drifting away)
+        let emergencyStartTime = 0;
+        let radarEscapeProgress = 0; // drives only the bottom radar's drift-away motion
         let userGaze = { yaw: 0, pitch: 0 };
         let userPos = { x: 170, y: 170 };
-        let mySeedProgress = 1.0; 
+        let mySeedProgress = 1.0;
 
         let anonymousSeeds = [0.75, 0.45, 0.15, -0.15, -0.45, -0.75];
 
         const registryFlow = document.getElementById('registry-flow');
         const mySeedEl = document.getElementById('my-seed');
+        const hudPanel = document.getElementById('hud-panel');
+        const hudTether = document.getElementById('hud-tether');
+        const hudTimerLabel = document.getElementById('hud-timer-label');
         const hudTimer = document.getElementById('hud-timer');
+        const hudChargeWindow = document.getElementById('hud-charge-window');
+        const hudCharge = document.getElementById('hud-charge');
+        const hudDescLabel = document.getElementById('hud-desc-label');
+        const hudPosLabel = document.getElementById('hud-pos-label');
         const locDown = document.getElementById('loc-down');
         const locRight = document.getElementById('loc-right');
         const locDist = document.getElementById('loc-dist');
+        const presentMarker = document.getElementById('present-marker');
+        const presentTitle = document.getElementById('present-title');
+        const modeToggle = document.getElementById('mode-toggle');
+        const radarInstructions = document.getElementById('radar-instructions');
         const radarCanvas = document.getElementById('radarCanvas');
         const ctx = radarCanvas.getContext('2d');
 
@@ -312,10 +412,100 @@
             return el;
         });
 
+        function clearJamVisuals() {
+            // Strip any leftover jam/blink styling so either mode starts
+            // from a clean, non-blocked look.
+            mySeedEl.classList.remove('blocked');
+            hudPanel.classList.remove('blocked');
+            hudTether.classList.remove('blocked');
+            modeToggle.classList.remove('danger');
+            hudDescLabel.textContent = '1. Event Description';
+            hudTimerLabel.textContent = '2. Registry Timer';
+        }
+
+        function toggleAberrationMode() {
+            if (appMode === 'normal') {
+                // Switch into Aberration Mode: restart the cycle fresh so
+                // the person sees the full approach → collapse → jam →
+                // drift sequence from the beginning.
+                appMode = 'aberration';
+                mode = 'normal';
+                mySeedProgress = 1.0;
+                radarEscapeProgress = 0;
+                clearJamVisuals();
+
+                hudChargeWindow.style.display = '';
+                hudPosLabel.textContent = '4. Relative Position';
+                hudTimerLabel.textContent = '2. Registry Timer';
+                radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
+
+                modeToggle.textContent = 'Aberration Mode: ON';
+                modeToggle.classList.add('engaged');
+            } else {
+                // Switch back to Normal: the plain, uninterrupted registry
+                // loop — event forms in the future, collapses at the
+                // present, decays into the archive, and logs as a seed.
+                appMode = 'normal';
+                mode = 'normal';
+                mySeedProgress = 1.0;
+                radarEscapeProgress = 0;
+                clearJamVisuals();
+
+                hudChargeWindow.style.display = 'none';
+                hudPosLabel.textContent = '3. Relative Position';
+                hudTimerLabel.textContent = '2. Registry Timer';
+                radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
+
+                modeToggle.textContent = 'Aberration Mode';
+                modeToggle.classList.remove('engaged');
+            }
+        }
+
+        function enterEmergency() {
+            // The seed has reached the present line and tries to receive
+            // its perception packet — the packet overloads the processor,
+            // so instead of completing normally it jams right here.
+            mode = 'emergency';
+            mySeedProgress = 0;
+            emergencyStartTime = performance.now();
+
+            mySeedEl.classList.add('blocked');
+            hudPanel.classList.add('blocked');
+            hudTether.classList.add('blocked');
+            modeToggle.classList.add('danger');
+
+            hudDescLabel.textContent = '1. Event Description \u26A0';
+            hudTimerLabel.textContent = '2. Registry Status';
+            radarInstructions.textContent = 'EVENT PENDING: PROCESSING BLOCKED';
+        }
+
+        function beginReceding() {
+            // The 1 second freeze at the meeting point is over, but the
+            // seed on the top track (and its attached HUD) stays pinned at
+            // the present line, still jammed and blinking red. Only the
+            // radar view below shows it drifting away from the meeting
+            // point, carrying the alert ring with it.
+            mode = 'receding';
+            radarEscapeProgress = 0;
+
+            radarInstructions.textContent = 'EVENT MISSED: DRIFTING TO ARCHIVE';
+        }
+
+        function resetRegistry() {
+            // Loop the aberration cycle back to the future side so it can
+            // approach the present line normally again.
+            mode = 'normal';
+            mySeedProgress = 1.0;
+            radarEscapeProgress = 0;
+
+            clearJamVisuals();
+            radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
+        }
+
         function formatMetricTime(seconds) {
             const absSec = Math.abs(seconds);
             let prefix = seconds >= 0 ? "Until Collapse: " : "Archived: ";
-            
+
             if (Math.abs(seconds) < 0.1) return "COLLAPSE (0.00)";
 
             if (absSec >= 1000) {
@@ -335,64 +525,130 @@
             const cx = radarCanvas.width / 2;
             const cy = radarCanvas.height / 2;
             const r = cx - 12;
-            
+
             // Fixed spatial event location (0.55r optimized radius allocation)
             const eventRad = CONFIG.eventAbsAngle * (Math.PI / 180);
             const eventX = cx + Math.cos(eventRad) * (r * 0.55);
             const eventY = cy + Math.sin(eventRad) * (r * 0.55);
 
             // 1. User Seed Core Movement Loop
-            mySeedProgress -= CONFIG.speed;
-            if (mySeedProgress < -1.05) {
-                mySeedProgress = 1.05; 
+            if (appMode === 'aberration') {
+                // The seed approaches the present line normally. The
+                // instant it arrives (progress reaches zero) it tries to
+                // receive its perception packet — that attempt is what
+                // overloads and jams it.
+                if (mode === 'normal') {
+                    mySeedProgress -= CONFIG.speed;
+                    if (mySeedProgress <= 0) {
+                        mySeedProgress = 0;
+                        enterEmergency();
+                    }
+                } else if (mode === 'emergency') {
+                    // Stay perfectly still at the meeting point for 1 second.
+                    if (performance.now() - emergencyStartTime >= EMERGENCY_PAUSE_MS) {
+                        beginReceding();
+                    }
+                } else if (mode === 'receding') {
+                    // Continue away from the meeting point at the same
+                    // speed it approached with — this only moves the
+                    // radar view; mySeedProgress stays at 0 so the top
+                    // track stays put.
+                    radarEscapeProgress -= CONFIG.speed;
+                    if (radarEscapeProgress <= -1.0) {
+                        resetRegistry();
+                    }
+                }
+            } else {
+                // Normal registry demo: the event forms in the future out
+                // of superposition, collapses at the present line, decays
+                // past it into the archive, and the seed logs itself with
+                // a timer and radial coordinates — a continuous, unbroken
+                // cycle that loops back around to form again.
+                mySeedProgress -= CONFIG.speed;
+                if (mySeedProgress < -1.05) {
+                    mySeedProgress = 1.05;
+                }
             }
 
-            const mySeedX = centerX + (mySeedProgress * centerX);
-            mySeedEl.style.left = `${mySeedX - 18}px`; 
+            const isBlocked = mode === 'emergency' || mode === 'receding';
+            const showAlertRing = mode === 'emergency' || mode === 'receding';
 
-            const timeDiffSeconds = mySeedProgress * 200; 
-            hudTimer.textContent = formatMetricTime(timeDiffSeconds);
+            // When blocked, the event is pinned exactly on the present
+            // line — no drift, no wobble, it has fully stopped.
+            const mySeedX = centerX + (mySeedProgress * centerX);
+            mySeedEl.style.left = `${mySeedX - 18}px`;
+
+            if (isBlocked) {
+                // Frozen exactly at the collapse point: the counter reads
+                // zero and stays there instead of ticking down or archiving.
+                hudTimer.textContent = formatMetricTime(0);
+                hudTimer.classList.remove('highlight');
+                hudTimer.classList.add('danger');
+                hudCharge.textContent = '1.42 / 1.00 MAX';
+                hudCharge.classList.remove('highlight');
+                hudCharge.classList.add('danger');
+                locDown.textContent = '0.0°';
+                locRight.textContent = '0.0°';
+                locDist.textContent = '0.0 m';
+            } else {
+                const timeDiffSeconds = mySeedProgress * 200;
+                hudTimer.textContent = formatMetricTime(timeDiffSeconds);
+                hudTimer.classList.remove('danger');
+                hudTimer.classList.add('highlight');
+                hudCharge.textContent = '0.62 / 1.00';
+                hudCharge.classList.remove('danger');
+                hudCharge.classList.add('highlight');
+            }
 
             // Cinematic Camera Autopilot
             let gazeWave = (Math.sin(tick * 0.012) + 1) * 0.5;
-            userGaze.yaw = CONFIG.eventAbsAngle + (gazeWave * 50); 
+            userGaze.yaw = CONFIG.eventAbsAngle + (gazeWave * 50);
             userGaze.pitch = CONFIG.eventAbsPitch + Math.cos(tick * 0.01) * 3;
 
             // Unified Spacetime Trajectory Logic (Continuous Tracking)
-            if (mySeedProgress > 0) {
-                // In Transit: Approaching the event horizon from the center
-                let approachRatio = 1.0 - mySeedProgress; 
+            // While receding, the radar dot's motion is driven by
+            // radarEscapeProgress, independent of the top track's
+            // mySeedProgress (which stays pinned at 0).
+            const radarProgress = mode === 'receding' ? radarEscapeProgress : mySeedProgress;
+
+            if (radarProgress > 0) {
+                let approachRatio = 1.0 - radarProgress;
                 userPos.x = cx + (eventX - cx) * approachRatio;
                 userPos.y = cy + (eventY - cy) * approachRatio;
+            } else if (radarProgress === 0) {
+                // Pinned exactly at the event: distance collapses to zero
+                // and stays there while the event remains unprocessed.
+                userPos.x = eventX;
+                userPos.y = eventY;
             } else {
-                // Past / Archive: Continuing journey past the waypoint into deep space
-                let escapeRatio = -mySeedProgress; 
+                let escapeRatio = -radarProgress;
                 userPos.x = eventX + (eventX - cx) * escapeRatio * 0.6;
                 userPos.y = eventY + (eventY - cy) * escapeRatio * 0.6;
             }
 
-            // Real physical distance calculations relative to the historical event
             let dx = eventX - userPos.x;
             let dy = eventY - userPos.y;
-            let pixelDist = Math.sqrt(dx*dx + dy*dy);
-            let maxPixelDist = r * 0.55; 
-            
+            let pixelDist = Math.sqrt(dx * dx + dy * dy);
+            let maxPixelDist = r * 0.55;
+
             let realDistance = (pixelDist / maxPixelDist) * CONFIG.maxDistance;
             let distanceString = realDistance < 0.5 ? "0.0 m" : `${realDistance.toFixed(1)} m`;
 
-            // Dynamic tracking of relative angular offsets based on current look vector
             let relativeRight = (CONFIG.eventAbsAngle - userGaze.yaw + 360) % 360;
             let relativeDown = (CONFIG.eventAbsPitch - userGaze.pitch + 360) % 360;
 
             if (relativeRight > 180) relativeRight -= 360;
             if (relativeDown > 180) relativeDown -= 360;
 
-            // Output uninterrupted live data streams to UI nodes
-            locDown.textContent = `${relativeDown.toFixed(1)}°`;
-            locRight.textContent = `${relativeRight.toFixed(1)}°`;
-            locDist.textContent = distanceString;
+            if (!isBlocked) {
+                locDown.textContent = `${relativeDown.toFixed(1)}°`;
+                locRight.textContent = `${relativeRight.toFixed(1)}°`;
+                locDist.textContent = distanceString;
+            }
 
             // 3. Anonymous Background Seeds Lifecycle Loop
+            // These keep flowing through the registry normally regardless of
+            // mode — only the overloaded event is stuck, not the whole system.
             anonymousSeeds.forEach((pos, index) => {
                 anonymousSeeds[index] -= CONFIG.speed;
                 if (anonymousSeeds[index] < -1.05) anonymousSeeds[index] = 1.05;
@@ -402,18 +658,18 @@
             });
 
             // 4. Render Canvas Radar Space
-            renderRadar(cx, cy, r, eventX, eventY);
+            renderRadar(cx, cy, r, eventX, eventY, isBlocked, showAlertRing);
 
             requestAnimationFrame(updateTick);
         }
 
-        function renderRadar(cx, cy, r, eventX, eventY) {
+        function renderRadar(cx, cy, r, eventX, eventY, isBlocked, showAlertRing) {
             ctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
 
             // Radar Tracking Rings Grid
             ctx.strokeStyle = '#161616';
             ctx.lineWidth = 1;
-            for(let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 3; i++) {
                 ctx.beginPath();
                 ctx.arc(cx, cy, (r / 3) * i, 0, Math.PI * 2);
                 ctx.stroke();
@@ -421,12 +677,12 @@
 
             // Gaze Field of View Cone
             const gazeRad = userGaze.yaw * (Math.PI / 180);
-            const fov = 40 * (Math.PI / 180); 
+            const fov = 40 * (Math.PI / 180);
 
             ctx.fillStyle = 'rgba(0, 102, 255, 0.12)';
             ctx.beginPath();
             ctx.moveTo(userPos.x, userPos.y);
-            ctx.arc(userPos.x, userPos.y, r * 0.8, gazeRad - fov/2, gazeRad + fov/2);
+            ctx.arc(userPos.x, userPos.y, r * 0.8, gazeRad - fov / 2, gazeRad + fov / 2);
             ctx.closePath();
             ctx.fill();
 
@@ -438,14 +694,16 @@
             ctx.lineTo(userPos.x + Math.cos(gazeRad) * (r * 0.8), userPos.y + Math.sin(gazeRad) * (r * 0.8));
             ctx.stroke();
 
-            // Cyberpunk Bridge (Fixed Objective Matrix Node)
-            ctx.fillStyle = '#00ff66';
+            // Event Matrix Node — green when processing normally, red when
+            // blocked by an overload
+            const eventColor = isBlocked ? '#ff2b2b' : '#00ff66';
+            ctx.fillStyle = eventColor;
             ctx.shadowBlur = 15;
-            ctx.shadowColor = '#00ff66';
+            ctx.shadowColor = eventColor;
             ctx.beginPath();
             ctx.arc(eventX, eventY, 8, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0; 
+            ctx.shadowBlur = 0;
 
             // User Profile Vector Node (White Matrix Dot)
             ctx.fillStyle = '#ffffff';
@@ -455,6 +713,23 @@
             ctx.arc(userPos.x, userPos.y, 7, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+
+            // Blinking alert ring around the user seed — appears the
+            // instant it reaches the meeting point, and keeps following
+            // the user while it pauses there and then drifts away.
+            if (showAlertRing) {
+                const blinkOn = Math.floor(tick / 15) % 2 === 0;
+                if (blinkOn) {
+                    ctx.strokeStyle = '#ff2b2b';
+                    ctx.lineWidth = 2;
+                    ctx.shadowBlur = 10;
+                    ctx.shadowColor = '#ff2b2b';
+                    ctx.beginPath();
+                    ctx.arc(userPos.x, userPos.y, 14, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            }
         }
 
         updateTick();
