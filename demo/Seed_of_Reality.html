@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseReal-OS // Seed of Reality Demo v6.0 (Normal + Aberration)</title>
+    <title>BaseReal-OS // Seed of Reality Demo v6.0 (Normal + Anomaly)</title>
     <style>
         * {
             box-sizing: border-box;
@@ -307,7 +307,7 @@
 </head>
 <body>
 
-    <button id="mode-toggle" class="mode-toggle" onclick="toggleAberrationMode()">Aberration Mode</button>
+    <button id="mode-toggle" class="mode-toggle" onclick="toggleAnomalyMode()">Anomaly Mode</button>
 
     <!-- TOP PANEL: TIME TRACK -->
     <div class="panel top-panel">
@@ -326,14 +326,14 @@
                     <!-- Window 1: Description -->
                     <div class="hud-window">
                         <div class="hud-label" id="hud-desc-label">1. Event Description</div>
-                        <div class="hud-value" id="hud-prompt">Fateful Bridge Meeting</div>
+                        <div class="hud-value" id="hud-prompt">Cyberpunk Bridge Meeting</div>
                     </div>
                     <!-- Window 2: Timer / Status -->
                     <div class="hud-window">
                         <div class="hud-label" id="hud-timer-label">2. Registry Timer</div>
                         <div class="hud-value highlight" id="hud-timer">Syncing...</div>
                     </div>
-                    <!-- Window 3: Charge Level (Aberration Mode only) -->
+                    <!-- Window 3: Charge Level (Anomaly Mode only) -->
                     <div class="hud-window" id="hud-charge-window" style="display: none;">
                         <div class="hud-label">3. Event Charge</div>
                         <div class="hud-value highlight" id="hud-charge">0.62 / 1.00</div>
@@ -375,8 +375,8 @@
         const EMERGENCY_PAUSE_MS = 1000; // how long the user freezes at the meeting point
 
         let tick = 0;
-        let appMode = 'normal'; // 'normal' (continuous registry loop) | 'aberration' (collapse + jam + drift)
-        let mode = 'normal'; // aberration sub-state: 'normal' (approaching) | 'emergency' (paused at meeting point) | 'receding' (drifting away)
+        let appMode = 'normal'; // 'normal' (continuous registry loop) | 'anomaly' (collapse + jam + drift)
+        let mode = 'normal'; // anomaly sub-state: 'normal' (approaching) | 'emergency' (paused at meeting point) | 'receding' (drifting away)
         let emergencyStartTime = 0;
         let radarEscapeProgress = 0; // drives only the bottom radar's drift-away motion
         let userGaze = { yaw: 0, pitch: 0 };
@@ -423,12 +423,12 @@
             hudTimerLabel.textContent = '2. Registry Timer';
         }
 
-        function toggleAberrationMode() {
+        function toggleAnomalyMode() {
             if (appMode === 'normal') {
-                // Switch into Aberration Mode: restart the cycle fresh so
+                // Switch into Anomaly Mode: restart the cycle fresh so
                 // the person sees the full approach → collapse → jam →
                 // drift sequence from the beginning.
-                appMode = 'aberration';
+                appMode = 'anomaly';
                 mode = 'normal';
                 mySeedProgress = 1.0;
                 radarEscapeProgress = 0;
@@ -439,7 +439,7 @@
                 hudTimerLabel.textContent = '2. Registry Timer';
                 radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
 
-                modeToggle.textContent = 'Aberration Mode: ON';
+                modeToggle.textContent = 'Anomaly Mode: ON';
                 modeToggle.classList.add('engaged');
             } else {
                 // Switch back to Normal: the plain, uninterrupted registry
@@ -456,7 +456,7 @@
                 hudTimerLabel.textContent = '2. Registry Timer';
                 radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
 
-                modeToggle.textContent = 'Aberration Mode';
+                modeToggle.textContent = 'Anomaly Mode';
                 modeToggle.classList.remove('engaged');
             }
         }
@@ -492,7 +492,7 @@
         }
 
         function resetRegistry() {
-            // Loop the aberration cycle back to the future side so it can
+            // Loop the anomaly cycle back to the future side so it can
             // approach the present line normally again.
             mode = 'normal';
             mySeedProgress = 1.0;
@@ -532,7 +532,7 @@
             const eventY = cy + Math.sin(eventRad) * (r * 0.55);
 
             // 1. User Seed Core Movement Loop
-            if (appMode === 'aberration') {
+            if (appMode === 'anomaly') {
                 // The seed approaches the present line normally. The
                 // instant it arrives (progress reaches zero) it tries to
                 // receive its perception packet — that attempt is what
