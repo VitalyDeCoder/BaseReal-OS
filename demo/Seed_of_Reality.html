@@ -3,18 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseReal-OS // Seed of Reality Demo v6.0 (Normal + Anomaly)</title>
+    <title>BaseReal-OS // Seed of Reality</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --green:   #00ff88;
+            --red:     #ff3355;
+            --cyan:    #00e5ff;
+            --blue:    #0066ff;
+            --bg:      #040404;
+            --surface: #0a0a0a;
+            --border:  #1a1a1a;
+            --muted:   #444;
+            --text:    #cccccc;
         }
-
         body {
-            background-color: #050505;
-            color: #ffffff;
-            font-family: 'Courier New', Courier, monospace;
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Courier New', monospace;
             height: 100vh;
             overflow: hidden;
             display: flex;
@@ -22,717 +28,628 @@
             user-select: none;
         }
 
-        /* 50/50 Screen Split */
-        .panel {
+        /* ── TOP PANEL ─────────────────────────────────────── */
+        .top-panel {
             flex: 1;
             position: relative;
+            background: radial-gradient(ellipse at 50% 120%, #0c0c14 0%, var(--bg) 70%);
+            border-bottom: 1px solid var(--border);
+            min-height: 0;
         }
-
-        .top-panel {
-            border-bottom: 3px solid #222;
-            background: radial-gradient(circle at 50% 100%, #0d0d0d 0%, #050505 100%);
-        }
-
-        .bottom-panel {
-            background: radial-gradient(circle at 50% 0%, #080808 0%, #050505 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* High-visibility Time Zone Labels */
-        .time-label {
+        .zone-label {
             position: absolute;
-            top: 20px;
-            font-size: 16px;
-            letter-spacing: 2px;
-            color: #a0a0a0;
-            font-weight: bold;
+            top: 14px;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--muted);
             text-transform: uppercase;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .label-past { left: 30px; }
-        .label-future { right: 30px; }
+        .zone-label.past   { left: 24px; }
+        .zone-label.future { right: 24px; }
 
-        /* Timeline Axis */
-        .timeline-axis {
+        /* Timeline */
+        .timeline {
             position: absolute;
-            bottom: 25px;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 2px;
-            background: #333;
+            height: 1px;
+            background: var(--border);
         }
 
-        .present-marker {
+        /* Present line — runs full height */
+        .present-line {
             position: absolute;
             left: 50%;
-            top: -150vh;
+            top: 0;
             bottom: 0;
-            width: 2px;
-            background: #00ffcc;
-            box-shadow: 0 0 15px #00ffcc;
-            z-index: 10;
+            width: 1px;
+            background: var(--cyan);
+            box-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,229,255,.2);
+            z-index: 20;
         }
 
-        .present-title {
+        /* PRESENT label sits at the seam between panels */
+        .present-label {
             position: fixed;
             left: 50%;
-            top: calc(50% + 22px);
+            top: 50%;
             transform: translate(-50%, -50%);
-            font-size: 16px;
-            color: #00ffcc;
-            font-weight: bold;
+            z-index: 100;
+            background: var(--bg);
+            border: 1px solid var(--cyan);
+            color: var(--cyan);
+            font-size: 10px;
             letter-spacing: 3px;
-            background: #050505;
-            padding: 6px 16px;
-            border: 2px solid #00ffcc;
-            border-radius: 4px;
-            z-index: 50;
+            padding: 5px 12px;
             white-space: nowrap;
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.2);
+            box-shadow: 0 0 16px rgba(0,229,255,.15);
         }
 
         /* Seeds */
         .seed {
             position: absolute;
-            bottom: -18px;
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            z-index: 5;
+            bottom: -10px;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            z-index: 10;
+            transform: translateX(-50%);
+        }
+        .seed.anon {
+            background: #1c1c1c;
+            border: 1px solid #2a2a2a;
+        }
+        .seed.mine {
+            background: var(--green);
+            border: 1px solid rgba(255,255,255,.3);
+            box-shadow: 0 0 20px rgba(0,255,136,.6);
+            transition: background .2s, box-shadow .2s;
+        }
+        .seed.mine.blocked {
+            background: var(--red);
+            box-shadow: 0 0 20px rgba(255,51,85,.8);
+            animation: blinkSeed .7s steps(1) infinite;
+        }
+        @keyframes blinkSeed {
+            0%,49%  { opacity: 1; }
+            50%,100%{ opacity: .2; }
         }
 
-        .seed.anonymous {
-            background: #333;
-            border: 2px solid #555;
-        }
-
-        .seed.user-owned {
-            background: #00ff66;
-            border: 2px solid #ffffff;
-            box-shadow: 0 0 25px rgba(0, 255, 102, 0.8);
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-
-        .seed.user-owned.blocked {
-            background: #ff2b2b;
-            box-shadow: 0 0 25px rgba(255, 43, 43, 0.9);
-        }
-
-        @media (prefers-reduced-motion: no-preference) {
-            .seed.user-owned.blocked {
-                animation: blinkRed 0.8s steps(1, end) infinite;
-            }
-        }
-
-        @keyframes blinkRed {
-            0%, 49% { opacity: 1; }
-            50%, 100% { opacity: 0.15; }
-        }
-
-        /* Optimized HUD Layout */
-        .hud-panel {
+        /* HUD — anchored ABOVE the seed */
+        .hud {
             position: absolute;
-            bottom: 55px;
+            bottom: 28px; /* gap above seed */
             left: 50%;
             transform: translateX(-50%);
-            width: 380px;
-            background: rgba(10, 10, 10, 0.98);
-            border: 2px solid #00ff66;
-            border-radius: 10px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
+            width: 320px;
+            background: rgba(6,6,8,.97);
+            border: 1px solid var(--green);
+            border-radius: 6px;
             overflow: hidden;
             pointer-events: none;
-            transition: border-color 0.3s;
+            transition: border-color .2s;
         }
-
-        .hud-panel.blocked {
-            border-color: #ff2b2b;
+        .hud.blocked { border-color: var(--red); }
+        .hud-row {
+            padding: 8px 14px;
+            border-bottom: 1px solid #111;
         }
-
-        .hud-window {
-            padding: 12px 16px;
-            border-bottom: 1px solid #222;
-        }
-        .hud-window:last-child {
-            border-bottom: none;
-        }
-
-        .hud-label {
-            color: #666;
-            font-size: 13px;
+        .hud-row:last-child { border-bottom: none; }
+        .hud-key {
+            font-size: 9px;
+            letter-spacing: 2px;
+            color: #444;
+            margin-bottom: 3px;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            margin-bottom: 4px;
         }
-
-        .hud-value {
-            color: #ffffff;
-            font-size: 22px;
+        .hud-val {
+            font-size: 15px;
             font-weight: bold;
-            line-height: 28px;
+            color: #fff;
             font-variant-numeric: tabular-nums;
-            transition: color 0.3s;
+            line-height: 1.2;
         }
+        .hud-val.ok  { color: var(--green); }
+        .hud-val.err { color: var(--red);   }
 
-        .hud-value.highlight {
-            color: #00ff66;
-        }
-
-        .hud-value.danger {
-            color: #ff2b2b;
-        }
-
-        /* Structured Coordinate Grid */
-        .loc-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-
-        .loc-line {
+        .grid-row {
             display: flex;
             justify-content: space-between;
-            font-size: 18px;
-            font-weight: bold;
-            color: #aaa;
-        }
-
-        .loc-line span {
-            color: #ffffff;
+            font-size: 13px;
+            color: var(--muted);
             font-variant-numeric: tabular-nums;
+            line-height: 1.6;
         }
+        .grid-row span { color: #ddd; }
 
-        /* Tether Line */
-        .hud-tether {
+        /* Tether */
+        .tether {
             position: absolute;
-            bottom: 34px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            width: 2px;
-            height: 23px;
-            background: #00ff66;
-            transition: background 0.3s;
+            width: 1px;
+            height: 4px;
+            background: var(--green);
+            transition: background .2s;
         }
+        .tether.blocked { background: var(--red); }
 
-        .hud-tether.blocked {
-            background: #ff2b2b;
-        }
-
-        /* Radar Setup */
-        .radar-container {
+        /* ── BOTTOM PANEL ──────────────────────────────────── */
+        .bottom-panel {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at 50% -20%, #0c0c14 0%, var(--bg) 70%);
             position: relative;
-            width: 340px;
-            height: 340px;
-            background: rgba(15, 15, 15, 0.6);
-            border: 2px solid #222;
+            min-height: 0;
+        }
+        .radar-wrap {
+            position: relative;
+        }
+        canvas#radar {
+            display: block;
             border-radius: 50%;
         }
-
-        .radar-canvas {
+        .radar-status {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        .radar-instructions {
-            position: absolute;
-            bottom: -40px;
+            bottom: -28px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 14px;
-            color: #00ffcc;
-            letter-spacing: 1px;
+            font-size: 10px;
+            letter-spacing: 2.5px;
+            color: var(--cyan);
             white-space: nowrap;
-            text-align: center;
-            width: 100%;
+            animation: fadePulse 3s ease-in-out infinite;
+        }
+        @keyframes fadePulse {
+            0%,100%{ opacity: .3; }
+            50%    { opacity: 1;  }
         }
 
-        @media (prefers-reduced-motion: no-preference) {
-            .radar-instructions {
-                animation: pulse 2.5s infinite ease-in-out;
-            }
-        }
-
-        @keyframes pulse {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
-        }
-
-        /* Mode toggle */
-        .mode-toggle {
+        /* ── CONTROLS ──────────────────────────────────────── */
+        .controls {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 60;
-            background: #0a0a0a;
-            border: 2px solid #444;
-            color: #ccc;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 13px;
-            letter-spacing: 1.5px;
+            bottom: 16px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .btn {
+            background: var(--surface);
+            border: 1px solid var(--muted);
+            color: var(--text);
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            letter-spacing: 2px;
             text-transform: uppercase;
-            padding: 8px 18px;
-            border-radius: 4px;
+            padding: 7px 14px;
+            border-radius: 3px;
             cursor: pointer;
-            transition: border-color 0.3s, color 0.3s;
+            transition: border-color .2s, color .2s;
         }
-
-        .mode-toggle:hover {
-            border-color: #888;
-        }
-
-        .mode-toggle.engaged {
-            border-color: #ff8080;
-            color: #ffb3b3;
-        }
-
-        .mode-toggle.danger {
-            border-color: #ff2b2b;
-            color: #ff8080;
-        }
-
-        .mode-toggle:focus-visible {
-            outline: 2px solid #00ffcc;
-            outline-offset: 2px;
-        }
+        .btn:hover          { border-color: #888; color: #fff; }
+        .btn.active         { border-color: var(--red); color: #ffaaaa; }
+        .btn:focus-visible  { outline: 1px solid var(--cyan); outline-offset: 2px; }
     </style>
 </head>
 <body>
 
-    <button id="mode-toggle" class="mode-toggle" onclick="toggleAnomalyMode()">Anomaly Mode</button>
+<!-- ── TOP ─────────────────────────────────────────────────── -->
+<div class="top-panel" id="topPanel">
+    <div class="zone-label past">← past</div>
+    <div class="zone-label future">future →</div>
 
-    <!-- TOP PANEL: TIME TRACK -->
-    <div class="panel top-panel">
-        <div class="time-label label-past">← Past</div>
-        <div class="time-label label-future">Future →</div>
-
-        <div class="timeline-axis">
-            <div id="present-marker" class="present-marker"></div>
-        </div>
-
-        <div id="registry-flow" style="position: absolute; width: 100%; height: 100%; left: 0; top: 0;">
-            <!-- User Seed Matrix Node -->
-            <div id="my-seed" class="seed user-owned">
-                <div id="hud-tether" class="hud-tether"></div>
-                <div id="hud-panel" class="hud-panel">
-                    <!-- Window 1: Description -->
-                    <div class="hud-window">
-                        <div class="hud-label" id="hud-desc-label">1. Event Description</div>
-                        <div class="hud-value" id="hud-prompt">Cyberpunk Bridge Meeting</div>
-                    </div>
-                    <!-- Window 2: Timer / Status -->
-                    <div class="hud-window">
-                        <div class="hud-label" id="hud-timer-label">2. Registry Timer</div>
-                        <div class="hud-value highlight" id="hud-timer">Syncing...</div>
-                    </div>
-                    <!-- Window 3: Charge Level (Anomaly Mode only) -->
-                    <div class="hud-window" id="hud-charge-window" style="display: none;">
-                        <div class="hud-label">3. Event Charge</div>
-                        <div class="hud-value highlight" id="hud-charge">0.62 / 1.00</div>
-                    </div>
-                    <!-- Window 4: Position Grid -->
-                    <div class="hud-window">
-                        <div class="hud-label" id="hud-pos-label">3. Relative Position</div>
-                        <div class="loc-container">
-                            <div class="loc-line">DOWN:  <span id="loc-down">0.0°</span></div>
-                            <div class="loc-line">RIGHT: <span id="loc-right">0.0°</span></div>
-                            <div class="loc-line">DIST:  <span id="loc-dist" style="color:#00ff66">0.0 m</span></div>
-                        </div>
-                    </div>
+    <div class="present-line"></div>
+    <div class="timeline"></div>
+    <div id="seedTrack" style="position:absolute;width:100%;height:100%;top:0;left:0;">
+        <!-- User seed + HUD stack -->
+        <div id="mySeed" class="seed mine">
+            <div id="tether"  class="tether"></div>
+            <div id="hud"     class="hud">
+                <div class="hud-row">
+                    <div class="hud-key" id="kDesc">event</div>
+                    <div class="hud-val" id="vDesc">Cyberpunk Bridge Meeting</div>
+                </div>
+                <div class="hud-row">
+                    <div class="hud-key" id="kTimer">registry timer</div>
+                    <div class="hud-val ok" id="vTimer">Syncing…</div>
+                </div>
+                <div class="hud-row" id="chargeRow" style="display:none">
+                    <div class="hud-key">event charge</div>
+                    <div class="hud-val ok" id="vCharge">0.62 / 1.00</div>
+                </div>
+                <div class="hud-row">
+                    <div class="hud-key" id="kPos">relative position</div>
+                    <div class="grid-row">DOWN <span id="gDown">0.0°</span></div>
+                    <div class="grid-row">RIGHT<span id="gRight">0.0°</span></div>
+                    <div class="grid-row">DIST <span id="gDist" style="color:var(--green)">0.0 m</span></div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- BOTTOM PANEL: ATTENTION RADAR -->
-    <div class="panel bottom-panel">
-        <div class="radar-container">
-            <canvas id="radarCanvas" class="radar-canvas" width="340" height="340"></canvas>
-            <div class="radar-instructions" id="radar-instructions">DEMO MODE: SCANNING HORIZON</div>
-        </div>
+<!-- PRESENT label at seam -->
+<div class="present-label">PRESENT TIME</div>
+
+<!-- ── BOTTOM ──────────────────────────────────────────────── -->
+<div class="bottom-panel">
+    <div class="radar-wrap">
+        <canvas id="radar" width="300" height="300"></canvas>
+        <div class="radar-status" id="radarStatus">scanning horizon</div>
     </div>
+</div>
 
-    <!-- PRESENT TIME marker -->
-    <div id="present-title" class="present-title">PRESENT TIME</div>
+<!-- ── CONTROLS (no overlap) ───────────────────────────────── -->
+<div class="controls">
+    <button class="btn" id="anomalyBtn" onclick="toggleAnomaly()">Anomaly Mode</button>
+</div>
 
-    <script>
-        const CONFIG = {
-            speed: 0.00125,
-            eventAbsAngle: 55,
-            eventAbsPitch: 10,
-            maxDistance: 250,
-            chargeThreshold: 1.00
-        };
+<script>
+// ── CONFIG ────────────────────────────────────────────────────
+const CFG = {
+    speed:          0.00115,
+    eventAngleDeg:  52,
+    eventPitchDeg:  10,
+    maxDist:        250,
+    pauseMs:        1000,
+};
 
-        const EMERGENCY_PAUSE_MS = 1000; // how long the user freezes at the meeting point
+// ── STATE ─────────────────────────────────────────────────────
+let tick = 0;
+let appMode   = 'normal';   // 'normal' | 'anomaly'
+let subMode   = 'approach'; // 'approach' | 'pause' | 'recede'
+let progress  = 1.0;        // 1→0 approach, 0→−1 recede
 
-        let tick = 0;
-        let appMode = 'normal'; // 'normal' (continuous registry loop) | 'anomaly' (collapse + jam + drift)
-        let mode = 'normal'; // anomaly sub-state: 'normal' (approaching) | 'emergency' (paused at meeting point) | 'receding' (drifting away)
-        let emergencyStartTime = 0;
-        let radarEscapeProgress = 0; // drives only the bottom radar's drift-away motion
-        let userGaze = { yaw: 0, pitch: 0 };
-        let userPos = { x: 170, y: 170 };
-        let mySeedProgress = 1.0;
+let escProg   = 0;
+let pauseStart = 0;
 
-        let anonymousSeeds = [0.75, 0.45, 0.15, -0.15, -0.45, -0.75];
+// Smooth gaze state — no snapping
+let gazeYaw   = CFG.eventAngleDeg;
+let gazePitch = CFG.eventPitchDeg;
+let radarUserX, radarUserY; // set in first frame
 
-        const registryFlow = document.getElementById('registry-flow');
-        const mySeedEl = document.getElementById('my-seed');
-        const hudPanel = document.getElementById('hud-panel');
-        const hudTether = document.getElementById('hud-tether');
-        const hudTimerLabel = document.getElementById('hud-timer-label');
-        const hudTimer = document.getElementById('hud-timer');
-        const hudChargeWindow = document.getElementById('hud-charge-window');
-        const hudCharge = document.getElementById('hud-charge');
-        const hudDescLabel = document.getElementById('hud-desc-label');
-        const hudPosLabel = document.getElementById('hud-pos-label');
-        const locDown = document.getElementById('loc-down');
-        const locRight = document.getElementById('loc-right');
-        const locDist = document.getElementById('loc-dist');
-        const presentMarker = document.getElementById('present-marker');
-        const presentTitle = document.getElementById('present-title');
-        const modeToggle = document.getElementById('mode-toggle');
-        const radarInstructions = document.getElementById('radar-instructions');
-        const radarCanvas = document.getElementById('radarCanvas');
-        const ctx = radarCanvas.getContext('2d');
+// Anonymous seeds spread evenly
+const anonPhases = [0.80, 0.55, 0.30, 0.05, -0.20, -0.50, -0.75];
 
-        const anonElements = anonymousSeeds.map(() => {
-            const el = document.createElement('div');
-            el.className = 'seed anonymous';
-            registryFlow.appendChild(el);
-            return el;
-        });
+// ── DOM ───────────────────────────────────────────────────────
+const seedEl    = document.getElementById('mySeed');
+const hudEl     = document.getElementById('hud');
+const tetherEl  = document.getElementById('tether');
+const anomBtn   = document.getElementById('anomalyBtn');
+const vTimer    = document.getElementById('vTimer');
+const vCharge   = document.getElementById('vCharge');
+const chargeRow = document.getElementById('chargeRow');
+const kTimer    = document.getElementById('kTimer');
+const kPos      = document.getElementById('kPos');
+const kDesc     = document.getElementById('kDesc');
+const gDown     = document.getElementById('gDown');
+const gRight    = document.getElementById('gRight');
+const gDist     = document.getElementById('gDist');
+const radarStatus = document.getElementById('radarStatus');
+const canvas    = document.getElementById('radar');
+const ctx       = canvas.getContext('2d');
+const trackEl   = document.getElementById('seedTrack');
 
-        function clearJamVisuals() {
-            // Strip any leftover jam/blink styling so either mode starts
-            // from a clean, non-blocked look.
-            mySeedEl.classList.remove('blocked');
-            hudPanel.classList.remove('blocked');
-            hudTether.classList.remove('blocked');
-            modeToggle.classList.remove('danger');
-            hudDescLabel.textContent = '1. Event Description';
-            hudTimerLabel.textContent = '2. Registry Timer';
+// Anonymous seed elements
+const anonEls = anonPhases.map(() => {
+    const el = document.createElement('div');
+    el.className = 'seed anon';
+    trackEl.appendChild(el);
+    return el;
+});
+
+// ── HELPERS ───────────────────────────────────────────────────
+function fmtTime(sec) {
+    const a = Math.abs(sec);
+    const pre = sec >= 0 ? 'Until collapse  ' : 'Archived  ';
+    if (a < 0.05)  return 'COLLAPSE';
+    if (a >= 1000) return `${pre}${(a/1000).toFixed(2)} ks`;
+    if (a < 1)     return `${pre}${(a*1000).toFixed(0)} ms`;
+    return `${pre}${a.toFixed(2)} s`;
+}
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+// ── MODE CONTROL ──────────────────────────────────────────────
+function resetVisuals() {
+    seedEl.classList.remove('blocked');
+    hudEl.classList.remove('blocked');
+    tetherEl.classList.remove('blocked');
+    anomBtn.classList.remove('active');
+    kDesc.textContent  = 'event';
+    kTimer.textContent = 'registry timer';
+    setHudOk();
+}
+
+function setHudOk() {
+    vTimer.classList.add('ok'); vTimer.classList.remove('err');
+    vCharge.classList.add('ok'); vCharge.classList.remove('err');
+}
+
+function setHudErr() {
+    vTimer.classList.add('err'); vTimer.classList.remove('ok');
+    vCharge.classList.add('err'); vCharge.classList.remove('ok');
+}
+
+function toggleAnomaly() {
+    if (appMode === 'normal') {
+        appMode = 'anomaly';
+        subMode = 'approach';
+        progress = 1.0; escProg = 0;
+        resetVisuals();
+        chargeRow.style.display = '';
+        kPos.textContent = 'relative position';
+        anomBtn.textContent = 'Anomaly: on';
+        anomBtn.classList.add('active');
+        radarStatus.textContent = 'scanning horizon';
+    } else {
+        appMode = 'normal';
+        subMode = 'approach';
+        progress = 1.0; escProg = 0;
+        resetVisuals();
+        chargeRow.style.display = 'none';
+        kPos.textContent = 'relative position';
+        anomBtn.textContent = 'Anomaly Mode';
+        radarStatus.textContent = 'scanning horizon';
+    }
+}
+
+function enterPause() {
+    subMode = 'pause';
+    progress = 0;
+    pauseStart = performance.now();
+    seedEl.classList.add('blocked');
+    hudEl.classList.add('blocked');
+    tetherEl.classList.add('blocked');
+    anomBtn.classList.add('active'); // stays red
+    kDesc.textContent  = 'event ⚠';
+    kTimer.textContent = 'registry status';
+    setHudErr();
+    radarStatus.textContent = 'event pending — processing blocked';
+}
+
+function enterRecede() {
+    subMode = 'recede';
+    escProg = 0;
+    radarStatus.textContent = 'event missed — drifting to archive';
+}
+
+function resetCycle() {
+    subMode = 'approach';
+    progress = 1.0; escProg = 0;
+    resetVisuals();
+    chargeRow.style.display = appMode === 'anomaly' ? '' : 'none';
+    kPos.textContent = 'relative position';
+    anomBtn.textContent = appMode === 'anomaly' ? 'Anomaly: on' : 'Anomaly Mode';
+    if (appMode === 'anomaly') anomBtn.classList.add('active');
+    radarStatus.textContent = 'scanning horizon';
+}
+
+// ── MAIN LOOP ─────────────────────────────────────────────────
+function loop() {
+    tick++;
+    const W = window.innerWidth;
+    const cX = W / 2;
+
+    // ── Radar geometry ────────────────────────────────────────
+    const R  = canvas.width / 2 - 10;
+    const cx = canvas.width  / 2;
+    const cy = canvas.height / 2;
+    const evtAngle = CFG.eventAngleDeg * Math.PI / 180;
+    const evtX = cx + Math.cos(evtAngle) * R * 0.52;
+    const evtY = cy + Math.sin(evtAngle) * R * 0.52;
+
+    // ── Progress update ───────────────────────────────────────
+    if (appMode === 'anomaly') {
+        if (subMode === 'approach') {
+            progress -= CFG.speed;
+            if (progress <= 0) { progress = 0; enterPause(); }
+        } else if (subMode === 'pause') {
+            if (performance.now() - pauseStart >= CFG.pauseMs) enterRecede();
+        } else { // recede
+            escProg -= CFG.speed;
+            if (escProg <= -1.0) resetCycle();
         }
+    } else {
+        progress -= CFG.speed;
+        if (progress < -1.05) progress = 1.05;
+    }
 
-        function toggleAnomalyMode() {
-            if (appMode === 'normal') {
-                // Switch into Anomaly Mode: restart the cycle fresh so
-                // the person sees the full approach → collapse → jam →
-                // drift sequence from the beginning.
-                appMode = 'anomaly';
-                mode = 'normal';
-                mySeedProgress = 1.0;
-                radarEscapeProgress = 0;
-                clearJamVisuals();
+    // ── Blocked? ──────────────────────────────────────────────
+    const blocked = subMode === 'pause' || subMode === 'recede';
 
-                hudChargeWindow.style.display = '';
-                hudPosLabel.textContent = '4. Relative Position';
-                hudTimerLabel.textContent = '2. Registry Timer';
-                radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
+    // ── Seed X on top track ───────────────────────────────────
+    const seedX = cX + progress * cX;
+    seedEl.style.left = `${seedX}px`;
 
-                modeToggle.textContent = 'Anomaly Mode: ON';
-                modeToggle.classList.add('engaged');
-            } else {
-                // Switch back to Normal: the plain, uninterrupted registry
-                // loop — event forms in the future, collapses at the
-                // present, decays into the archive, and logs as a seed.
-                appMode = 'normal';
-                mode = 'normal';
-                mySeedProgress = 1.0;
-                radarEscapeProgress = 0;
-                clearJamVisuals();
+    // ── HUD timer ─────────────────────────────────────────────
+    if (blocked) {
+        vTimer.textContent = 'COLLAPSE';
+        vCharge.textContent = '1.42 / 1.00  MAX';
+        gDown.textContent  = '0.0°';
+        gRight.textContent = '0.0°';
+        gDist.textContent  = '0.0 m';
+    } else {
+        vTimer.textContent  = fmtTime(progress * 200);
+        vCharge.textContent = '0.62 / 1.00';
+        setHudOk();
+    }
 
-                hudChargeWindow.style.display = 'none';
-                hudPosLabel.textContent = '3. Relative Position';
-                hudTimerLabel.textContent = '2. Registry Timer';
-                radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
+    // ── Smooth gaze — organic saccade pattern ─────────────────
+    // Horizontal: slowly drifts between two targets (event and slightly off)
+    // Vertical:   gentle breathing oscillation
+    // Both update at different frequencies for natural feel
+    const t = tick * 0.008;
+    const targetYaw   = CFG.eventAngleDeg
+        + Math.sin(t * 0.7) * 18      // slow broad sweep
+        + Math.sin(t * 2.3) * 5       // quick glance
+        + Math.sin(t * 0.19) * 8;     // long drift
+    const targetPitch = CFG.eventPitchDeg
+        + Math.sin(t * 1.1) * 4       // vertical sway
+        + Math.cos(t * 0.4) * 2;      // slow nod
 
-                modeToggle.textContent = 'Anomaly Mode';
-                modeToggle.classList.remove('engaged');
-            }
-        }
+    // Smooth follow with different lag per axis
+    gazeYaw   = lerp(gazeYaw,   targetYaw,   0.025);
+    gazePitch = lerp(gazePitch, targetPitch, 0.018);
 
-        function enterEmergency() {
-            // The seed has reached the present line and tries to receive
-            // its perception packet — the packet overloads the processor,
-            // so instead of completing normally it jams right here.
-            mode = 'emergency';
-            mySeedProgress = 0;
-            emergencyStartTime = performance.now();
+    // ── Radar user position ───────────────────────────────────
+    const radarProg = subMode === 'recede' ? escProg : progress;
+    let ux, uy;
+    if (radarProg > 0) {
+        const ratio = 1.0 - radarProg;
+        ux = cx + (evtX - cx) * ratio;
+        uy = cy + (evtY - cy) * ratio;
+    } else if (radarProg === 0) {
+        ux = evtX; uy = evtY;
+    } else {
+        const ratio = -radarProg * 0.6;
+        ux = evtX + (evtX - cx) * ratio;
+        uy = evtY + (evtY - cy) * ratio;
+    }
 
-            mySeedEl.classList.add('blocked');
-            hudPanel.classList.add('blocked');
-            hudTether.classList.add('blocked');
-            modeToggle.classList.add('danger');
+    // Smooth radar user position
+    if (radarUserX === undefined) { radarUserX = ux; radarUserY = uy; }
+    radarUserX = lerp(radarUserX, ux, 0.06);
+    radarUserY = lerp(radarUserY, uy, 0.06);
 
-            hudDescLabel.textContent = '1. Event Description \u26A0';
-            hudTimerLabel.textContent = '2. Registry Status';
-            radarInstructions.textContent = 'EVENT PENDING: PROCESSING BLOCKED';
-        }
+    // ── Bearing readout ───────────────────────────────────────
+    if (!blocked) {
+        const dx = evtX - radarUserX, dy = evtY - radarUserY;
+        const pxDist = Math.sqrt(dx*dx + dy*dy);
+        const maxPx  = R * 0.52;
+        const realD  = (pxDist / maxPx) * CFG.maxDist;
+        gDist.textContent  = realD < 0.5 ? '0.0 m' : `${realD.toFixed(1)} m`;
 
-        function beginReceding() {
-            // The 1 second freeze at the meeting point is over, but the
-            // seed on the top track (and its attached HUD) stays pinned at
-            // the present line, still jammed and blinking red. Only the
-            // radar view below shows it drifting away from the meeting
-            // point, carrying the alert ring with it.
-            mode = 'receding';
-            radarEscapeProgress = 0;
+        let relR = (CFG.eventAngleDeg - gazeYaw + 360) % 360;
+        let relD = (CFG.eventPitchDeg - gazePitch + 360) % 360;
+        if (relR > 180) relR -= 360;
+        if (relD > 180) relD -= 360;
 
-            radarInstructions.textContent = 'EVENT MISSED: DRIFTING TO ARCHIVE';
-        }
+        gDown.textContent  = `${relD.toFixed(1)}°`;
+        gRight.textContent = `${relR.toFixed(1)}°`;
+    }
 
-        function resetRegistry() {
-            // Loop the anomaly cycle back to the future side so it can
-            // approach the present line normally again.
-            mode = 'normal';
-            mySeedProgress = 1.0;
-            radarEscapeProgress = 0;
+    // ── Anonymous seeds ───────────────────────────────────────
+    anonPhases.forEach((_, i) => {
+        anonPhases[i] -= CFG.speed;
+        if (anonPhases[i] < -1.05) anonPhases[i] = 1.05;
+        anonEls[i].style.left = `${cX + anonPhases[i] * cX}px`;
+    });
 
-            clearJamVisuals();
-            radarInstructions.textContent = 'DEMO MODE: SCANNING HORIZON';
-        }
+    // ── Draw radar ────────────────────────────────────────────
+    drawRadar(cx, cy, R, evtX, evtY, blocked);
 
-        function formatMetricTime(seconds) {
-            const absSec = Math.abs(seconds);
-            let prefix = seconds >= 0 ? "Until Collapse: " : "Archived: ";
+    requestAnimationFrame(loop);
+}
 
-            if (Math.abs(seconds) < 0.1) return "COLLAPSE (0.00)";
+function drawRadar(cx, cy, R, evtX, evtY, blocked) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            if (absSec >= 1000) {
-                return `${prefix}${(absSec / 1000).toFixed(2)} ks`;
-            } else if (absSec < 1) {
-                return `${prefix}${(absSec * 1000).toFixed(0)} ms`;
-            } else {
-                return `${prefix}${absSec.toFixed(2)} sec`;
-            }
-        }
+    // Grid rings
+    for (let i = 1; i <= 4; i++) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, R * i / 4, 0, Math.PI * 2);
+        ctx.strokeStyle = i === 4 ? '#1e1e1e' : '#131313';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
 
-        function updateTick() {
-            tick++;
-            const width = window.innerWidth;
-            const centerX = width / 2;
+    // Cross hairs
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.lineTo(cx, cy + R); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx - R, cy); ctx.lineTo(cx + R, cy); ctx.stroke();
 
-            const cx = radarCanvas.width / 2;
-            const cy = radarCanvas.height / 2;
-            const r = cx - 12;
+    // Gaze cone
+    const gazeRad = gazeYaw * Math.PI / 180;
+    const fov     = 38 * Math.PI / 180;
+    ctx.fillStyle = 'rgba(0,102,255,0.07)';
+    ctx.beginPath();
+    ctx.moveTo(radarUserX, radarUserY);
+    ctx.arc(radarUserX, radarUserY, R * 0.85, gazeRad - fov/2, gazeRad + fov/2);
+    ctx.closePath();
+    ctx.fill();
 
-            // Fixed spatial event location (0.55r optimized radius allocation)
-            const eventRad = CONFIG.eventAbsAngle * (Math.PI / 180);
-            const eventX = cx + Math.cos(eventRad) * (r * 0.55);
-            const eventY = cy + Math.sin(eventRad) * (r * 0.55);
+    // Gaze line
+    ctx.strokeStyle = 'rgba(0,102,255,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(radarUserX, radarUserY);
+    ctx.lineTo(
+        radarUserX + Math.cos(gazeRad) * R * 0.85,
+        radarUserY + Math.sin(gazeRad) * R * 0.85
+    );
+    ctx.stroke();
 
-            // 1. User Seed Core Movement Loop
-            if (appMode === 'anomaly') {
-                // The seed approaches the present line normally. The
-                // instant it arrives (progress reaches zero) it tries to
-                // receive its perception packet — that attempt is what
-                // overloads and jams it.
-                if (mode === 'normal') {
-                    mySeedProgress -= CONFIG.speed;
-                    if (mySeedProgress <= 0) {
-                        mySeedProgress = 0;
-                        enterEmergency();
-                    }
-                } else if (mode === 'emergency') {
-                    // Stay perfectly still at the meeting point for 1 second.
-                    if (performance.now() - emergencyStartTime >= EMERGENCY_PAUSE_MS) {
-                        beginReceding();
-                    }
-                } else if (mode === 'receding') {
-                    // Continue away from the meeting point at the same
-                    // speed it approached with — this only moves the
-                    // radar view; mySeedProgress stays at 0 so the top
-                    // track stays put.
-                    radarEscapeProgress -= CONFIG.speed;
-                    if (radarEscapeProgress <= -1.0) {
-                        resetRegistry();
-                    }
-                }
-            } else {
-                // Normal registry demo: the event forms in the future out
-                // of superposition, collapses at the present line, decays
-                // past it into the archive, and the seed logs itself with
-                // a timer and radial coordinates — a continuous, unbroken
-                // cycle that loops back around to form again.
-                mySeedProgress -= CONFIG.speed;
-                if (mySeedProgress < -1.05) {
-                    mySeedProgress = 1.05;
-                }
-            }
+    // Dashed line: user → event
+    const dx = evtX - radarUserX, dy = evtY - radarUserY;
+    const d  = Math.sqrt(dx*dx + dy*dy);
+    if (d > 2) {
+        ctx.save();
+        ctx.setLineDash([3, 5]);
+        ctx.strokeStyle = blocked
+            ? 'rgba(255,51,85,.25)'
+            : 'rgba(0,255,136,.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(radarUserX, radarUserY);
+        ctx.lineTo(evtX, evtY);
+        ctx.stroke();
+        ctx.restore();
+    }
 
-            const isBlocked = mode === 'emergency' || mode === 'receding';
-            const showAlertRing = mode === 'emergency' || mode === 'receding';
+    // Event node
+    const evtCol = blocked ? '#ff3355' : '#00ff88';
+    ctx.shadowBlur = 12; ctx.shadowColor = evtCol;
+    ctx.fillStyle = evtCol;
+    ctx.beginPath();
+    ctx.arc(evtX, evtY, 7, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
-            // When blocked, the event is pinned exactly on the present
-            // line — no drift, no wobble, it has fully stopped.
-            const mySeedX = centerX + (mySeedProgress * centerX);
-            mySeedEl.style.left = `${mySeedX - 18}px`;
+    // Subtle label for event
+    ctx.fillStyle = blocked ? 'rgba(255,51,85,.6)' : 'rgba(0,255,136,.5)';
+    ctx.font = '9px Courier New';
+    ctx.fillText('EVT', evtX + 11, evtY + 3);
 
-            if (isBlocked) {
-                // Frozen exactly at the collapse point: the counter reads
-                // zero and stays there instead of ticking down or archiving.
-                hudTimer.textContent = formatMetricTime(0);
-                hudTimer.classList.remove('highlight');
-                hudTimer.classList.add('danger');
-                hudCharge.textContent = '1.42 / 1.00 MAX';
-                hudCharge.classList.remove('highlight');
-                hudCharge.classList.add('danger');
-                locDown.textContent = '0.0°';
-                locRight.textContent = '0.0°';
-                locDist.textContent = '0.0 m';
-            } else {
-                const timeDiffSeconds = mySeedProgress * 200;
-                hudTimer.textContent = formatMetricTime(timeDiffSeconds);
-                hudTimer.classList.remove('danger');
-                hudTimer.classList.add('highlight');
-                hudCharge.textContent = '0.62 / 1.00';
-                hudCharge.classList.remove('danger');
-                hudCharge.classList.add('highlight');
-            }
+    // User node
+    ctx.shadowBlur = 8; ctx.shadowColor = '#fff';
+    ctx.fillStyle  = '#fff';
+    ctx.beginPath();
+    ctx.arc(radarUserX, radarUserY, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#0066ff';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+    ctx.shadowBlur  = 0;
 
-            // Cinematic Camera Autopilot
-            let gazeWave = (Math.sin(tick * 0.012) + 1) * 0.5;
-            userGaze.yaw = CONFIG.eventAbsAngle + (gazeWave * 50);
-            userGaze.pitch = CONFIG.eventAbsPitch + Math.cos(tick * 0.01) * 3;
+    // Blinking alert ring
+    if (blocked && Math.floor(tick / 14) % 2 === 0) {
+        ctx.beginPath();
+        ctx.arc(radarUserX, radarUserY, 13, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff3355';
+        ctx.lineWidth   = 1.5;
+        ctx.shadowBlur  = 8; ctx.shadowColor = '#ff3355';
+        ctx.stroke();
+        ctx.shadowBlur  = 0;
+    }
 
-            // Unified Spacetime Trajectory Logic (Continuous Tracking)
-            // While receding, the radar dot's motion is driven by
-            // radarEscapeProgress, independent of the top track's
-            // mySeedProgress (which stays pinned at 0).
-            const radarProgress = mode === 'receding' ? radarEscapeProgress : mySeedProgress;
+    // Outer border
+    ctx.beginPath();
+    ctx.arc(cx, cy, R, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1a1a1a';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+}
 
-            if (radarProgress > 0) {
-                let approachRatio = 1.0 - radarProgress;
-                userPos.x = cx + (eventX - cx) * approachRatio;
-                userPos.y = cy + (eventY - cy) * approachRatio;
-            } else if (radarProgress === 0) {
-                // Pinned exactly at the event: distance collapses to zero
-                // and stays there while the event remains unprocessed.
-                userPos.x = eventX;
-                userPos.y = eventY;
-            } else {
-                let escapeRatio = -radarProgress;
-                userPos.x = eventX + (eventX - cx) * escapeRatio * 0.6;
-                userPos.y = eventY + (eventY - cy) * escapeRatio * 0.6;
-            }
-
-            let dx = eventX - userPos.x;
-            let dy = eventY - userPos.y;
-            let pixelDist = Math.sqrt(dx * dx + dy * dy);
-            let maxPixelDist = r * 0.55;
-
-            let realDistance = (pixelDist / maxPixelDist) * CONFIG.maxDistance;
-            let distanceString = realDistance < 0.5 ? "0.0 m" : `${realDistance.toFixed(1)} m`;
-
-            let relativeRight = (CONFIG.eventAbsAngle - userGaze.yaw + 360) % 360;
-            let relativeDown = (CONFIG.eventAbsPitch - userGaze.pitch + 360) % 360;
-
-            if (relativeRight > 180) relativeRight -= 360;
-            if (relativeDown > 180) relativeDown -= 360;
-
-            if (!isBlocked) {
-                locDown.textContent = `${relativeDown.toFixed(1)}°`;
-                locRight.textContent = `${relativeRight.toFixed(1)}°`;
-                locDist.textContent = distanceString;
-            }
-
-            // 3. Anonymous Background Seeds Lifecycle Loop
-            // These keep flowing through the registry normally regardless of
-            // mode — only the overloaded event is stuck, not the whole system.
-            anonymousSeeds.forEach((pos, index) => {
-                anonymousSeeds[index] -= CONFIG.speed;
-                if (anonymousSeeds[index] < -1.05) anonymousSeeds[index] = 1.05;
-
-                const anonX = centerX + (anonymousSeeds[index] * centerX);
-                anonElements[index].style.left = `${anonX - 18}px`;
-            });
-
-            // 4. Render Canvas Radar Space
-            renderRadar(cx, cy, r, eventX, eventY, isBlocked, showAlertRing);
-
-            requestAnimationFrame(updateTick);
-        }
-
-        function renderRadar(cx, cy, r, eventX, eventY, isBlocked, showAlertRing) {
-            ctx.clearRect(0, 0, radarCanvas.width, radarCanvas.height);
-
-            // Radar Tracking Rings Grid
-            ctx.strokeStyle = '#161616';
-            ctx.lineWidth = 1;
-            for (let i = 1; i <= 3; i++) {
-                ctx.beginPath();
-                ctx.arc(cx, cy, (r / 3) * i, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            // Gaze Field of View Cone
-            const gazeRad = userGaze.yaw * (Math.PI / 180);
-            const fov = 40 * (Math.PI / 180);
-
-            ctx.fillStyle = 'rgba(0, 102, 255, 0.12)';
-            ctx.beginPath();
-            ctx.moveTo(userPos.x, userPos.y);
-            ctx.arc(userPos.x, userPos.y, r * 0.8, gazeRad - fov / 2, gazeRad + fov / 2);
-            ctx.closePath();
-            ctx.fill();
-
-            // Direct Vector Gaze Axis Line
-            ctx.strokeStyle = '#0066ff';
-            ctx.lineWidth = 2.5;
-            ctx.beginPath();
-            ctx.moveTo(userPos.x, userPos.y);
-            ctx.lineTo(userPos.x + Math.cos(gazeRad) * (r * 0.8), userPos.y + Math.sin(gazeRad) * (r * 0.8));
-            ctx.stroke();
-
-            // Event Matrix Node — green when processing normally, red when
-            // blocked by an overload
-            const eventColor = isBlocked ? '#ff2b2b' : '#00ff66';
-            ctx.fillStyle = eventColor;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = eventColor;
-            ctx.beginPath();
-            ctx.arc(eventX, eventY, 8, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
-
-            // User Profile Vector Node (White Matrix Dot)
-            ctx.fillStyle = '#ffffff';
-            ctx.strokeStyle = '#0066ff';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(userPos.x, userPos.y, 7, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-
-            // Blinking alert ring around the user seed — appears the
-            // instant it reaches the meeting point, and keeps following
-            // the user while it pauses there and then drifts away.
-            if (showAlertRing) {
-                const blinkOn = Math.floor(tick / 15) % 2 === 0;
-                if (blinkOn) {
-                    ctx.strokeStyle = '#ff2b2b';
-                    ctx.lineWidth = 2;
-                    ctx.shadowBlur = 10;
-                    ctx.shadowColor = '#ff2b2b';
-                    ctx.beginPath();
-                    ctx.arc(userPos.x, userPos.y, 14, 0, Math.PI * 2);
-                    ctx.stroke();
-                    ctx.shadowBlur = 0;
-                }
-            }
-        }
-
-        updateTick();
-    </script>
+loop();
+</script>
 </body>
 </html>
