@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Seed of Reality</title>
+<title>Seed of Reality · Navigator</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -123,7 +123,7 @@
 <body>
 
 <header>
-  <div class="brand"><span class="os"><b>BaseReal-OS</b> // </span>Seed of Reality</div>
+  <div class="brand"><span class="os"><b>BaseReal-OS</b> // </span>Seed of Reality · Nav</div>
   <button class="mode" id="modeBtn" aria-pressed="false"><span class="led"></span><span id="modeText">Anomaly: off</span></button>
 </header>
 
@@ -166,7 +166,8 @@
 
 <footer>
   <b>Green</b> is your seed with its event frame. Dark seeds belong to other users.
-  The timer reaches 0 exactly when you arrive at the meeting point; then the seed collapses and the sensors keep running.
+  <b>Navigator view:</b> you stay fixed on the map, right under PRESENT; the city moves and the meeting point comes to you.
+  The timer reaches 0 exactly when the meeting point reaches you; then the seed collapses and the sensors keep running.
   In anomaly mode the seed gets stuck in the cache.
   <b>Hold the track to stop time, drag to move it.</b>
 </footer>
@@ -186,7 +187,6 @@ const TRACK_Y = 62;   // the meeting point on the track (height inside the stage
 const EVT = [0, -400];                                              // meeting point (on the bridge)
 const ROUTE  = [[-320, 160], [-320, -160], [0, -160], [0, -400]];   // 880 m to the meeting point
 const BEYOND = [[0, -400], [0, -480], [320, -480]];                 // 400 m after it
-const VIEW = { x0: -390, x1: 390, y0: -545, y1: 225 };             // area that always fits on screen
 const RIVER_Y = -400, RIVER_W = 26;
 const riverY = x => RIVER_Y + 12 * Math.sin(x / 95);
 
@@ -475,24 +475,35 @@ function drawTrack() {
   c.beginPath(); c.moveTo(sx, ty + 10); c.lineTo(sx, hudEl.offsetTop); c.stroke();
 }
 
-// ── DRAW: MAP (top view, dark street map) ─────────────────────
+// ── DRAW: MAP (navigator view: YOU stay fixed under PRESENT, the world moves to you) ──
 const PARKS = [[-2, 1], [-3, 1], [2, -1], [3, 0], [-4, -3], [1, 1], [2, -6]];   // block indices (80 m grid)
-function drawMap() {
+const MAP_AHEAD = 300;   // metres visible ahead of you
+let camRot = null;       // world → screen rotation, smoothed: your walking direction is always up
+function drawMap(dt) {
   const w = mapBox.clientWidth, h = mapBox.clientHeight;
   if (!w || !h) return;
   fitCanvas(mapCv, mctx, w, h);
   const c = mctx;
-  const sc = Math.min(w / (VIEW.x1 - VIEW.x0), h / (VIEW.y1 - VIEW.y0));
-  const ox = w / 2 - sc * (VIEW.x0 + VIEW.x1) / 2, oy = h / 2 - sc * (VIEW.y0 + VIEW.y1) / 2;
-  const P = (x, y) => [ox + x * sc, oy + y * sc];
-  const wx0 = -ox / sc, wx1 = (w - ox) / sc, wy0 = -oy / sc, wy1 = (h - oy) / sc;
+  const ux = w / 2, uy = h * 0.8;                // YOU: fixed, on the PRESENT line
+  const sc = uy / MAP_AHEAD;
+  const target = -Math.PI / 2 - Math.atan2(user.dy, user.dx);
+  camRot = camRot === null ? target : camRot + angDiff(target, camRot) * smooth(0.06, dt);
+  const cs = Math.cos(camRot), sn = Math.sin(camRot);
+  const P = (x, y) => { const rx = x - user.x, ry = y - user.y; return [ux + (rx * cs - ry * sn) * sc, uy + (rx * sn + ry * cs) * sc]; };
+  const R = Math.hypot(w, h) / sc;               // world radius that covers the screen at any rotation
+  const wx0 = user.x - R, wx1 = user.x + R, wy0 = user.y - R, wy1 = user.y + R;
   const G = 80;
   const stuck = appMode === "anomaly" && progress <= 0;
+  function quad(x0, y0, x1, y1) {
+    const a = P(x0, y0), b = P(x1, y0), d = P(x1, y1), e = P(x0, y1);
+    c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(d[0], d[1]); c.lineTo(e[0], e[1]); c.closePath(); c.fill();
+  }
+  function seg(x0, y0, x1, y1) { const a = P(x0, y0), b = P(x1, y1); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); }
 
   // ground + parks
   c.fillStyle = "#11171d"; c.fillRect(0, 0, w, h);
   c.fillStyle = "#0f2219";
-  for (const [i, j] of PARKS) { const [x, y] = P(i * G + 6, j * G + 6); c.fillRect(x, y, (G - 12) * sc, (G - 12) * sc); }
+  for (const [i, j] of PARKS) quad(i * G + 6, j * G + 6, i * G + G - 6, j * G + G - 6);
 
   // streets: minor every 80 m, major every 240 m
   for (let pass = 0; pass < 2; pass++) {
@@ -500,13 +511,13 @@ function drawMap() {
       const major = gx % 240 === 0;
       if ((pass === 1) !== major) continue;
       c.strokeStyle = major ? "#2a3440" : "#1c242d"; c.lineWidth = Math.max(2, (major ? 14 : 7) * sc);
-      const [x] = P(gx, 0); c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke();
+      seg(gx, wy0, gx, wy1);
     }
     for (let gy = Math.floor(wy0 / G) * G; gy <= wy1; gy += G) {
       const major = gy % 240 === 0;
       if ((pass === 1) !== major) continue;
       c.strokeStyle = major ? "#2a3440" : "#1c242d"; c.lineWidth = Math.max(2, (major ? 14 : 7) * sc);
-      const [, y] = P(0, gy); c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke();
+      seg(wx0, gy, wx1, gy);
     }
   }
 
@@ -518,10 +529,10 @@ function drawMap() {
   c.closePath(); c.fill();
 
   // bridges
+  c.fillStyle = "#34404d";
   for (let bx = Math.floor(wx0 / 240) * 240; bx <= wx1; bx += 240) {
-    const [x, y] = P(bx, riverY(bx));
-    c.fillStyle = "#34404d";
-    c.fillRect(x - 8 * sc, y - (RIVER_W + 6) * sc, 16 * sc, (2 * RIVER_W + 12) * sc);
+    const y = riverY(bx);
+    quad(bx - 8, y - RIVER_W - 6, bx + 8, y + RIVER_W + 6);
   }
 
   // route: walked part grey, remaining part blue
@@ -552,6 +563,13 @@ function drawMap() {
   strokePath(walked, ROUTE_LEN, "#3d8bff", 5);
   strokePath(Math.max(walked, ROUTE_LEN), total, "rgba(61,139,255,.35)", 4);
 
+  // the PRESENT line continues down from the track and ends in you
+  c.save();
+  c.strokeStyle = "rgba(0,229,255,.45)"; c.lineWidth = 1.5; c.setLineDash([6, 6]);
+  c.shadowColor = "#00e5ff"; c.shadowBlur = 8;
+  c.beginPath(); c.moveTo(ux, 0); c.lineTo(ux, uy); c.stroke();
+  c.restore();
+
   // meeting point: a green dot with a soft pulsing halo
   const [ex, ey] = P(EVT[0], EVT[1]);
   const mcol = stuck ? "255,51,85" : "0,255,136";
@@ -566,15 +584,14 @@ function drawMap() {
   c.fillStyle = "rgba(6,9,11,.85)"; c.fillRect(ex - 26 - lw, ey - 11, lw, 22);
   c.fillStyle = `rgb(${mcol})`; c.fillText(label, ex - 19 - lw, ey);
 
-  // you: blue dot + line-of-sight beam
-  const [ux, uy] = P(user.x, user.y);
-  const beamL = 80, fov = 0.6;
+  // you: blue dot + line-of-sight beam (never moves on screen; only the gaze swings)
+  const beamL = 80, fov = 0.6, look = heading + camRot;
   const beam = c.createRadialGradient(ux, uy, 4, ux, uy, beamL);
   beam.addColorStop(0, "rgba(61,139,255,.55)"); beam.addColorStop(1, "rgba(61,139,255,0)");
   c.fillStyle = beam;
-  c.beginPath(); c.moveTo(ux, uy); c.arc(ux, uy, beamL, heading - fov / 2, heading + fov / 2); c.closePath(); c.fill();
+  c.beginPath(); c.moveTo(ux, uy); c.arc(ux, uy, beamL, look - fov / 2, look + fov / 2); c.closePath(); c.fill();
   c.strokeStyle = "rgba(61,139,255,.8)"; c.lineWidth = 1.5;                       // centre of the line of sight
-  c.beginPath(); c.moveTo(ux, uy); c.lineTo(ux + Math.cos(heading) * beamL, uy + Math.sin(heading) * beamL); c.stroke();
+  c.beginPath(); c.moveTo(ux, uy); c.lineTo(ux + Math.cos(look) * beamL, uy + Math.sin(look) * beamL); c.stroke();
   c.fillStyle = "rgba(61,139,255,.18)"; c.beginPath(); c.arc(ux, uy, 18, 0, Math.PI * 2); c.fill();
   c.save(); c.shadowColor = "rgba(0,0,0,.6)"; c.shadowBlur = 6;
   c.fillStyle = "#fff"; c.beginPath(); c.arc(ux, uy, 9, 0, Math.PI * 2); c.fill(); c.restore();
@@ -584,8 +601,12 @@ function drawMap() {
   }
 
   // compass (top-right) + scale bar (bottom-right): both away from the route and the label
-  c.fillStyle = "rgba(6,9,11,.8)"; c.beginPath(); c.arc(w - 24, 24, 15, 0, Math.PI * 2); c.fill();
-  c.fillStyle = "#d8dee6"; c.textAlign = "center"; c.font = "700 13px " + FONT; c.fillText("N", w - 24, 25);
+  // compass turns with the map: the red tip always points north
+  c.fillStyle = "rgba(6,9,11,.8)"; c.beginPath(); c.arc(w - 24, 24, 17, 0, Math.PI * 2); c.fill();
+  c.save(); c.translate(w - 24, 24); c.rotate(camRot);
+  c.fillStyle = "#ff3355"; c.beginPath(); c.moveTo(0, -16); c.lineTo(-4, -10); c.lineTo(4, -10); c.closePath(); c.fill();
+  c.fillStyle = "#d8dee6"; c.textAlign = "center"; c.textBaseline = "middle"; c.font = "700 13px " + FONT; c.fillText("N", 0, 1);
+  c.restore();
   const barM = 100, barPx = barM * sc, bx1 = w - 12, bx0 = bx1 - barPx;
   c.strokeStyle = "#d8dee6"; c.lineWidth = 2;
   c.beginPath(); c.moveTo(bx0, h - 14); c.lineTo(bx1, h - 14);
@@ -604,7 +625,7 @@ function loop(now) {
   syncLook();
   updateHud();
   drawTrack();
-  drawMap();
+  drawMap(dt);
 }
 resetCycle();
 requestAnimationFrame(loop);
