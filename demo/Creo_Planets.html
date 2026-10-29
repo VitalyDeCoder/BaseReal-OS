@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -225,7 +225,7 @@ input.tilt::-webkit-slider-runnable-track{background:linear-gradient(90deg,rgba(
 }
 
 /* ---------- layout fixes after review ---------- */
-#skip{top:14px;right:146px}
+#skip{top:auto;bottom:14px;right:14px} /* bottom right: the top row holds EN · RO · RU */
 #galbar{position:absolute;left:14px;top:62px;min-width:0;width:auto;max-width:300px}
 #card{width:320px;background:rgba(7,13,24,.86)}
 .toast.glass{background:rgba(7,13,24,.86)}
@@ -272,11 +272,13 @@ input.tilt::-webkit-slider-runnable-track{background:linear-gradient(90deg,rgba(
 @media (max-width:1100px) and (min-width:601px){ body.cfg #caption{left:14px;transform:none;width:calc(100vw - 350px)} }
 @media (max-width:900px){ #player{top:106px} body.demo #panel{top:156px;max-height:calc(100% - 172px)} }
 @media (max-width:600px){ #player{top:100px;padding:5px 6px} #player .pinfo{min-width:84px;font-size:10px} body.demo #caption{top:150px} body.demo #panel{top:auto} }
-@media (max-width:900px){ #galbar{top:108px} #panel{width:290px} #skip{top:14px;right:146px} }
+@media (max-width:900px){ #galbar{top:108px} #panel{width:290px} }
 @media (max-width:600px){
   #topL .btn span:not(.ic){display:none}
   #topL .btn{padding:0;width:38px;height:38px;justify-content:center}
-  #skip{right:146px;padding:0 12px;height:38px}
+  #skip{right:10px;bottom:10px;padding:0 14px;height:40px}
+  #topR{gap:6px}
+  #langs button{min-width:30px;padding:0 5px}
   #skip span:not(.ic){font-size:11px}
   #crumb{top:60px}
   #caption{top:100px;bottom:auto;background:rgba(3,6,14,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid var(--line)}
@@ -292,6 +294,13 @@ input.tilt::-webkit-slider-runnable-track{background:linear-gradient(90deg,rgba(
   #panel{bottom:10px;max-height:56%;left:10px;right:10px;width:auto}
   #galbar{top:auto;bottom:62px;left:10px;right:10px;max-width:none;font-size:11px;padding:7px 10px}
 }
+/* language switch: EN · RO · RU */
+#topR{z-index:5} /* above the title screen and the pause veil, so the language can be picked right away */
+#langs{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(10,20,36,.62);border:1px solid var(--line2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#langs button{font:600 11.5px var(--ui);letter-spacing:.08em;color:var(--mut);background:transparent;border:1px solid transparent;border-radius:999px;min-width:32px;height:30px;padding:0 7px;cursor:pointer;transition:color .2s,background .2s,border-color .2s,box-shadow .2s}
+#langs button:hover{color:var(--text);background:rgba(98,216,255,.1)}
+#langs button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+#langs button.on{color:var(--cyan2);background:rgba(98,216,255,.18);border-color:rgba(98,216,255,.6);box-shadow:0 0 12px rgba(98,216,255,.35)}
 </style>
 </head>
 <body>
@@ -305,7 +314,7 @@ input.tilt::-webkit-slider-runnable-track{background:linear-gradient(90deg,rgba(
   <div id="crumb" class="fade off"><div class="l1" id="crumb1"></div><div class="l2" id="crumb2"></div></div>
   <div id="topR">
     <button id="btnReplay" class="btn icon pe hidden" data-tip="tip_replay">⟲</button>
-    <button id="btnLang" class="btn icon pe" title="RU / EN">EN</button>
+    <div id="langs" class="pe" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
     <button id="btnSound" class="btn icon pe" data-tip="tip_sound">🔊</button>
     <button id="btnHelp" class="btn icon pe" data-tip="tip_help">?</button>
   </div>
@@ -494,10 +503,11 @@ function planetType(Me, TK, inHZ) {
 }
 
 /* ---------------- formatting ---------------- */
-let LANG = 'ru';
+let LANG = 'en'; // every start is in English; EN · RO · RU buttons switch
+const LOCALE = { en: 'en-US', ro: 'ro-RO', ru: 'ru-RU' };
 function nf(v, d = 2) {
   if (!isFinite(v)) return '∞';
-  return v.toLocaleString(LANG === 'ru' ? 'ru-RU' : 'en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  return v.toLocaleString(LOCALE[LANG], { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 function sig(v, n = 3) {
   if (!isFinite(v)) return '∞';
@@ -511,7 +521,7 @@ function sig(v, n = 3) {
   return nf(v, Math.min(d, 4));
 }
 function supNum(e) { const m = { '-': '⁻', '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹' }; return String(e).split('').map(c => m[c] || c).join(''); }
-function intf(v) { return Math.round(v).toLocaleString(LANG === 'ru' ? 'ru-RU' : 'en-US'); }
+function intf(v) { return Math.round(v).toLocaleString(LOCALE[LANG]); }
 function fmtDur(s) { // seconds → human
   if (!isFinite(s)) return '∞';
   const a = Math.abs(s);
@@ -1838,7 +1848,7 @@ const S = {
   cardOff: false, renaming: null, cfgHover: null, cfgDrag: null, cfgPts: {}, twist: null, speedPrev: null
 };
 function setSpeed(i) { S.speedV = clamp(i, 0, SPEEDS.length - 1); S.speed = SPEEDS[S.speedV]; $('spd').value = S.speedV; updateTimebar(); }
-function t(k, ...a) { let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.ru[k] ?? k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; }
+function t(k, ...a) { let s = (I18N[LANG] && I18N[LANG][k]) ?? I18N.en[k] ?? k; a.forEach((v, i) => { s = s.split('{' + i + '}').join(v); }); return s; }
 
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 1.75);
@@ -1892,10 +1902,11 @@ function toast(html, dur = 8.5) {
   el.onclick = kill; setTimeout(kill, dur * 1000);
 }
 function hint(key, force) { if (S.demo && !force) return; if (S.seen.has(key)) return; S.seen.add(key); toast(t(key)); }
-let capTimer = 0;
+let capTimer = 0, capKeys = null;
 function caption(tk, xk) {
   const c = $('caption'), was = c.classList.contains('on');
   clearTimeout(capTimer); c.classList.remove('on');
+  capKeys = tk ? [tk, xk] : null;
   if (!tk) return;
   S.capStart = S.time; S.capLen = t(xk).replace(/<[^>]+>/g, '').length;
   capTimer = setTimeout(() => { $('capT').innerHTML = t(tk); $('capX').innerHTML = t(xk); c.classList.add('on'); }, was ? 450 : 0);
@@ -3263,6 +3274,132 @@ const I18N = {
 <span class="f">click a body</span><span>Select and fly to it</span><span class="f">double-click</span><span>Whole-system overview</span>
 <span class="f">drag a ring</span><span>While configuring: blue — orbit, orange — synchronous orbit</span><span class="f">twist the tool</span><span>Take it by the ring or tail and turn — axial tilt</span><span class="f">name</span><span>The “Name” field while creating, or ✎ Name in the card</span><span class="f">Esc · Space</span><span>Cancel · pause</span><span class="f">demo: tap · swipe</span><span>Pause · chapters back/forward (or ⏮ ❚❚ ⏭, ← →)</span><span class="f">⟲</span><span>Watch the demo again</span></div>
 <p>Body sizes and distances on screen are compressed so everything fits. Orbital periods, days and seasons are real. Solar System: R and T computed from measured radii and GM.</p>`
+  },
+  ro: {
+    home: 'Acasă', galaxy: 'Galaxia', cancel: 'Anulează', skip: 'Sari peste', start: 'Privește creația', free: 'Creează imediat', real: 'date reale',
+    title_sub: 'Crearea stelelor, planetelor și lunilor în <b>sistemul LT</b>: fiecare corp este definit de doar două numere — raza <b>R</b> și perioada <b>T</b> a unei orbite chiar la suprafață.',
+    title_note: 'Sunetul pornește după primul clic · mouse — rotire · rotiță — zoom',
+    title_saved: 'Sisteme stelare salvate: {0}',
+    no_gl: 'WebGL nu este disponibil — galaxia și gaura neagră nu vor fi afișate, dar sistemele stelare funcționează.',
+    tip_home: 'Acasă — în Sistemul Solar. Și acolo puteți crea planete, luni și luni ale lunilor.',
+    tip_galaxy: 'Galaxia: stelele voastre și intrarea în gaura neagră — forja stelelor.',
+    tip_sound: 'Sunet: pornit / oprit', tip_help: 'Fițuică: formulele LT și comenzile',
+    tip_speed: 'Ritmul timpului. Perioadele orbitale și zilele sunt reale — se schimbă doar viteza de redare.',
+    tip_star: 'Plonjați în gaura neagră supermasivă din centrul galaxiei și făuriți o stea nouă.',
+    tip_planet: 'Alegeți o orbită în jurul stelei și creați o planetă.',
+    tip_moon: 'Creați o lună pentru planeta sau luna selectată — chiar și o lună a unei luni.',
+    tip_moon_no: 'Mai întâi selectați o planetă sau o lună. Dacă butonul este inactiv, sfera Hill a corpului e prea mică și luna nu se va menține.',
+    tip_over: 'Arată tot sistemul (sau dublu clic)',
+    tip_R: '<b>R</b> — raza stelei. La același T, câmpul crește ca R³: <span class="f">μ = 4π²R³/T²</span>.',
+    tip_T: '<b>T</b> — perioada unei orbite chiar la suprafață. Cu cât T e mai mic, cu atât câmpul e mai puternic: <span class="f">μ = 4π²R³/T²</span>. La Soare T ≈ 10.000 s.',
+    tip_a: 'Raza orbitei. Legea 3/2: <span class="f">P = T★·(a/R★)<sup>3/2</sup></span> — cu cât mai aproape de stea, cu atât anul e mai scurt.',
+    tip_am: 'Raza orbitei lunii, în raze ale corpului-gazdă. Perioada ei: <span class="f">P = T·(a/R)<sup>3/2</sup></span>. Limita este sfera Hill.',
+    tip_Rp: 'Raza corpului. În LT masa este geometrie: M = 4π²R³; la același T, și câmpul μ crește ca R³.',
+    tip_Tp: '<b>T</b> — perioada unei orbite la suprafață. T mai mic → câmp mai puternic: <span class="f">g = 4π²R/T²</span>. Pământul: T ≈ 5061 s → 9,8 m/s².',
+    tip_h: 'Înălțimea orbitei sincrone (în raze ale corpului): un satelit de acolo stă mereu deasupra aceluiași punct. Ziua siderală <span class="f">= T·h<sup>3/2</sup></span>. Orbită mai înaltă → zile și nopți mai lungi, mai puține zile pe an.',
+    tip_tilt: 'Înclinarea axei față de planul orbitei. Ea aduce iarna și vara; la 0° nu există anotimpuri.',
+    cr_galaxy: 'Galaxia', cr_protogal: 'Se naște o protogalaxie', cr_galaxy2: 'Galaxie spirală tânără', cr_center: 'Centrul galaxiei', cr_bh: 'Gaură neagră supermasivă',
+    cr_inside: 'Dincolo de orizontul evenimentelor', cr_forge: 'Forja stelelor', cr_home: 'Acasă', cr_system: 'Sistem stelar',
+    act_star: 'Creează o stea', act_planet: 'Planetă', act_moon: 'Lună', act_over: 'Panoramă',
+    speed_fmt: '1 s = {0}', date_fmt: 'anul {0} · ziua {1}',
+    gal_info: '{0}<br>timp scurs: <b>{1} mil. ani</b><br>stele: <b>~220 km/s</b> · o rotație: <b>~230 mil. ani</b>',
+    gal_rate: 'timp: <b>1 s = 1 mil. ani</b>', gal_rate_fast: 'timp accelerat: <b>1 s = {0} mil. ani</b>',
+    k_R: 'R — raza', k_T: 'T — perioada la suprafață', k_mu: 'Câmpul μ', k_mass: 'μ în mase solare', k_L: 'Luminozitate', k_Teff: 'Temperatura suprafeței',
+    k_g: 'Gravitația g', k_hz: 'Zona locuibilă', k_life: 'Durata de viață', k_massE: 'μ în mase terestre', k_a: 'Orbita a', k_year: 'Anul', k_month: 'Luna siderală',
+    k_sync: 'Orbita sincronă', k_day: 'Ziua', k_dpy: 'Zile pe an', k_tilt: 'Înclinarea axei', k_temp: 'Temperatura (estimare)', k_moons: 'Luni', k_syncKm: 'Orbita sincronă',
+    u_km: 'km', u_s: 's', u_mu: 'km³/s²', u_ms2: 'm/s²', u_au: 'UA', u_min: 'min', u_h: 'h', u_d: 'zile', u_y: 'ani', u_my: 'mil. ani', u_gy: 'mld. ani',
+    locked: 'blocaj mareic: ziua = luna siderală', locked_s: '= luna siderală (blocaj)', locked_p: 'blocaj mareic: zi veșnică pe o parte', locked_p_s: '= anul (blocaj)',
+    sea_none: 'fără anotimpuri', sea_mild: 'anotimpuri blânde', sea_strong: 'anotimpuri puternice', sea_extreme: 'anotimpuri extreme',
+    sea_sum: 'Nord: <b>vară</b> · Sud: iarnă', sea_win: 'Nord: <b>iarnă</b> · Sud: vară', sea_eq: 'Echinocțiu: primăvară sau toamnă',
+    sea_zen: 'steaua la zenit la {0}° {1}', north: 'lat. N', south: 'lat. S',
+    too_fast: 'Orbitează prea repede pentru ritmul actual al timpului — încetiniți timpul (jos, în dreapta).',
+    sl_R: 'Raza R', sl_T: 'Perioada la suprafață T', sl_a: 'Orbita a', sl_am: 'Orbita a', sl_Rp: 'Raza R', sl_h: 'Orbita sincronă h', sl_tilt: 'Înclinarea axei',
+    field_x: 'câmp ×{0} față de Soare',
+    p_star: 'Forja stelelor', p_planet: 'Planetă nouă', p_moon: 'Lună nouă', n_seed: 'Geneza-{0}', new_planet: 'Planetă nouă', new_moon: 'Lună nouă', around: 'gazdă: {0}',
+    ignite: 'Aprinde steaua', create_planet: 'Creează planeta', create_moon: 'Creează luna',
+    h_T: '<b>Cu cât T e mai mic, cu atât câmpul e mai puternic.</b> <span class="f">μ = 4π²R³/T²</span> — fără constanta G: fiecare corp își stabilește singur câmpul.',
+    h_Tp: '<b>T mai mic — gravitație mai puternică:</b> <span class="f">g = 4π²R/T²</span>. Pentru Pământ, T = 5061 s dă 9,8 m/s².',
+    h_R: 'Raza dă geometria: masa în LT este <span class="f">M = 4π²R³</span>, iar la același T și câmpul crește ca <span class="f">R³</span>.',
+    h_a: '<b>Cu cât mai aproape de stea, cu atât anul e mai scurt.</b> Legea 3/2: <span class="f">P = T★·(a/R★)<sup>3/2</sup></span>.',
+    h_am: 'Perioada unei luni urmează tot legea 3/2: <span class="f">P = T·(a/R)<sup>3/2</sup></span>, cu T și R ale corpului-gazdă.',
+    h_sync: '<b>Orbita sincronă</b> — înălțimea la care un satelit stă deasupra aceluiași punct. Orbită mai înaltă → rotație mai lentă → <b>zile și nopți mai lungi</b> și mai puține zile pe an.',
+    h_tilt: '<b>Înclinarea axei aduce iarna și vara.</b> Emisfera întoarsă spre stea primește mai multă lumină. După naștere, urmăriți calotele polare.',
+    h_season: 'Axa își păstrează direcția în spațiu, așa că de-a lungul anului spre stea se întoarce când nordul, când sudul. ☀ și ❄ de pe orbită marchează solstițiile. Calotele polare cresc iarna și se topesc vara.',
+    h_fast: 'Corpul orbitează prea repede pentru acest ritm. Încetiniți timpul jos, în dreapta, ca să-l vedeți.',
+    h_place: 'Mișcați mouse-ul dinspre stea: eticheta arată durata anului. Faceți clic pentru a alege orbita.',
+    h_placem: 'Mișcați mouse-ul dinspre corp și faceți clic pentru a alege orbita lunii.',
+    h_hz: '<b>Inelul verde este zona locuibilă:</b> aici apa de la suprafață poate rămâne lichidă.',
+    h_hill: 'O lună se menține doar în interiorul <b>sferei Hill</b>: <span class="f">r_H = a·∛(μ/3μ★)</span>. Mai departe, steaua o fură.',
+    h_moonmoon: 'Lunile lunilor aproape că nu există în natură: mareele le distrug repede orbitele. Dar aici se poate!',
+    h_newstar: 'S-a născut o stea! Apăsați <b>＋ Planetă</b> mai jos, ca să-i dați o planetă.',
+    h_home: '<b>Acasă — Sistemul Solar.</b> Fiecare corp e definit doar de R și T. Faceți clic pe o planetă ca s-o priviți de aproape; adăugați propriile planete și luni.',
+    h_galaxy: 'Stelele zboară cu ~220 km/s, dar galaxia e uriașă: o rotație durează ~230 mil. ani. Aici 1 s = 1 mil. ani. Faceți clic pe centru — acolo e forja stelelor.',
+    h_lt: 'Aceasta este forja stelelor. Mișcați <b>R</b> și <b>T</b>: masa, luminozitatea și culoarea viitoarei stele decurg din ele.',
+    h_free: 'Faceți clic pe centrul strălucitor al galaxiei — acolo e o gaură neagră, forja stelelor. Sau <b>⌂ Acasă</b> — în Sistemul Solar.',
+    w_bd: 'Sub 0,075 M☉ fuziunea nu pornește: se obține o pitică brună.',
+    w_massive: 'Peste ~120 M☉ steaua își aruncă învelișul cu propria lumină. Aici se poate.',
+    w_wd: 'Rază foarte mică la masă mare — o pitică albă densă.',
+    w_breakup: 'Ziua e aproape egală cu T: ecuatorul se mișcă cu viteză orbitală — corpul e gata să se rupă!',
+    w_moonmoon: 'O lună a unei luni: în natură asemenea orbite sunt instabile, dar aici se poate.', w_heavier: 'Câmpul lunii e mai puternic decât al gazdei sale — în natură, ea ar fi centrul.', w_roche: 'Sub limita Roche (~{0} R): mareele vor rupe luna — așa se nasc inelele.', w_westeast: 'Ziua e mai lungă decât anul: steaua se târăște pe cer de la vest la est.',
+    w_hill_small: 'Sfera Hill a acestui corp e prea mică — luna nu se va menține: un vecin mai masiv o va fura.',
+    you_are_here: 'Sunteți aici',
+    tip_replay: 'Privește demo-ul din nou', tip_prev: 'Înapoi: la începutul capitolului, încă o dată — la cel anterior (sau glisare la dreapta, ←)', tip_pause: 'Pauză (sau atingeți ecranul, Spațiu)', tip_play: 'Continuă', tip_next: 'Înainte: capitolul următor (sau glisare la stânga, →)', tip_exit: 'Ieșiți din demo și creați singuri',
+    paused: 'Pauză · atingeți pentru a continua',
+    ch_g1: 'Protogalaxia', ch_g2: 'Viteze reale', ch_bh: 'Gaura neagră', ch_forge: 'Forja stelelor', ch_ignite: 'Aprinderea', ch_orbit: 'Orbita planetei', ch_day: 'Zile și anotimpuri', ch_moon: 'Luna', ch_end: 'Rândul vostru',
+    tip_cardx: 'Ascunde fișa (revine când selectați un corp)', tip_rename: 'Dați un nume creației voastre',
+    name_hint: 'gol — va fi „{0}”; mai târziu — ✎ Nume în fișă',
+    nm_star: 'Numele stelei', nm_planet: 'Numele planetei', nm_moon: 'Numele lunii', nm_ph: 'scrieți un nume…', rename: 'Nume',
+    nm_ask: 'Cum o veți numi? Scrieți un nume și apăsați Enter',
+    h_dragrings: 'Totul se poate face cu mâna, direct în scenă: inelul <b>albastru</b> e orbita (durata anului), cel <b>portocaliu</b> — orbita sincronă (durata zilei). Iar instrumentul însuși prindeți-l de inel sau de coadă și <b>rotiți-l</b>, ca în mână — aceasta e înclinarea axei.',
+    drag_tilt: 'înclinarea axei <b>{0}°</b> · {1} — rotiți',
+    drag_sync: 'orbita sincronă <b>{0} R</b> · ziua: <b>{1}</b> — trageți',
+    drag_orbit: 'orbita <b>{0} UA</b> · anul: <b>{1}</b> — trageți',
+    drag_orbit_m: 'orbita <b>{0} R</b> · perioada: <b>{1}</b> — trageți',
+    h_slowed_day: 'Lângă o planetă timpul <b>încetinește singur</b>, ca ziua și noaptea să se schimbe în ritmul lor real, fără comprimare. Viteza e pe bara din dreapta jos.',
+    h_born: 'Camera s-a mutat la corpul în jurul căruia se rotește nou-născutul. Scrieți-i numele direct în fișă — sau păstrați-l pe cel automat.', you_sub: 'în interiorul găurii negre · aici se nasc stelele', h_slowed: 'Timpul a fost încetinit la <b>1 s = {0}</b>, ca să se vadă corpul.', h_yourturn: '<b>Rândul vostru!</b> ＋ Planetă — o planetă nouă, ＋ Lună — o lună pentru corpul selectat, ⌂ Acasă — Sistemul Solar.', w_bdplanet: 'Peste ~13 mase joviene — aceasta e deja o pitică brună, nu o planetă.', w_starplanet: 'Peste 0,075 mase solare, în miez se aprinde fuziunea: aceasta e deja o stea!', k_seasons: 'Anotimpuri', st_L: 'Pitică L rece', st_T: 'Pitică T cu metan', bh_label: 'Gaura neagră — forja stelelor', hz_label: 'zona locuibilă', sol_s: 'vară (N)', sol_w: 'iarnă (N)',
+    pl_planet: 'a = <b>{0} UA</b> · anul: <b>{1}</b>', pl_moon: 'a = <b>{0} R</b> · perioada: <b>{1}</b>',
+    n_solar: 'Sistemul Solar', n_sun: 'Soarele', n_mercury: 'Mercur', n_venus: 'Venus', n_earth: 'Pământul', n_moon: 'Luna', n_mars: 'Marte', n_phobos: 'Phobos', n_deimos: 'Deimos',
+    n_jupiter: 'Jupiter', n_io: 'Io', n_europa: 'Europa', n_ganymede: 'Ganymede', n_callisto: 'Callisto', n_saturn: 'Saturn', n_titan: 'Titan', n_uranus: 'Uranus', n_neptune: 'Neptun',
+    n_triton: 'Triton', n_pluto: 'Pluto', n_charon: 'Charon', n_px: 'Planeta X-{0}',
+    ty_gas: 'Gigant gazos', ty_hotjup: 'Jupiter fierbinte', ty_subnep: 'Mini-Neptun', ty_icegiant: 'Gigant de gheață', ty_lava: 'Lume de lavă', ty_venus: 'Lume cu efect de seră',
+    ty_airless: 'Lume stâncoasă fără aer', ty_desert: 'Lume deșertică', ty_earthlike: 'Planetă asemănătoare Pământului', ty_mars: 'Deșert rece', ty_tundra: 'Lume-tundră', ty_icy: 'Lume înghețată', ty_cold: 'Deșert rece',
+    ty_earth: 'Casa noastră', ty_mercury: 'Planetă stâncoasă', ty_jupiter: 'Gigant gazos', ty_saturn: 'Gigant cu inele', ty_uranus: 'Gigant de gheață „culcat”', ty_neptune: 'Gigant de gheață',
+    ty_pluto: 'Planetă pitică', ty_moon: 'Satelitul Pământului', ty_rock: 'Asteroid capturat', ty_io: 'Lună vulcanică', ty_ganymede: 'Cea mai mare lună', ty_callisto: 'Lună cu cratere străvechi',
+    ty_titan: 'Lună cu atmosferă densă', ty_triton: 'Lună cu orbită retrogradă', ty_charon: 'Geamănul lui Pluto',
+    st_O: 'Stea fierbinte albastră', st_B: 'Stea alb-albăstruie', st_A: 'Stea albă', st_F: 'Stea alb-gălbuie', st_G: 'Pitică galbenă', st_K: 'Pitică portocalie', st_M: 'Pitică roșie',
+    st_bd: 'Pitică brună', st_wd: 'Pitică albă', st_rg: 'Gigantă roșie', st_bg: 'Gigantă albastră', st_yg: 'Gigantă galbenă', st_rsg: 'Supergigantă roșie', st_bsg: 'Supergigantă albastră', st_ysg: 'Supergigantă galbenă',
+    cap_g1_t: 'Protogalaxia', cap_g1: 'Un nor de gaz se contractă și se rotește tot mai repede — așa se nasc galaxiile. Timp accelerat: <span class="f">1 s ≈ 45 mil. ani</span>.',
+    cap_g2_t: 'Viteze reale', cap_g2: 'Stelele zboară cu ~220 km/s, dar distanțele sunt uriașe: o rotație în jurul centrului durează ~230 mil. ani. Acum <span class="f">1 s = 1 mil. ani</span>, iar galaxia aproape că stă pe loc.',
+    cap_g3_t: 'Drumul spre creație', cap_g3: 'Ca să creăm o stea, trebuie să intrăm în gaura neagră supermasivă din centrul galaxiei.',
+    cap_bh_t: 'Gaura neagră', cap_bh: 'Milioane de mase solare. Lumina o ocolește: deasupra și dedesubtul umbrei se vede partea îndepărtată a discului. O parte e mai strălucitoare — ea se năpustește spre noi aproape cu viteza luminii.',
+    cap_bh2_t: 'Orizontul evenimentelor', cap_bh2: 'Trecem dincolo de orizontul evenimentelor. De aici nu se întoarce nici măcar lumina…',
+    cap_f1_t: 'Forja stelelor', cap_f1: 'În sistemul LT un corp este definit de două numere: raza <b>R</b> și perioada <b>T</b> a unei orbite la suprafață. Masa și câmpul decurg din ele.',
+    cap_f2_t: 'Sarcina gravitațională', cap_f2: 'Micșorăm T — câmpul crește: <span class="f">μ = 4π²R³/T²</span>. Șablonul se încarcă, pâlnia gravitațională se adâncește.',
+    cap_f3_t: 'Legea 3/2', cap_f3: 'Coada șablonului: în timp ce un corp de la suprafață face o rotație completă în T, un corp aflat la <b>n·R</b> parcurge doar un arc de <span class="f">2π/n<sup>3/2</sup></span>.',
+    cap_f4_t: 'Aprinderea', cap_f4: 'R = 1 R☉, T ≈ 10.000 s — o stea ca Soarele. Aprindem!',
+    cap_s1_t: 'S-a născut o stea', cap_s1: 'Un soare nou strălucește. Inelul verde este zona locuibilă. Acum să creăm o planetă.',
+    cap_p1_t: 'Orbita', cap_p1: 'Cu cât mai aproape de stea, cu atât anul e mai scurt: <span class="f">P = T★·(a/R★)<sup>3/2</sup></span>. Alegem o orbită în zona locuibilă.',
+    cap_p2_t: 'Câmpul planetei', cap_p2: 'Micșorăm T — gravitația crește: <span class="f">g = 4π²R/T²</span>. T = 5061 s, ca la Pământ: 9,8 m/s².',
+    cap_p3_t: 'Zile și nopți', cap_p3: 'Cercul portocaliu este orbita sincronă (o puteți trage cu mouse-ul). Mai sus — planeta se rotește mai încet: zile și nopți mai lungi, mai puține zile pe an.',
+    cap_p4_t: 'Iarnă și vară', cap_p4: 'Înclinarea axei aduce anotimpurile: 23° — ca la Pământ. Instrumentul se ține de coadă, ca în mâna stângă, și se rotește — odată cu axa se înclină totul: ecuatorul, orbita sincronă, coada 3/2.',
+    cap_p5_t: 'Se naște o planetă', cap_p5: 'O descărcare puternică — și din șablon se naște o planetă.',
+    cap_m1_t: 'Luna', cap_m1: 'O planetă poate avea o lună — și chiar o lună a lunii.',
+    cap_m2_t: 'Perioada lunii', cap_m2: 'Perioada lunii — luna siderală — ascultă de aceeași lege 3/2, doar că în jurul planetei.',
+    cap_end_t: 'Rândul vostru', cap_end: 'Creați planete, luni și luni ale lunilor. <b>Galaxia</b> — o stea nouă din gaura neagră. <b>⌂ Acasă</b> — Sistemul Solar.',
+    help_html: `<button class="btn icon ghost x pe">✕</button><h2>Fițuică · sistemul LT</h2><div class="fm">
+<span class="f">μ = 4π²R³/T²</span><span>Câmpul corpului („masa”) din raza R și perioada T de la suprafață. Fără constanta G.</span>
+<span class="f">g = 4π²R/T²</span><span>Gravitația la suprafață. Cu cât T e mai mic, cu atât câmpul e mai puternic.</span>
+<span class="f">P = T·(a/R)<sup>3/2</sup></span><span>Perioada orbitei la distanța a — legea 3/2. Mai aproape de stea — an mai scurt.</span>
+<span class="f">P_zi = T·h<sup>3/2</sup></span><span>Ziua siderală din înălțimea orbitei sincrone h (în raze). Mai sus — zile și nopți mai lungi.</span>
+<span class="f">zile pe an</span><span>Anul ÷ ziua solară (ține cont și de rotație, și de mișcarea pe orbită).</span>
+<span class="f">r_H = a·∛(μ/3μ★)</span><span>Sfera Hill: unde se poate menține o lună.</span>
+<span class="f">înclinarea axei</span><span>Cauza anotimpurilor: emisfera spre stea — vară, dinspre stea — iarnă.</span>
+<span class="f">v ≈ 220 km/s</span><span>Viteza stelelor în galaxie; o rotație durează ~230 mil. ani.</span></div>
+<h3>Comenzi</h3><div class="fm">
+<span class="f">mouse / deget</span><span>Rotirea vederii</span><span class="f">rotiță / ciupire</span><span>Zoom</span>
+<span class="f">clic pe un corp</span><span>Selectare și apropiere</span><span class="f">dublu clic</span><span>Tot sistemul dintr-o privire</span>
+<span class="f">trageți un inel</span><span>La configurare: albastru — orbita, portocaliu — orbita sincronă</span><span class="f">rotiți instrumentul</span><span>Prindeți-l de inel sau de coadă și rotiți — înclinarea axei</span><span class="f">nume</span><span>Câmpul „Nume” la creare sau ✎ Nume în fișă</span><span class="f">Esc · Spațiu</span><span>Anulare · pauză</span><span class="f">demo: atingere · glisare</span><span>Pauză · capitole înapoi/înainte (sau ⏮ ❚❚ ⏭, ← →)</span><span class="f">⟲</span><span>Privește demo-ul din nou</span></div>
+<p>Dimensiunile corpurilor și distanțele de pe ecran sunt comprimate, ca să încapă totul. Perioadele orbitale, zilele și anotimpurile sunt reale. Sistemul Solar: R și T sunt calculate din razele și GM măsurate.</p>`
   }
 };
 
@@ -3270,11 +3407,11 @@ const I18N = {
 function applyLang() {
   document.documentElement.lang = LANG;
   document.querySelectorAll('[data-i]').forEach(el => el.textContent = t(el.dataset.i));
-  $('btnLang').textContent = LANG === 'ru' ? 'EN' : 'RU';
+  document.querySelectorAll('#langs [data-lang]').forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   $('tSub').innerHTML = t('title_sub'); $('tNote').innerHTML = t('title_note') + (S.systems.length ? '<br>' + t('title_saved', S.systems.length) : '');
   $('helpBox').innerHTML = t('help_html');
   $('toasts').innerHTML = ''; // old-language hints go away
-  if ($('caption').classList.contains('on')) $('caption').classList.remove('on');
+  if (capKeys) { $('capT').innerHTML = t(capKeys[0]); $('capX').innerHTML = t(capKeys[1]); } // the demo narration just switches language
   if (PANEL.kind && !$('panel').classList.contains('hidden')) buildPanel(PANEL.kind);
   refreshUI();
 }
@@ -3313,7 +3450,6 @@ function boot() {
   resize(); window.addEventListener('resize', resize);
   if (!GLR.init()) setTimeout(() => toast(t('no_gl'), 14), 600);
   setGLScale();
-  try { const l = localStorage.getItem('genesisLT.lang'); if (l === 'en' || l === 'ru') LANG = l; } catch (e) { }
   load();
   applyLang();
   gcam.dist = 48; gcam.pitch = 1.0; gcam.yaw = .3; S.galForm = 0; S.galRate = 12;
@@ -3324,7 +3460,7 @@ function boot() {
   };
   $('btnHome').onclick = () => { Snd.init(); goHome(); };
   $('btnGalaxy').onclick = () => { Snd.init(); goGalaxy(); };
-  $('btnLang').onclick = () => { LANG = LANG === 'ru' ? 'en' : 'ru'; try { localStorage.setItem('genesisLT.lang', LANG); } catch (e) { } applyLang(); };
+  document.querySelectorAll('#langs [data-lang]').forEach(b => b.onclick = () => { if (b.dataset.lang !== LANG) { LANG = b.dataset.lang; applyLang(); } });
   $('btnSound').onclick = () => { Snd.init(); $('btnSound').textContent = Snd.toggle() ? '🔊' : '🔇'; };
   $('btnHelp').onclick = () => { $('help').classList.remove('hidden'); };
   $('help').onclick = e => { if (e.target.id === 'help' || e.target.closest('.x')) $('help').classList.add('hidden'); };
