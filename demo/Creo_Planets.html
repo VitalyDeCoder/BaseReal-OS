@@ -2103,7 +2103,7 @@ function startRename(invite) {
   if (!invite || matchMedia('(pointer: fine)').matches) { inp.focus(); inp.select(); } // no surprise keyboard on phones
   const done = ok => {
     if (S.renaming !== b) return;
-    if (ok) { const v = cleanName(inp.value); if (v && v !== baseName(b)) b.customName = v; else b.customName = undefined; if (S.sys && !S.sys.home) S.sys.touched = true; save(); if (v) Snd.chime(); }
+    if (ok) { const v = cleanName(inp.value); if (v && v !== baseName(b)) { b.customName = v; if (S.sys && !S.sys.home) S.sys.touched = true; } else b.customName = undefined; save(); if (v) Snd.chime(); }
     S.renaming = null; S.renameDone = null; renderCard(true); crumb();
   };
   S.renameDone = done;
@@ -2341,6 +2341,7 @@ function createStarSystem(R, T) {
   S.nSys++;
   const star = makeBody({ kind: 'star', R, T, sysN: S.nSys, user: true, uid: 's' + S.nSys + '_' + randi(1, 1e9), tilt: rand(0, 7), born: S.time });
   const sys = { id: 's' + S.nSys, sysN: S.nSys, t: 0, star, gal: { a: rand(3.8, 11.5), th0: rand(0, TAU) } };
+  if (S.demo) { sys.demo = true; S.demoSys = sys; } // marked from the very first moment: a skip or a closed tab must not leave it looking like the user's own
   S.systems.push(sys); S.sys = sys; S.scene = 'system'; S.mode = 'birth'; S.sel = star; S.follow = star; S.camAnim = null;
   cam.target = [0, 0, 0]; cam.dist = dispR(star) * 8; cam.pitch = .32;
   Snd.setDrone(.6); refreshUI();
@@ -2352,6 +2353,7 @@ function goHome() {
   if (S.demo) skipDemo();
   if (S.mode === 'birth' || S.scene === 'bh' || S.scene === 'dive') return;
   warpTo(() => {
+    forgetDemoSys();
     if (!S.home) S.home = makeSolar();
     S.sys = S.home; S.scene = 'system'; S.mode = 'view'; S.draft = null; S.sel = null; S.camAnim = null; S.follow = S.home.star;
     updatePositions(S.home); cam.target = [0, 0, 0]; cam.dist = overviewDist(S.home); cam.pitch = .55; cam.yaw = .5;
@@ -2362,6 +2364,7 @@ function goGalaxy() {
   if (S.demo) skipDemo();
   if (S.mode === 'birth' || S.scene === 'bh' || S.scene === 'dive') return;
   warpTo(() => {
+    forgetDemoSys();
     S.scene = 'galaxy'; S.mode = 'view'; S.draft = null; S.galForm = 1; S.galRate = 1;
     gcam.target = [0, 0, 0]; gcam.dist = 32; gcam.pitch = .9; Snd.setDrone(.9); refreshUI(); hint('h_galaxy');
   });
@@ -2857,7 +2860,8 @@ const SAVE_KEY = 'genesisLT.v1';
 function serBody(b) { return { uid: b.uid, p: b.parent ? (b.parent.uid || b.parent.nameKey) : null, kind: b.kind, R: b.R, T: b.T, a: b.a, e: b.e, w: b.w, M0: b.M0, tilt: b.tilt, tiltAz: b.tiltAz, h: b.h, locked: !!b.locked, seed: b.seed, customName: b.customName, letter: b.letter, roman: b.roman, sub: b.sub, xn: b.xn, sysN: b.sysN }; }
 function save() {
   try {
-    const data = { nSys: S.nSys, systems: S.systems.map(s => ({ sysN: s.sysN, t: s.t, gal: s.gal, demo: !!s.demo, touched: !!s.touched, bodies: allBodies(s).map(serBody) })), home: S.home ? { t: S.home.t, xn: S.home.xn || 0, bodies: allBodies(S.home).filter(b => b.user).map(serBody) } : null };
+    const kept = S.systems.filter(s => !isDemoLeftover(s)); // the demo's untouched world is never saved
+    const data = { v: 2, nSys: maxSysN(kept), systems: kept.map(s => ({ sysN: s.sysN, t: s.t, gal: s.gal, demo: !!s.demo, touched: !!s.touched, bodies: allBodies(s).map(serBody) })), home: S.home ? { t: S.home.t, xn: S.home.xn || 0, bodies: allBodies(S.home).filter(b => b.user).map(serBody) } : null };
     localStorage.setItem(SAVE_KEY, JSON.stringify(data));
   } catch (e) { }
 }
@@ -2867,13 +2871,16 @@ function restoreBodies(list, map) {
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); if (!d) return false;
-    S.nSys = d.nSys || 0;
     for (const s of d.systems || []) {
       const so = s.bodies.find(b => b.kind === 'star'); if (!so) continue;
+      if (isDemoLeftover(s)) continue;
+      // saves before v2: a demo star caught between its birth and its mark — the Sun's exact R and T, no name, nothing built around it
+      if (!d.v && !s.touched && s.bodies.length === 1 && !so.customName && so.R === SUN.R && so.T === SUN.T) continue;
       const star = makeBody({ kind: 'star', R: so.R, T: so.T, sysN: s.sysN, uid: so.uid, seed: so.seed, tilt: so.tilt, tiltAz: so.tiltAz, user: true, customName: so.customName });
       const map = { [so.uid]: star }; restoreBodies(s.bodies, map);
       S.systems.push({ id: 's' + s.sysN, sysN: s.sysN, t: s.t || 0, star, gal: s.gal, demo: !!s.demo, touched: !!s.touched });
     }
+    S.nSys = maxSysN(S.systems);
     if (d.home && d.home.bodies.length) {
       S.home = makeSolar(); S.home.t = d.home.t || 0; S.home.xn = d.home.xn || 0;
       const map = {}; for (const b of allBodies(S.home)) map[b.nameKey] = b; restoreBodies(d.home.bodies, map);
@@ -2954,6 +2961,13 @@ function dropDemoSys() { // forget the system the demo made (when rewinding befo
   const d = S.demoSys; if (!d) return;
   S.systems = S.systems.filter(s => s !== d); if (d.sysN === S.nSys) S.nSys--; if (S.sys === d) S.sys = null; S.demoSys = null;
 }
+// the universe holds only what the user made: the demo's world lives until they leave it, and becomes theirs only once they build on it or name it
+const isDemoLeftover = s => s.demo && !s.touched;
+const maxSysN = list => list.reduce((m, s) => Math.max(m, s.sysN), 0);
+function forgetDemoSys() {
+  if (S.sys && isDemoLeftover(S.sys)) { S.sys = null; S.sel = null; S.follow = null; }
+  S.systems = S.systems.filter(s => !isDemoLeftover(s)); S.demoSys = null; S.nSys = maxSysN(S.systems);
+}
 function demoStar() {
   if (!S.demoSys || !S.systems.includes(S.demoSys)) { createStarSystem(SUN.R, SUN.T); S.demoSys = S.sys; S.demoSys.demo = true; S.demoSys.star.born = -1e9; }
   const sys = S.demoSys; S.sys = sys; S.scene = 'system'; S.mode = 'view'; S.follow = sys.star; setGLScale(); updatePositions(sys); Snd.setDrone(.6); return sys;
@@ -2987,7 +3001,6 @@ const CHAPTERS = [
       caption('cap_f3_t', 'cap_f3'); await capWait(5.8);
       caption('cap_f4_t', 'cap_f4'); await capWait(1.6);
       const bd = birthDone(); curShow(true); await curClickEl($('btnCreate')); curShow(false); await guard(bd);
-      S.demoSys = S.sys; S.sys.demo = true;
     } },
   { key: 'ch_orbit', setup(nat) { const sys = demoStar(); sys.star.children.length = 0; S.sel = sys.star; if (!nat) demoOverview(); },
     async play() {
@@ -3039,9 +3052,7 @@ const CHAPTERS = [
 async function runDemo(start = 0) {
   abortDirector(SKIP); demoClean();
   const run = ++S.demoRun;
-  // replays tidy up after themselves: earlier demo systems the user never touched are forgotten
-  S.systems = S.systems.filter(s => !(s.demo && !s.touched)); if (S.sys && S.sys.demo && !S.sys.touched) S.sys = null; S.demoSys = null;
-  S.nSys = S.systems.reduce((m, s) => Math.max(m, s.sysN), 0);
+  forgetDemoSys(); // replays tidy up after themselves
   S.demo = true; S.dpause = false; curSet(innerWidth * .5, innerHeight * .8);
   let ch = start, natural = false;
   while (run === S.demoRun && S.demo && ch < CHAPTERS.length) {
