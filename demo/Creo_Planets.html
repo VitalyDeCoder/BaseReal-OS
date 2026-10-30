@@ -58,6 +58,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .btn.ghost{background:transparent;border-color:rgba(255,255,255,.14);color:var(--mut)}
 .btn.ghost:hover{color:var(--text);border-color:rgba(255,255,255,.35);box-shadow:none;background:rgba(255,255,255,.05)}
 .btn[disabled]{opacity:.35;pointer-events:none}
+.btn.dis{opacity:.4;cursor:help;box-shadow:none}
 @keyframes pulseA{0%,100%{box-shadow:0 0 14px rgba(255,184,77,.25),inset 0 0 10px rgba(255,184,77,.08)}50%{box-shadow:0 0 38px rgba(255,184,77,.75),0 0 70px rgba(255,140,40,.3),inset 0 0 18px rgba(255,184,77,.2)}}
 @keyframes pulseC{0%,100%{box-shadow:0 0 14px rgba(98,216,255,.25),inset 0 0 10px rgba(98,216,255,.08)}50%{box-shadow:0 0 38px rgba(98,216,255,.75),0 0 70px rgba(60,160,255,.3),inset 0 0 18px rgba(98,216,255,.2)}}
 @keyframes pulseV{0%,100%{box-shadow:0 0 14px rgba(185,156,255,.25)}50%{box-shadow:0 0 38px rgba(185,156,255,.75),0 0 70px rgba(140,100,255,.3)}}
@@ -1012,6 +1013,7 @@ function chainLen(b) { let n = 0; while (b.parent) { n++; b = b.parent; } return
 /* ---------- display scale (distances and sizes are compressed; periods are real) ---------- */
 function dispR(b) {
   if (b.kind === 'star') return clamp(6.5 * Math.pow(b.R / SUN.R, .33), 2.2, 24);
+  if (b.parent && b.parent.kind === 'moon') return Math.max(.08, dispR(b.parent) * Math.sqrt(b.R / b.parent.R)); // the .26 floor must not make a tiny moon's moon its twin
   return clamp(1.15 * Math.sqrt(b.R / EARTH.R), .26, 6.5);
 }
 function dispOrbit(b, r) {
@@ -1040,7 +1042,7 @@ function updatePositions(sys) {
       if (c.pending) continue;
       const k = keplerNu(c, t); c.nu = k.nu;
       const d = dispOrbit(c, k.r), th = k.nu + c.w;
-      c.wp = [b.wp[0] + d * Math.cos(th), b.wp[1], b.wp[2] - d * Math.sin(th)];
+      c.wp = c.oU ? vadd(b.wp, vadd(vmul(c.oU, d * Math.cos(th)), vmul(c.oV, d * Math.sin(th)))) : [b.wp[0] + d * Math.cos(th), b.wp[1], b.wp[2] - d * Math.sin(th)];
       rec(c);
     }
   };
@@ -1050,9 +1052,16 @@ function orbitPath(b, n = 128) { // ellipse in display space relative to parent,
   const pts = [], e = b.e, p = b.a * (1 - e * e), dir = b.retroOrbit ? 1 : -1;
   for (let k = 0; k <= n; k++) {
     const nu = b.nu + dir * TAU * k / n, r = e < 1e-4 ? b.a : p / (1 + e * Math.cos(nu));
-    const d = dispOrbit(b, r), th = nu + b.w; pts.push([d * Math.cos(th), 0, -d * Math.sin(th)]);
+    const d = dispOrbit(b, r), th = nu + b.w; pts.push(b.oU ? vadd(vmul(b.oU, d * Math.cos(th)), vmul(b.oV, d * Math.sin(th))) : [d * Math.cos(th), 0, -d * Math.sin(th)]);
   }
   return pts;
+}
+// a natural moon orbits in its planet's equatorial plane (off it by `inc`), and its spin axis is that orbit's pole
+function setMoonPlane(b, inc, node = 0) { // node: turns the tilt around the planet's axis
+  const p = b.parent, i = inc * DEG, o = node * DEG, e1 = vadd(vmul(p.e1, Math.cos(o)), vmul(p.e2, Math.sin(o)));
+  b.oU = vcross(p.axis, e1); b.oV = vadd(vmul(e1, -Math.cos(i)), vmul(p.axis, Math.sin(i)));
+  const n = vcross(b.oU, b.oV), a = b.retroOrbit ? vmul(n, -1) : n;
+  b.tilt = Math.acos(clamp(a[1], -1, 1)) / DEG; b.tiltAz = Math.atan2(-a[2], a[0]); setAxis(b);
 }
 function allBodies(sys) { const out = []; const rec = b => { out.push(b); b.children.forEach(rec); }; rec(sys.star); return out; }
 
@@ -1079,7 +1088,12 @@ function makeSolar() {
   const sun = makeBody({ kind: 'star', nameKey: 'n_sun', R: 695700, T: 10008.225, Prot: 25.38 * DAY, tilt: 7.25, tiltAz: 0 });
   sys.star = sun;
   const P = (o) => makeBody(Object.assign({ kind: 'planet', parent: sun, h: hFromRot(o.T, o.rot * DAY) }, o, { a: o.a * AU, M0: (o.L - o.w) * DEG, w: o.w * DEG, fixedType: o.type }));
-  const M = (par, o) => makeBody(Object.assign({ kind: 'moon', parent: par, locked: true, fixedType: o.type }, o, { M0: (o.M0 || rand(0, 360)) * DEG, w: (o.w || 0) * DEG }));
+  // inc: orbit's inclination to the planet's equator; node is chosen so that the far-tilted orbits also keep their measured angle to the ecliptic; only the Moon stays near the ecliptic
+  const M = (par, o) => {
+    const b = makeBody(Object.assign({ kind: 'moon', parent: par, locked: true, fixedType: o.type }, o, { M0: (o.M0 || rand(0, 360)) * DEG, w: (o.w || 0) * DEG }));
+    if (par !== ear) setMoonPlane(b, o.inc || 0, o.node || 0);
+    return b;
+  };
   const mer = P({ nameKey: 'n_mercury', R: 2439.4, T: 5100.100, a: .38709927, e: .20563593, L: 252.2503, w: 77.4578, tilt: .03, rot: 58.646, type: 'mercury', tiltAz: 1 });
   const ven = P({ nameKey: 'n_venus', R: 6051.8, T: 5189.907, a: .72333566, e: .00677672, L: 181.9791, w: 131.6025, tilt: 177.36, rot: 243.025, type: 'venus', tiltAz: 2 });
   const ear = P({ nameKey: 'n_earth', R: 6371.0, T: 5060.837, a: 1.00000261, e: .01671123, L: 100.4646, w: 102.9377, tilt: 23.44, rot: .99726968, type: 'earth', tiltAz: PI / 2 });
@@ -1094,10 +1108,21 @@ function makeSolar() {
   M(jup, { nameKey: 'n_ganymede', R: 2634.1, T: 8542.371, a: 1070412, e: .0013, type: 'ganymede' });
   M(jup, { nameKey: 'n_callisto', R: 2410.3, T: 8774.967, a: 1882709, e: .0074, type: 'callisto' });
   const sat = P({ nameKey: 'n_saturn', R: 58232, T: 14335.872, a: 9.53667594, e: .05386179, L: 49.9542, w: 92.5989, tilt: 26.73, rot: .44401, type: 'saturn', ring: true, tiltAz: 1.39 });
+  M(sat, { nameKey: 'n_mimas', R: 198.2, T: 11080.578, a: 185520, e: .0202, inc: 1.57, type: 'mimas' });
+  M(sat, { nameKey: 'n_enceladus', R: 252.1, T: 9366.134, a: 238020, e: .0045, type: 'enceladus' });
+  M(sat, { nameKey: 'n_tethys', R: 531.1, T: 11979.106, a: 294660, e: .0001, inc: 1.09, type: 'tethys' });
+  M(sat, { nameKey: 'n_dione', R: 561.4, T: 9774.219, a: 377400, e: .0022, type: 'dione' });
+  M(sat, { nameKey: 'n_rhea', R: 763.5, T: 10683.541, a: 527040, e: .001, type: 'rhea' });
   M(sat, { nameKey: 'n_titan', R: 2574.7, T: 8663.185, a: 1221870, e: .0288, type: 'titan' });
-  P({ nameKey: 'n_uranus', R: 25362, T: 10543.085, a: 19.18916464, e: .04725744, L: 313.2381, w: 170.9543, tilt: 97.77, rot: .71833, type: 'uranus', tiltAz: 1.36 });
+  M(sat, { nameKey: 'n_iapetus', R: 734.3, T: 11388.576, a: 3560850, e: .0283, inc: 15.47, node: 51.6, type: 'iapetus' }); // 17.28° to the ecliptic
+  const ura = P({ nameKey: 'n_uranus', R: 25362, T: 10543.085, a: 19.18916464, e: .04725744, L: 313.2381, w: 170.9543, tilt: 97.77, rot: .71833, type: 'uranus', tiltAz: 1.36 });
+  M(ura, { nameKey: 'n_miranda', R: 235.8, T: 10971.382, a: 129846, e: .0013, inc: 4.34, type: 'miranda' });
+  M(ura, { nameKey: 'n_ariel', R: 578.9, T: 9577.275, a: 190929, e: .0012, type: 'ariel' });
+  M(ura, { nameKey: 'n_umbriel', R: 584.7, T: 9629.744, a: 265986, e: .0039, type: 'umbriel' });
+  M(ura, { nameKey: 'n_titania', R: 788.9, T: 9242.63, a: 436298, e: .0011, type: 'titania' });
+  M(ura, { nameKey: 'n_oberon', R: 761.4, T: 9213.077, a: 583511, e: .0014, type: 'oberon' });
   const nep = P({ nameKey: 'n_neptune', R: 24622, T: 9285.225, a: 30.06992276, e: .00859048, L: -55.1200, w: 44.9648, tilt: 28.32, rot: .6713, type: 'neptune', tiltAz: 5.57 });
-  M(nep, { nameKey: 'n_triton', R: 1353.4, T: 8279.724, a: 354759, e: .000016, type: 'triton', retroOrbit: true, tilt: 180 });
+  M(nep, { nameKey: 'n_triton', R: 1353.4, T: 8279.724, a: 354759, e: .000016, type: 'triton', retroOrbit: true, inc: 22.7, node: -69.8 }); // 157.3° counted from the same pole; 129.8° to the ecliptic
   const plu = P({ nameKey: 'n_pluto', R: 1188.3, T: 8729.396, a: 39.48211675, e: .2488273, L: 238.9290, w: 224.0689, tilt: 122.53, rot: 6.387, type: 'pluto', tiltAz: 2.40, dwarf: true });
   M(plu, { nameKey: 'n_charon', R: 606, T: 9099.785, a: 19591, e: .0002, type: 'charon' });
   return sys;
@@ -1126,6 +1151,13 @@ const ATM = {
   subnep: [140, 230, 230, .7], hotjup: [255, 120, 80, .6], tundra: [190, 215, 255, .3], desert: [255, 205, 150, .4], pluto: [180, 200, 255, .15]
 };
 const CAP = { earth: .3, earthlike: .32, mars: .2, desert: .08 };
+// the big moons of Saturn and Uranus: [bright, dark, number of craters]; each adds its signature feature in genTexture
+const MOON_LOOK = {
+  mimas: [[212, 208, 204], [158, 154, 150], 80], enceladus: [[250, 252, 255], [222, 232, 240], 12], tethys: [[232, 230, 226], [190, 188, 184], 45],
+  dione: [[222, 220, 218], [158, 156, 156], 45], rhea: [[214, 210, 204], [158, 152, 146], 80], iapetus: [[226, 220, 206], [176, 168, 150], 45],
+  miranda: [[196, 196, 198], [138, 138, 142], 25], ariel: [[214, 212, 210], [156, 152, 150], 25], umbriel: [[118, 114, 112], [78, 74, 74], 70],
+  titania: [[196, 184, 176], [140, 126, 118], 50], oberon: [[172, 150, 136], [112, 94, 86], 70]
+};
 function genTexture(type, seed) {
   const w = TEX_W, h = TEX_H, col = new Uint8Array(w * h * 3), aux = new Uint8Array(w * h);
   let emis = null, cloud = null;
@@ -1134,10 +1166,17 @@ function genTexture(type, seed) {
   if (needCl) cloud = new Uint8Array(w * h);
   if (type === 'earth' || type === 'lava' || type === 'hotjup' || type === 'io') emis = new Uint8Array(w * h);
   const crat = [];
-  if (['airless', 'mercury', 'moon', 'rock', 'callisto', 'ganymede', 'charon', 'icy', 'mars', 'triton'].includes(type)) {
-    const n = type === 'icy' || type === 'triton' ? 10 : type === 'mars' ? 25 : 70;
+  const look = MOON_LOOK[type];
+  if (look || ['airless', 'mercury', 'moon', 'rock', 'callisto', 'ganymede', 'charon', 'icy', 'mars', 'triton'].includes(type)) {
+    const n = look ? look[2] : type === 'icy' || type === 'triton' ? 10 : type === 'mars' ? 25 : 70;
     for (let i = 0; i < n; i++) { const u = R() * 2 - 1, ph = R() * TAU, q = Math.sqrt(1 - u * u); const rr = .02 + .16 * Math.pow(R(), 3); crat.push([q * Math.cos(ph), u, q * Math.sin(ph), Math.cos(rr), rr]); }
   }
+  // longitude 0 faces the planet, -90° leads along the orbit (west longitudes of the maps are negative here)
+  const onSphere = (latD, lonD) => { const la = latD * DEG, lo = lonD * DEG; return [Math.cos(la) * Math.cos(lo), Math.sin(la), Math.cos(la) * Math.sin(lo)]; };
+  const pit = (latD, lonD, rr) => crat.push([...onSphere(latD, lonD), Math.cos(rr), rr]);
+  const HERSCHEL = onSphere(0, -112), ODYSSEUS = onSphere(30, -128), WUNDA = onSphere(-8, 87);
+  if (type === 'mimas') pit(0, -112, .35);
+  if (type === 'tethys') pit(30, -128, .42);
   // gas giant palettes
   const pal = {
     jupiter: [[235, 222, 196], [196, 150, 106], [168, 104, 66], [222, 196, 160], [140, 98, 72]],
@@ -1221,6 +1260,20 @@ function genTexture(type, seed) {
         const li = ridged(x * 3.5, y * 3.5, z * 3.5, s + 2, 5), m = fbm(x * 4, y * 4, z * 4, s + 4, 4);
         let c = type === 'triton' ? mixc([226, 214, 206], [196, 170, 160], m) : mixc([236, 228, 214], [206, 192, 170], m);
         c = mixc(c, [150, 92, 62], clamp((li - .8) * 6, 0, .8)); [r, g, b] = c;
+      } else if (look) {
+        const m = fbm(x * 4, y * 4, z * 4, s + 4, 5), li = ridged(x * 3.5, y * 3.5, z * 3.5, s + 2, 4), dot = v => x * v[0] + y * v[1] + z * v[2];
+        let c = mixc(look[0], look[1], clamp((m - .3) * 2, 0, 1));
+        if (type === 'mimas') { if (dot(HERSCHEL) > .9988) c = [236, 234, 230]; } // Herschel's central peak
+        else if (type === 'enceladus') { if (y < -.8 && Math.abs(Math.sin((x * .8 + z * .6) * 14 + (m - .5) * 3)) < .13) c = mixc(c, [110, 165, 190], .85); } // tiger stripes
+        else if (type === 'tethys') { if (Math.abs(dot(ODYSSEUS)) < .045 + (m - .5) * .05) c = mixc(c, [150, 146, 140], .8); } // Ithaca Chasma
+        else if (type === 'titania') { if (z < .3 && Math.abs(x * .6 + y * .6 + z * .529) < .035 + (m - .5) * .04) c = mixc(c, [92, 80, 74], .85); } // Messina Chasmata
+        else if (type === 'dione' || type === 'rhea') { const tr = clamp(z * 1.6, 0, 1); c = mixc(c, [120, 118, 118], tr * .3); c = mixc(c, [250, 250, 250], clamp((li - .72) * 5, 0, 1) * tr * (type === 'dione' ? 1 : .5)); } // wisps on the trailing side
+        else if (type === 'iapetus') { const e = -z + (m - .5) * .7 - y * y * .9 - .05; c = mixc(c, [58, 40, 30], clamp(e * 5 + .5, 0, 1)); } // the dark leading side
+        else if (type === 'miranda') { for (const o of [[.9, -.2, .38], [-.5, -.3, .8], [.1, -.95, -.29]]) { const d = dot(o); if (d > .72) c = mixc(c, Math.sin((Math.acos(Math.min(1, d)) + (m - .5) * .4) * 26) > 0 ? [222, 222, 224] : [92, 92, 98], .5); } } // coronae
+        else if (type === 'ariel') c = mixc(c, [110, 106, 104], clamp((li - .8) * 7, 0, .85)); // canyons
+        else if (type === 'umbriel') { if (Math.abs(Math.acos(Math.min(1, dot(WUNDA))) - .2) < .035) c = mixc(c, [225, 220, 205], .9); } // the bright ring of Wunda
+        else if (type === 'oberon' && n1 > .6) c = mixc(c, [70, 56, 50], clamp((n1 - .6) * 6, 0, .8)); // dark crater floors
+        const f = 1 + cr * 1.4; r = c[0] * f; g = c[1] * f; b = c[2] * f;
       } else if (type === 'titan') {
         const m = fbm(x * 2, y * 8, z * 2, s, 4); const c = mixc([222, 158, 66], [196, 128, 50], m); [r, g, b] = c;
       } else if (type === 'pluto') {
@@ -1269,7 +1322,7 @@ function bodyColor(b) {
   if (b.kind === 'star') return b.phys.rgb;
   if (b.color) return b.color;
   const guess = { earth: [90, 140, 220], earthlike: [90, 150, 200], mars: [200, 110, 70], venus: [230, 210, 160], gas: [210, 180, 140], jupiter: [215, 185, 150], saturn: [225, 205, 155], uranus: [170, 220, 230], neptune: [80, 120, 220], icegiant: [110, 170, 225], subnep: [120, 186, 196], hotjup: [150, 70, 50], lava: [200, 90, 40], icy: [220, 210, 195], titan: [215, 150, 60], io: [225, 200, 90], pluto: [200, 170, 140], desert: [210, 165, 100], tundra: [210, 225, 240] };
-  return guess[b.type] || [175, 170, 165];
+  return guess[b.type] || (MOON_LOOK[b.type] ? MOON_LOOK[b.type][0] : [175, 170, 165]);
 }
 
 /* ---------- per-pixel sphere renderer (lit by the star, tilted axis, spin, seasons) ---------- */
@@ -1280,7 +1333,7 @@ function sphereBuf(id, N) {
   return c;
 }
 function drawPlanet(ctx, b, sx, sy, Rpx, cam, simT, molten = 0) {
-  const tex = texOf(b), L = vnorm(vsub(starOf(b).wp, b.wp));
+  const tex = Rpx < 2.4 ? b.tex : texOf(b), L = vnorm(vsub(starOf(b).wp, b.wp)); // a dot needs no texture: the queue serves what is really seen
   if (!tex || Rpx < 2.4) { // tiny: shaded dot
     const c = bodyColor(b), zb = vnorm(vsub(cam.pos, b.wp)), lit = .25 + .75 * Math.max(0, vdot(zb, L));
     ctx.fillStyle = rgbStr(mixc(c.map(v => v * lit), [255, 140, 60], molten)); ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, Rpx), 0, TAU); ctx.fill();
@@ -1343,6 +1396,7 @@ function drawPlanet(ctx, b, sx, sy, Rpx, cam, simT, molten = 0) {
 function advanceSpin(b, dtSim, dtReal) {
   if (!b.Prot) return;
   if (b.locked && b.parent) { // tidally locked: always the same face to the parent, at any time speed
+    if (b.oU) { const d = vsub(b.parent.wp, b.wp); b.spinPh = ((Math.atan2(vdot(d, b.e2), vdot(d, b.e1)) / TAU) % 1 + 1) % 1; b.cloudPh = b.spinPh; return; } // longitude 0 faces the planet
     const th = b.nu + b.w; b.spinPh = (((b.axis[1] >= 0 ? th : -th) / TAU) % 1 + 1) % 1; b.cloudPh = b.spinPh; return;
   }
   const k = 1; // tilt > 90° already flips the axis → retrograde spin comes out by itself
@@ -1937,18 +1991,23 @@ function crumb() {
   else if (sc === 'system' && S.sys) { a = S.sys.home ? t('cr_home') : t('cr_system'); b = sysName(S.sys) + (S.sel && S.sel.kind !== 'star' ? ' · ' + nameOf(S.sel) : ''); }
   $('crumb1').textContent = a; $('crumb2').textContent = b;
 }
-function canMoon(b) {
-  if (!b || b.kind === 'star' || chainLen(b) >= 4) return false;
-  const hill = hillR(b.a, b.mu, b.parent.mu);
-  return .5 * hill > b.R * 2.5 * 1.25;
+// where a moon of p can orbit: out to half the Hill sphere (the stable limit), from 2.5 R;
+// a small Hill sphere (Io, Mimas) leaves less room, so the orbit may come down almost to the surface
+function moonRange(p) {
+  const max = Math.min(.5 * hillR(p.a, p.mu, p.parent.mu), p.R * 400);
+  if (max < p.R * 1.2) return null; // the stable zone ends at the surface (Phobos)
+  return { min: max >= p.R * 3.125 ? p.R * 2.5 : Math.max(p.R * 1.15, max / 1.25), max };
 }
+function canMoon(b) { return !!b && b.kind !== 'star' && chainLen(b) < 4 && !!moonRange(b); }
+function moonBlock(b) { return !b || b.kind === 'star' ? 'tip_moon_no' : chainLen(b) >= 4 ? 'w_chain_max' : 'w_hill_small'; }
 function setActions(list) {
   const el = $('actions'); el.innerHTML = '';
+  $('tip').classList.remove('on'); // the button under it is gone: no pointerout will ever come
   for (const a of list) {
     const b = document.createElement('button'); b.className = 'btn pe ' + (a.cls || ''); b.id = a.id;
     b.innerHTML = (a.icon ? `<span class="ic">${a.icon}</span>` : '') + `<span>${t(a.key)}</span>`;
-    if (a.tip) b.dataset.tip = a.tip; if (a.disabled) b.disabled = true;
-    b.onclick = () => { Snd.init(); Snd.tick(); a.fn(); };
+    if (a.tip) b.dataset.tip = a.tip; if (a.off) b.classList.add('dis'); // stays clickable: it has to be able to say why not
+    b.onclick = () => { Snd.init(); Snd.tick(); if (a.off) { $('tip').classList.remove('on'); toast(t(a.off)); return; } a.fn(); };
     el.appendChild(b);
   }
 }
@@ -1972,10 +2031,10 @@ function refreshUI() {
   // actions
   if (sc === 'galaxy' && S.galForm > .999 && !S.demo) setActions([{ id: 'aStar', cls: 'violet ready', icon: '◉', key: 'act_star', tip: 'tip_star', fn: () => enterBlackHole() }]);
   else if (sc === 'system' && m === 'view') {
-    const mo = canMoon(S.sel);
+    const mo = canMoon(S.sel), mb = mo ? null : moonBlock(S.sel);
     setActions([
       { id: 'aPlanet', cls: 'cyan' + (S.time < S.pulseUntil ? ' ready' : ''), icon: '＋', key: 'act_planet', tip: 'tip_planet', fn: () => startPlace(S.sys.star) },
-      { id: 'aMoon', cls: 'violet', icon: '＋', key: 'act_moon', tip: S.sel && S.sel.kind !== 'star' && !mo ? 'tip_moon_no' : 'tip_moon', disabled: !mo, fn: () => startPlace(S.sel) },
+      { id: 'aMoon', cls: 'violet', icon: '＋', key: 'act_moon', tip: mb || 'tip_moon', off: mb, fn: () => startPlace(S.sel) },
       { id: 'aOver', cls: 'ghost', icon: '◎', key: 'act_over', tip: 'tip_over', fn: () => { S.sel = null; focusOverview(); refreshUI(); } }
     ]);
   }
@@ -2066,7 +2125,7 @@ function starDefs() {
 function bodyDefs(b) {
   const isP = b.kind === 'planet', p = b.parent;
   const aMin = S.placeMin, aMax = S.placeMax;
-  const Rmax = isP ? 15 * EARTH.R : Math.min(15 * EARTH.R, p.R * .6), Rmin = isP ? .1 * EARTH.R : Math.min(.02 * EARTH.R, Rmax * .2);
+  const Rmax = isP ? 15 * EARTH.R : Math.min(15 * EARTH.R, p.R * .6, Math.max(p.R * .12, aMax - p.R)), Rmin = isP ? .1 * EARTH.R : Math.min(.02 * EARTH.R, Rmax * .2);
   return [
     { key: 'a', lb: isP ? 'sl_a' : 'sl_am', tip: isP ? 'tip_a' : 'tip_am', map: logMap(aMin, aMax), get: () => b.a, set: v => b.a = v,
       val: () => isP ? sig(b.a / AU, 3) + ' ' + t('u_au') : sig(b.a / p.R, 3) + ' R', sub: () => [isP ? fmtLen(b.a) : intf(b.a) + ' ' + t('u_km'), t(isP ? 'k_year' : 'k_month') + ': ' + fmtDur(b.Porb)] },
@@ -2112,6 +2171,7 @@ function onParam(key, old, v) {
 function refreshPanel() {
   for (const d of PANEL.defs) {
     $('v_' + d.key).textContent = d.val(); const s = d.sub(); $('sa_' + d.key).innerHTML = s[0]; $('sb_' + d.key).innerHTML = s[1];
+    if (d.key === 'h' && document.activeElement !== d.inp) d.inp.value = d.map.to(d.get()); // a locked moon's h follows its orbit: keep the thumb honest
     if (d.meter) $('m_' + d.key).style.width = (d.meter() * 100).toFixed(1) + '%';
   }
   let rows, warn = '', pv, pvT, pvS;
@@ -2130,6 +2190,7 @@ function refreshPanel() {
     else if (Msun >= .013) warn = '⚠ ' + t('w_bdplanet');
     else if (b.h < 1.25) warn = '⚠ ' + t('w_breakup');
     else if (!isP && b.mu > p.mu) warn = '⚠ ' + t('w_heavier');
+    else if (!isP && b.a < p.R + b.R) warn = '⚠ ' + t('w_touch');
     else if (!isP && b.a < roche) warn = '⚠ ' + t('w_roche', sig(roche / p.R, 2));
     else if (isP && b.tilt <= 90 && b.Prot > b.Porb * 1.01) warn = 'ⓘ ' + t('w_westeast');
     else if (!isP && chainLen(b) >= 3) warn = 'ⓘ ' + t('w_moonmoon');
@@ -2150,8 +2211,9 @@ function overviewDist(sys) {
 }
 function focusDist(b) {
   if (b.kind === 'star') return overviewDist(S.sys);
-  let m = dispR(b) * 9;
-  for (const c of b.children) m = Math.max(m, dispOrbit(c, c.a * (1 + c.e)) * 2.6);
+  let m = dispR(b) * 9; // the farthest orbit only has to fit: it must not shrink the planet (Iapetus around Saturn)
+  const ds = b.children.map(c => dispOrbit(c, c.a * (1 + c.e))).sort((x, y) => y - x);
+  if (ds.length) m = Math.max(m, ds[0] * (ds.length > 1 ? 1.7 : 2.6), (ds[1] || 0) * 2.6);
   return m;
 }
 // the fastest playback at which `period` still takes at least `sec` real seconds
@@ -2168,7 +2230,7 @@ function focusOn(b, dist, dur = 1.6, opts = {}) {
   // rate — instead of a compressed whirl that only becomes visible when we zoom in
   const w = opts.watch;
   const before = S.speedV;
-  if (w) { setSpeed(speedFor(w.Porb, 8)); S.speedPrev = null; }
+  if (w) { const prev = S.speedPrev ?? S.speedV; setSpeed(speedFor(w.Porb, 8)); S.speedPrev = b.kind === 'star' ? null : prev; } // back to the overview: the old tempo returns
   else if (b.kind === 'star') { if (S.speedPrev != null) { setSpeed(S.speedPrev); S.speedPrev = null; } }
   else { const need = speedFor(b.Prot, 7.5); if (need < S.speedV) { if (S.speedPrev == null) S.speedPrev = S.speedV; setSpeed(need); if (!S.demo && !b.draft) hint('h_slowed_day'); } }
   if (S.speedV !== before) flashTimebar();
@@ -2189,7 +2251,7 @@ function select(b, focus = true) {
   S.sel = b; S.cardOff = false; if (b && focus) focusOn(b);
   refreshUI();
   if (b && b.kind !== 'star') {
-    const x = b.tilt > 90 ? 180 - b.tilt : b.tilt; if (x > 3) hint('h_season');
+    const x = b.tilt > 90 ? 180 - b.tilt : b.tilt; if (x > 3 && b.kind === 'planet') hint('h_season'); // it speaks of ☀ ❄ on the orbit, drawn for planets only
     if (strobing(b)) { // slow time down so the selected body is visible (≥ ~4 s per orbit)
       setSpeed(Math.min(S.speedV, speedFor(b.Porb, 4))); toast(t('h_slowed', fmtDur(S.speed).replace(/[,.]0+(?=\s)/, '')), 5);
     }
@@ -2203,14 +2265,14 @@ function startPlace(parent) {
   const isP = parent.kind === 'star';
   if (isP) { S.placeMin = Math.max(.02 * AU, parent.R * 4); S.placeMax = 60 * AU; }
   else {
-    const hill = hillR(parent.a, parent.mu, parent.parent.mu);
-    S.placeMin = parent.R * 2.5; S.placeMax = Math.min(.5 * hill, parent.R * 400);
-    if (S.placeMax < S.placeMin * 1.25) { toast(t('w_hill_small')); return; }
+    const rg = moonRange(parent); if (!rg) { toast(t('w_hill_small')); return; }
+    S.placeMin = rg.min; S.placeMax = rg.max;
   }
   S.mode = 'place'; S.placeParent = parent; S.placeHover = null;
   if (isP) { S.sel = null; focusOverview(); }
   else { S.sel = parent; focusOn(parent, Math.max(focusDist(parent), dispOrbitFor(parent, S.placeMax) * 2.3, dispR(parent) * 12)); }
   refreshUI();
+  if (!isP && S.placeMax < S.placeMin * 2 && !S.demo) { toast(t('h_tight', sig(S.placeMin / parent.R, 3), sig(S.placeMax / parent.R, 3))); return; } // so that a ring that hardly moves makes sense
   hint(isP ? 'h_place' : 'h_placem'); if (isP) hint('h_hz'); else hint('h_hill');
   if (!isP && chainLen(parent) >= 2) hint('h_moonmoon');
 }
@@ -2224,7 +2286,9 @@ function startConfig(parent, a, ang) {
   const isP = parent.kind === 'star';
   const o = { kind: isP ? 'planet' : 'moon', parent, draft: true, user: true, a, e: 0, w: 0, M0: 0, ang, uid: 'u' + randi(1, 1e9) };
   if (isP) Object.assign(o, { R: EARTH.R, T: 7600, h: 6.62, tilt: 0, tiltAz: rand(0, TAU) });
-  else Object.assign(o, { R: Math.min(parent.R * .27, .4 * EARTH.R), T: 8000, tilt: 2, locked: true });
+  else Object.assign(o, { // a tight orbit gets a small moon clear of the surface, dense enough to stay outside the Roche limit
+    R: Math.min(parent.R * .27, .4 * EARTH.R, Math.max(parent.R * .12, (a - parent.R) * .6)),
+    T: clamp(parent.T * Math.pow(a / (2.44 * parent.R), 1.5) * .98, 1500, 8000), tilt: 2, locked: true });
   const b = makeBody(o);
   b.wp = draftPos(b);
   S.draft = b; S.mode = 'config'; S.cfgZoom = 1; S.sel = null; S.pendingName = ''; S.cfgHover = S.cfgDrag = null; $('placeLbl').classList.remove('on');
@@ -2291,7 +2355,7 @@ function goHome() {
     if (!S.home) S.home = makeSolar();
     S.sys = S.home; S.scene = 'system'; S.mode = 'view'; S.draft = null; S.sel = null; S.camAnim = null; S.follow = S.home.star;
     updatePositions(S.home); cam.target = [0, 0, 0]; cam.dist = overviewDist(S.home); cam.pitch = .55; cam.yaw = .5;
-    setSpeed(10); Snd.setDrone(.6); refreshUI(); hint('h_home');
+    setSpeed(10); S.speedPrev = null; Snd.setDrone(.6); refreshUI(); hint('h_home');
   });
 }
 function goGalaxy() {
@@ -2306,7 +2370,7 @@ function goSystem(sys) {
   warpTo(() => {
     S.sys = sys; S.scene = 'system'; S.mode = 'view'; S.sel = null; S.camAnim = null; S.follow = sys.star;
     updatePositions(sys); cam.target = [0, 0, 0]; cam.dist = overviewDist(sys); cam.pitch = .5;
-    setSpeed(10); refreshUI();
+    setSpeed(10); S.speedPrev = null; refreshUI();
   });
 }
 function enterBlackHole(after) {
@@ -2506,6 +2570,8 @@ function drawBodyAt(b, q) {
   }
   if (b.kind !== 'planet' && q.s * dispOrbit(b, b.a) < 7 * DPR) return; // moon would sit on top of its planet
   if (strobing(b)) return;
+  const host = (S.follow || S.draft)?.parent; // the body the camera's subject circles stays until the camera is really inside it
+  if (b !== S.follow && q.z < dispR(b) * (b === host ? 1.1 : 2)) return; // a neighbour flying through the camera would blank the screen
   const cool = b.TK < 200 ? 2 : 3.2, Rp = Math.max(R, (b.kind === 'planet' ? 2.2 : 1.6) * DPR), molten = age < cool ? Math.pow(1 - age / cool, 1.4) : 0;
   if (R < 5 * DPR) { // distant body: soft halo so it reads as a point of light
     ctx.save(); ctx.globalCompositeOperation = 'lighter'; const hr = (b.kind === 'planet' ? 9 : 6) * DPR, c = bodyColor(b);
@@ -2516,7 +2582,10 @@ function drawBodyAt(b, q) {
   drawPlanet(ctx, b, q.x, q.y, Rp, cam, S.sys.t, molten);
   if (b.ring) drawRings(ctx, b, cam, dispR(b) * grow, true);
   if (molten > 0) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; const g = ctx.createRadialGradient(q.x, q.y, Rp * .8, q.x, q.y, Rp * 2.4); g.addColorStop(0, `rgba(255,150,60,${.5 * molten})`); g.addColorStop(1, 'rgba(255,120,40,0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, Rp * 2.4, 0, TAU); ctx.fill(); ctx.restore(); }
-  S.pick.push({ b, x: q.x, y: q.y, r: Math.max(Rp, 7 * DPR) });
+  const hq = b.kind === 'moon' ? cam.project(b.parent.wp) : null;
+  if (hq && q.z > hq.z && Math.hypot(q.x - hq.x, q.y - hq.y) < hq.s * dispR(b.parent)) return; // behind its host's disk: no click, no label
+  // from afar the moons huddle around the planet: their hit circles must not eat the planet's own
+  S.pick.push({ b, x: q.x, y: q.y, r: Math.max(Rp, b.kind === 'planet' ? 7 * DPR : Math.min(7 * DPR, .45 * q.s * dispOrbit(b, b.a))) });
 }
 function drawBrackets(x, y, r, col) {
   const s = r + 7 * DPR, l = 7 * DPR; ctx.strokeStyle = col; ctx.lineWidth = 1.4 * DPR; ctx.beginPath();
@@ -2696,7 +2765,8 @@ function zoom(f) {
     if (S.camAnim) S.camAnim.toD = clamp(S.camAnim.toD * f, mn, 6000); else cam.dist = clamp(cam.dist * f, mn, 6000);
   }
 }
-function pickAt(x, y, list) { let best = null, bd = 1e9; for (const p of list) { const d = Math.hypot(p.x - x, p.y - y) - p.r; if (d < 10 * DPR && d < bd) { bd = d; best = p; } } return best; }
+// nearest by distance in the body's own radii, so a small moon in front of its planet's disk can still be clicked
+function pickAt(x, y, list) { let best = null, bd = 1e9; for (const p of list) { const l = Math.hypot(p.x - x, p.y - y), d = l / p.r; if (l - p.r < 10 * DPR && d < bd) { bd = d; best = p; } } return best; }
 function hoverAt(x, y) {
   if (S.scene === 'system') {
     if (S.mode === 'place') { placeAt(x, y); const pl = $('placeLbl'); if (S.placeHover) { const p = S.placeParent, a = S.placeHover.a, isP = p.kind === 'star'; const P = orbPeriod(a, p.mu);
@@ -2890,7 +2960,7 @@ function demoStar() {
 }
 function demoPlanet() { const st = demoStar().star; return st.children[0] || quickBody(st, { kind: 'planet', a: AU * Math.sqrt(st.phys.L), R: EARTH.R, T: EARTH.T, h: 6.62, tilt: 23.4 }); }
 function demoMoon(pl) { return pl.children[0] || quickBody(pl, { kind: 'moon', a: pl.R * 38, R: pl.R * .27, T: 6400, tilt: 2, locked: true }); }
-function demoOverview() { cam.target = [0, 0, 0]; cam.dist = overviewDist(S.sys); cam.pitch = .5; S.camAnim = null; S.follow = S.sys.star; setSpeed(10); }
+function demoOverview() { cam.target = [0, 0, 0]; cam.dist = overviewDist(S.sys); cam.pitch = .5; S.camAnim = null; S.follow = S.sys.star; setSpeed(10); S.speedPrev = null; }
 const CHAPTERS = [
   { key: 'ch_g1', setup() { dropDemoSys(); toGalaxy(false); },
     async play() {
@@ -3036,7 +3106,7 @@ const I18N = {
     tip_star: 'Нырнуть в сверхмассивную чёрную дыру в центре галактики и выковать новую звезду.',
     tip_planet: 'Выберите орбиту вокруг звезды и создайте планету.',
     tip_moon: 'Создать луну у выбранной планеты или луны — даже луну луны.',
-    tip_moon_no: 'Сначала выберите планету или луну. Если кнопка неактивна — сфера Хилла тела слишком мала, луна не удержится.',
+    tip_moon_no: 'Сначала выберите планету или луну.',
     tip_over: 'Показать всю систему (или двойной щелчок)',
     tip_R: '<b>R</b> — радиус звезды. При том же T поле растёт как R³: <span class="f">μ = 4π²R³/T²</span>.',
     tip_T: '<b>T</b> — период обращения у самой поверхности. Чем меньше T, тем сильнее поле: <span class="f">μ = 4π²R³/T²</span>. У Солнца T ≈ 10 000 с.',
@@ -3076,6 +3146,7 @@ const I18N = {
     h_fast: 'Тело обращается слишком быстро для этого темпа. Замедлите время внизу справа, чтобы его увидеть.',
     h_place: 'Ведите мышью от звезды: подпись покажет длину года. Щёлкните, чтобы выбрать орбиту.',
     h_placem: 'Ведите мышью от тела и щёлкните, чтобы выбрать орбиту луны.',
+    h_tight: 'Тесная зона: <b>сфера Хилла</b> оставляет луне только орбиты от <b>{0} R</b> до <b>{1} R</b>. Щёлкните, чтобы выбрать.',
     h_hz: '<b>Зелёное кольцо — зона жизни:</b> здесь вода на поверхности может быть жидкой.',
     h_hill: 'Луна удержится только внутри <b>сферы Хилла</b>: <span class="f">r_H = a·∛(μ/3μ★)</span>. Дальше её отнимет звезда.',
     h_moonmoon: 'Луны лун в природе почти не встречаются: приливы быстро разрушают их орбиты. Но здесь — можно!',
@@ -3090,6 +3161,7 @@ const I18N = {
     w_breakup: 'Сутки почти равны T: экватор вращается с орбитальной скоростью — тело на грани разрыва!',
     w_moonmoon: 'Луна луны: в природе такие орбиты неустойчивы, но здесь — можно.', w_heavier: 'Поле луны сильнее, чем у её «хозяина» — в природе центром стала бы она.', w_roche: 'Ближе предела Роша (~{0} R): приливы разорвут луну — так рождаются кольца.', w_westeast: 'Сутки длиннее года: звезда ползёт по небу с запада на восток.',
     w_hill_small: 'Сфера Хилла этого тела слишком мала — луна не удержится: её отнимет более массивный сосед.',
+    w_chain_max: 'Дальше цепочка не идёт: это предел игры.', w_touch: 'Луна слишком велика для такой низкой орбиты: она заденет поверхность.',
     you_are_here: 'Вы здесь',
     tip_replay: 'Смотреть демо снова', tip_prev: 'Назад: к началу главы, ещё раз — к предыдущей (или свайп вправо, ←)', tip_pause: 'Пауза (или коснитесь экрана, пробел)', tip_play: 'Продолжить', tip_next: 'Вперёд: следующая глава (или свайп влево, →)', tip_exit: 'Выйти из демо и творить самому',
     paused: 'Пауза · коснитесь, чтобы продолжить',
@@ -3108,11 +3180,13 @@ const I18N = {
     pl_planet: 'a = <b>{0} а.е.</b> · год: <b>{1}</b>', pl_moon: 'a = <b>{0} R</b> · месяц: <b>{1}</b>',
     n_solar: 'Солнечная система', n_sun: 'Солнце', n_mercury: 'Меркурий', n_venus: 'Венера', n_earth: 'Земля', n_moon: 'Луна', n_mars: 'Марс', n_phobos: 'Фобос', n_deimos: 'Деймос',
     n_jupiter: 'Юпитер', n_io: 'Ио', n_europa: 'Европа', n_ganymede: 'Ганимед', n_callisto: 'Каллисто', n_saturn: 'Сатурн', n_titan: 'Титан', n_uranus: 'Уран', n_neptune: 'Нептун',
+    n_mimas: 'Мимас', n_enceladus: 'Энцелад', n_tethys: 'Тефия', n_dione: 'Диона', n_rhea: 'Рея', n_iapetus: 'Япет', n_miranda: 'Миранда', n_ariel: 'Ариэль', n_umbriel: 'Умбриэль', n_titania: 'Титания', n_oberon: 'Оберон',
     n_triton: 'Тритон', n_pluto: 'Плутон', n_charon: 'Харон', n_px: 'Планета X-{0}',
     ty_gas: 'Газовый гигант', ty_hotjup: 'Горячий юпитер', ty_subnep: 'Мини-нептун', ty_icegiant: 'Ледяной гигант', ty_lava: 'Лавовый мир', ty_venus: 'Парниковый мир',
     ty_airless: 'Каменный мир без воздуха', ty_desert: 'Пустынный мир', ty_earthlike: 'Землеподобная планета', ty_mars: 'Холодная пустыня', ty_tundra: 'Мир-тундра', ty_icy: 'Ледяной мир', ty_cold: 'Холодная пустыня',
     ty_earth: 'Наш дом', ty_mercury: 'Каменная планета', ty_jupiter: 'Газовый гигант', ty_saturn: 'Гигант с кольцами', ty_uranus: 'Ледяной гигант «на боку»', ty_neptune: 'Ледяной гигант',
     ty_pluto: 'Карликовая планета', ty_moon: 'Спутник Земли', ty_rock: 'Захваченный астероид', ty_io: 'Вулканическая луна', ty_ganymede: 'Крупнейшая луна', ty_callisto: 'Луна в древних кратерах',
+    ty_mimas: 'Луна с гигантским кратером', ty_enceladus: 'Ледяная луна с гейзерами', ty_tethys: 'Ледяная луна с огромным каньоном', ty_dione: 'Ледяная луна с разломами', ty_rhea: 'Ледяная луна в кратерах', ty_iapetus: 'Двуликая луна', ty_miranda: 'Луна-лоскутное одеяло', ty_ariel: 'Самая светлая луна Урана', ty_umbriel: 'Самая тёмная луна Урана', ty_titania: 'Крупнейшая луна Урана', ty_oberon: 'Красноватая луна в кратерах',
     ty_titan: 'Луна с плотной атмосферой', ty_triton: 'Луна с обратной орбитой', ty_charon: 'Двойник Плутона',
     st_O: 'Горячая голубая звезда', st_B: 'Голубо-белая звезда', st_A: 'Белая звезда', st_F: 'Жёлто-белая звезда', st_G: 'Жёлтый карлик', st_K: 'Оранжевый карлик', st_M: 'Красный карлик',
     st_bd: 'Коричневый карлик', st_wd: 'Белый карлик', st_rg: 'Красный гигант', st_bg: 'Голубой гигант', st_yg: 'Жёлтый гигант', st_rsg: 'Красный сверхгигант', st_bsg: 'Голубой сверхгигант', st_ysg: 'Жёлтый сверхгигант',
@@ -3162,7 +3236,7 @@ const I18N = {
     tip_star: 'Dive into the supermassive black hole at the galaxy centre and forge a new star.',
     tip_planet: 'Pick an orbit around the star and create a planet.',
     tip_moon: 'Create a moon for the selected planet or moon — even a moon of a moon.',
-    tip_moon_no: 'Select a planet or a moon first. If disabled, the body’s Hill sphere is too small to hold a moon.',
+    tip_moon_no: 'Select a planet or a moon first.',
     tip_over: 'Show the whole system (or double-click)',
     tip_R: '<b>R</b> — the star’s radius. At the same T the field grows as R³: <span class="f">μ = 4π²R³/T²</span>.',
     tip_T: '<b>T</b> — the period of an orbit right at the surface. Smaller T means a stronger field: <span class="f">μ = 4π²R³/T²</span>. The Sun has T ≈ 10,000 s.',
@@ -3202,6 +3276,7 @@ const I18N = {
     h_fast: 'This body orbits too fast for the current rate. Slow time down at the bottom right to see it.',
     h_place: 'Move the mouse away from the star: the label shows the year length. Click to pick the orbit.',
     h_placem: 'Move the mouse away from the body and click to pick the moon’s orbit.',
+    h_tight: 'A tight fit: the <b>Hill sphere</b> leaves a moon only orbits from <b>{0} R</b> to <b>{1} R</b>. Click to pick one.',
     h_hz: '<b>The green ring is the habitable zone:</b> surface water can stay liquid here.',
     h_hill: 'A moon stays only inside the <b>Hill sphere</b>: <span class="f">r_H = a·∛(μ/3μ★)</span>. Further out the star steals it.',
     h_moonmoon: 'Moons of moons are almost never found in nature: tides quickly destroy their orbits. But here you can!',
@@ -3216,6 +3291,7 @@ const I18N = {
     w_breakup: 'The day is almost equal to T: the equator moves at orbital speed — the body is about to fly apart!',
     w_moonmoon: 'A moon of a moon: such orbits are unstable in nature, but here you can.', w_heavier: 'The moon’s field is stronger than its host’s — in nature it would be the centre.', w_roche: 'Inside the Roche limit (~{0} R): tides will tear the moon apart — this is how rings are born.', w_westeast: 'The day is longer than the year: the star crawls across the sky from west to east.',
     w_hill_small: 'This body’s Hill sphere is too small — a moon would not stay: a heavier neighbour would steal it.',
+    w_chain_max: 'The chain stops here: this is the game’s limit.', w_touch: 'The moon is too big for such a low orbit: it would graze the surface.',
     you_are_here: 'You are here',
     tip_replay: 'Watch the demo again', tip_prev: 'Back: to the start of the chapter, again — to the previous one (or swipe right, ←)', tip_pause: 'Pause (or tap the screen, Space)', tip_play: 'Play', tip_next: 'Forward: next chapter (or swipe left, →)', tip_exit: 'Leave the demo and create yourself',
     paused: 'Paused · tap to continue',
@@ -3234,11 +3310,13 @@ const I18N = {
     pl_planet: 'a = <b>{0} AU</b> · year: <b>{1}</b>', pl_moon: 'a = <b>{0} R</b> · month: <b>{1}</b>',
     n_solar: 'Solar System', n_sun: 'Sun', n_mercury: 'Mercury', n_venus: 'Venus', n_earth: 'Earth', n_moon: 'Moon', n_mars: 'Mars', n_phobos: 'Phobos', n_deimos: 'Deimos',
     n_jupiter: 'Jupiter', n_io: 'Io', n_europa: 'Europa', n_ganymede: 'Ganymede', n_callisto: 'Callisto', n_saturn: 'Saturn', n_titan: 'Titan', n_uranus: 'Uranus', n_neptune: 'Neptune',
+    n_mimas: 'Mimas', n_enceladus: 'Enceladus', n_tethys: 'Tethys', n_dione: 'Dione', n_rhea: 'Rhea', n_iapetus: 'Iapetus', n_miranda: 'Miranda', n_ariel: 'Ariel', n_umbriel: 'Umbriel', n_titania: 'Titania', n_oberon: 'Oberon',
     n_triton: 'Triton', n_pluto: 'Pluto', n_charon: 'Charon', n_px: 'Planet X-{0}',
     ty_gas: 'Gas giant', ty_hotjup: 'Hot Jupiter', ty_subnep: 'Mini-Neptune', ty_icegiant: 'Ice giant', ty_lava: 'Lava world', ty_venus: 'Greenhouse world',
     ty_airless: 'Airless rocky world', ty_desert: 'Desert world', ty_earthlike: 'Earth-like planet', ty_mars: 'Cold desert', ty_tundra: 'Tundra world', ty_icy: 'Ice world', ty_cold: 'Cold desert',
     ty_earth: 'Our home', ty_mercury: 'Rocky planet', ty_jupiter: 'Gas giant', ty_saturn: 'Ringed giant', ty_uranus: 'Ice giant on its side', ty_neptune: 'Ice giant',
     ty_pluto: 'Dwarf planet', ty_moon: 'Earth’s satellite', ty_rock: 'Captured asteroid', ty_io: 'Volcanic moon', ty_ganymede: 'Largest moon', ty_callisto: 'Ancient cratered moon',
+    ty_mimas: 'Moon with a giant crater', ty_enceladus: 'Ice moon with geysers', ty_tethys: 'Ice moon with a vast canyon', ty_dione: 'Ice moon with bright cliffs', ty_rhea: 'Cratered ice moon', ty_iapetus: 'Two-faced moon', ty_miranda: 'Patchwork moon', ty_ariel: 'Brightest moon of Uranus', ty_umbriel: 'Darkest moon of Uranus', ty_titania: 'Largest moon of Uranus', ty_oberon: 'Reddish cratered moon',
     ty_titan: 'Moon with a thick atmosphere', ty_triton: 'Moon on a retrograde orbit', ty_charon: 'Pluto’s twin',
     st_O: 'Hot blue star', st_B: 'Blue-white star', st_A: 'White star', st_F: 'Yellow-white star', st_G: 'Yellow dwarf', st_K: 'Orange dwarf', st_M: 'Red dwarf',
     st_bd: 'Brown dwarf', st_wd: 'White dwarf', st_rg: 'Red giant', st_bg: 'Blue giant', st_yg: 'Yellow giant', st_rsg: 'Red supergiant', st_bsg: 'Blue supergiant', st_ysg: 'Yellow supergiant',
@@ -3288,7 +3366,7 @@ const I18N = {
     tip_star: 'Plonjați în gaura neagră supermasivă din centrul galaxiei și făuriți o stea nouă.',
     tip_planet: 'Alegeți o orbită în jurul stelei și creați o planetă.',
     tip_moon: 'Creați o lună pentru planeta sau luna selectată — chiar și o lună a unei luni.',
-    tip_moon_no: 'Mai întâi selectați o planetă sau o lună. Dacă butonul este inactiv, sfera Hill a corpului e prea mică și luna nu se va menține.',
+    tip_moon_no: 'Mai întâi selectați o planetă sau o lună.',
     tip_over: 'Arată tot sistemul (sau dublu clic)',
     tip_R: '<b>R</b> — raza stelei. La același T, câmpul crește ca R³: <span class="f">μ = 4π²R³/T²</span>.',
     tip_T: '<b>T</b> — perioada unei orbite chiar la suprafață. Cu cât T e mai mic, cu atât câmpul e mai puternic: <span class="f">μ = 4π²R³/T²</span>. La Soare T ≈ 10.000 s.',
@@ -3328,6 +3406,7 @@ const I18N = {
     h_fast: 'Corpul orbitează prea repede pentru acest ritm. Încetiniți timpul jos, în dreapta, ca să-l vedeți.',
     h_place: 'Mișcați mouse-ul dinspre stea: eticheta arată durata anului. Faceți clic pentru a alege orbita.',
     h_placem: 'Mișcați mouse-ul dinspre corp și faceți clic pentru a alege orbita lunii.',
+    h_tight: 'Loc strâmt: <b>sfera Hill</b> îi lasă lunii doar orbite de la <b>{0} R</b> la <b>{1} R</b>. Faceți clic pentru a alege.',
     h_hz: '<b>Inelul verde este zona locuibilă:</b> aici apa de la suprafață poate rămâne lichidă.',
     h_hill: 'O lună se menține doar în interiorul <b>sferei Hill</b>: <span class="f">r_H = a·∛(μ/3μ★)</span>. Mai departe, steaua o fură.',
     h_moonmoon: 'Lunile lunilor aproape că nu există în natură: mareele le distrug repede orbitele. Dar aici se poate!',
@@ -3342,6 +3421,7 @@ const I18N = {
     w_breakup: 'Ziua e aproape egală cu T: ecuatorul se mișcă cu viteză orbitală — corpul e gata să se rupă!',
     w_moonmoon: 'O lună a unei luni: în natură asemenea orbite sunt instabile, dar aici se poate.', w_heavier: 'Câmpul lunii e mai puternic decât al gazdei sale — în natură, ea ar fi centrul.', w_roche: 'Sub limita Roche (~{0} R): mareele vor rupe luna — așa se nasc inelele.', w_westeast: 'Ziua e mai lungă decât anul: steaua se târăște pe cer de la vest la est.',
     w_hill_small: 'Sfera Hill a acestui corp e prea mică — luna nu se va menține: un vecin mai masiv o va fura.',
+    w_chain_max: 'Lanțul se oprește aici: aceasta e limita jocului.', w_touch: 'Luna e prea mare pentru o orbită atât de joasă: ar atinge suprafața.',
     you_are_here: 'Sunteți aici',
     tip_replay: 'Privește demo-ul din nou', tip_prev: 'Înapoi: la începutul capitolului, încă o dată — la cel anterior (sau glisare la dreapta, ←)', tip_pause: 'Pauză (sau atingeți ecranul, Spațiu)', tip_play: 'Continuă', tip_next: 'Înainte: capitolul următor (sau glisare la stânga, →)', tip_exit: 'Ieșiți din demo și creați singuri',
     paused: 'Pauză · atingeți pentru a continua',
@@ -3360,11 +3440,13 @@ const I18N = {
     pl_planet: 'a = <b>{0} UA</b> · anul: <b>{1}</b>', pl_moon: 'a = <b>{0} R</b> · perioada: <b>{1}</b>',
     n_solar: 'Sistemul Solar', n_sun: 'Soarele', n_mercury: 'Mercur', n_venus: 'Venus', n_earth: 'Pământul', n_moon: 'Luna', n_mars: 'Marte', n_phobos: 'Phobos', n_deimos: 'Deimos',
     n_jupiter: 'Jupiter', n_io: 'Io', n_europa: 'Europa', n_ganymede: 'Ganymede', n_callisto: 'Callisto', n_saturn: 'Saturn', n_titan: 'Titan', n_uranus: 'Uranus', n_neptune: 'Neptun',
+    n_mimas: 'Mimas', n_enceladus: 'Enceladus', n_tethys: 'Tethys', n_dione: 'Dione', n_rhea: 'Rhea', n_iapetus: 'Iapetus', n_miranda: 'Miranda', n_ariel: 'Ariel', n_umbriel: 'Umbriel', n_titania: 'Titania', n_oberon: 'Oberon',
     n_triton: 'Triton', n_pluto: 'Pluto', n_charon: 'Charon', n_px: 'Planeta X-{0}',
     ty_gas: 'Gigant gazos', ty_hotjup: 'Jupiter fierbinte', ty_subnep: 'Mini-Neptun', ty_icegiant: 'Gigant de gheață', ty_lava: 'Lume de lavă', ty_venus: 'Lume cu efect de seră',
     ty_airless: 'Lume stâncoasă fără aer', ty_desert: 'Lume deșertică', ty_earthlike: 'Planetă asemănătoare Pământului', ty_mars: 'Deșert rece', ty_tundra: 'Lume-tundră', ty_icy: 'Lume înghețată', ty_cold: 'Deșert rece',
     ty_earth: 'Casa noastră', ty_mercury: 'Planetă stâncoasă', ty_jupiter: 'Gigant gazos', ty_saturn: 'Gigant cu inele', ty_uranus: 'Gigant de gheață „culcat”', ty_neptune: 'Gigant de gheață',
     ty_pluto: 'Planetă pitică', ty_moon: 'Satelitul Pământului', ty_rock: 'Asteroid capturat', ty_io: 'Lună vulcanică', ty_ganymede: 'Cea mai mare lună', ty_callisto: 'Lună cu cratere străvechi',
+    ty_mimas: 'Lună cu un crater gigantic', ty_enceladus: 'Lună de gheață cu gheizere', ty_tethys: 'Lună de gheață cu un canion imens', ty_dione: 'Lună de gheață cu falii', ty_rhea: 'Lună de gheață cu cratere', ty_iapetus: 'Lună cu două fețe', ty_miranda: 'Lună-mozaic', ty_ariel: 'Cea mai luminoasă lună a lui Uranus', ty_umbriel: 'Cea mai întunecată lună a lui Uranus', ty_titania: 'Cea mai mare lună a lui Uranus', ty_oberon: 'Lună roșiatică cu cratere',
     ty_titan: 'Lună cu atmosferă densă', ty_triton: 'Lună cu orbită retrogradă', ty_charon: 'Geamănul lui Pluto',
     st_O: 'Stea fierbinte albastră', st_B: 'Stea alb-albăstruie', st_A: 'Stea albă', st_F: 'Stea alb-gălbuie', st_G: 'Pitică galbenă', st_K: 'Pitică portocalie', st_M: 'Pitică roșie',
     st_bd: 'Pitică brună', st_wd: 'Pitică albă', st_rg: 'Gigantă roșie', st_bg: 'Gigantă albastră', st_yg: 'Gigantă galbenă', st_rsg: 'Supergigantă roșie', st_bsg: 'Supergigantă albastră', st_ysg: 'Supergigantă galbenă',
@@ -3424,7 +3506,7 @@ function frame(now) {
     processDirector(dt);
     if (S.formAnim) { S.galForm = Math.min(1, S.galForm + dt * .45); if (S.galForm >= 1) { S.formAnim = false; refreshUI(); } }
     S.galT += Math.min(.25, rawDt) * (window.__ts || 1) * S.galRate; // galaxy clock is not slowed by low fps
-    if (S.sys && S.scene === 'system' && !S.paused) { const dts = S.speed * dt; S.sys.t += dts; for (const b of allBodies(S.sys)) advanceSpin(b, dts, dt); }
+    if (S.sys && S.scene === 'system' && !S.paused && S.cfgDrag !== 'orbit') { const dts = S.speed * dt; S.sys.t += dts; for (const b of allBodies(S.sys)) advanceSpin(b, dts, dt); }
     if (S.draft) advanceSpin(S.draft, S.speed * dt, dt);
     FX.update(dt);
     const sc = S.scene;
