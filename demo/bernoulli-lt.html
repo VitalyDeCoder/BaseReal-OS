@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bernoulli's law in the LT system</title>
+<style>
+:root{--bg:#060b16;--fg:#e9eef7;--mut:#93a4bb;--line:#22314a;--cy:#62d8ff;--am:#ffb84d;--gold:#ffdf9a}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 30% 0%,#12284a 0%,#0a1428 45%,#060b16 100%) fixed;color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100vh}
+main{max-width:980px;margin:0 auto;padding:18px max(14px,env(safe-area-inset-right)) 28px max(14px,env(safe-area-inset-left))}
+.k{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--am)}
+h1{font-size:clamp(22px,4.2vw,34px);font-weight:600;margin:4px 0 4px;letter-spacing:.01em}
+p.sub{margin:0 0 12px;color:var(--mut);font-size:14px;max-width:760px}
+canvas{display:block;width:100%;border:1px solid var(--line);border-radius:14px;background:#050a14;touch-action:pan-y}
+.ctl{display:flex;gap:12px;align-items:center;margin:14px 0 6px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(10,20,36,.6)}
+.ctl span{font-size:13px;color:var(--mut);white-space:nowrap}
+.ctl b{font:600 14px Consolas,monospace;color:var(--gold);min-width:44px;text-align:right}
+input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:36px;background:transparent;touch-action:none;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--am),var(--cy))}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--am),var(--cy))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#9fe8ff 45%,#1b84c4);border:1px solid #b4efff;box-shadow:0 0 14px rgba(98,216,255,.8)}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#9fe8ff;border:1px solid #b4efff}
+.tw{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:6px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--mut);font-weight:600;font-size:12px}
+th small{display:block;font:600 11px Consolas,monospace;color:#5f7da6}
+th:first-child,td:first-child{text-align:left}
+td.inv{color:var(--gold);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:14px}
+.card{border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:rgba(10,20,36,.55);font-size:13.5px;color:#cfdbea}
+.card b{color:var(--fg)} .card .f{display:block;font:600 14px Consolas,monospace;color:var(--gold);margin:3px 0 5px}
+.card i{font-style:normal;font:600 11px Consolas,monospace;color:var(--cy);letter-spacing:.06em}
+p.note{font-size:12.5px;color:var(--mut);margin:14px 0 0}
+</style>
+</head>
+<body>
+<main>
+<div class="k">BaseReal-OS · LT-System v2</div>
+<h1>Bernoulli's law in the LT cells</h1>
+<p class="sub">An ideal fluid in a pipe, written with two quantities only: radius R and time T. Squeeze the pipe and watch speed and pressure trade places while flow and head stay constant.</p>
+<canvas id="c" aria-label="Pipe with a constriction, energy columns and LT clocks"></canvas>
+<div class="ctl"><span>Throat radius</span><input id="s" type="range" min="50" max="100" value="62" aria-label="Throat radius"><b id="sv">0.62</b><span>R₀</span></div>
+<div class="tw"><table id="tb"></table></div>
+<div class="cards">
+ <div class="card"><i>L³T⁻¹ · CONTINUITY</i><span class="f">Q = πR²·v = const</span>The same volume passes every section each second, so a narrower section must be faster: <b>v ∝ 1/R²</b>.</div>
+ <div class="card"><i>T¹ · THE LT CLOCK</i><span class="f">T = 2πR / v ∝ R³</span>Each section has its own period: the time the flow needs to travel one circumference 2πR. Halve the radius and the clock turns <b>8 times faster</b>, the 3rd power of R.</div>
+ <div class="card"><i>L²T⁻² · HEAD</i><span class="f">½v² + p/ρ = const</span>Kinetic term and pressure term live in one cell and add up to the same head everywhere. Where the flow is fast, the pressure is low.</div>
+</div>
+<p class="note">Ideal incompressible fluid, steady flow, no viscosity. Units: R₀ = 1, v₀ = 1 at the inlet, head E = 8.5 v₀². Density has dimension T⁻² in LT-System v2, so p/ρ has L²T⁻², the same cell as v² and the orbital M/r. This is the classical energy balance written in LT cells, not a new law.</p>
+</main>
+<script>
+const cv = document.getElementById('c'), g = cv.getContext('2d'), sl = document.getElementById('s');
+const E0 = 8.5, TAU = Math.PI * 2;                         // head (L²T⁻²): keeps p/ρ > 0 down to R = 0.5
+let r1 = .62, W = 900, H = 560, D = 1, last = 0;
+const R = x => 1 - (1 - r1) * Math.exp(-Math.pow((x - .5) / .17, 2));   // pipe radius, R₀ = 1
+const v = x => 1 / (R(x) * R(x));                          // continuity: πR²v = const, v₀ = 1
+const T = x => TAU * R(x) / v(x);                          // LT clock: T = 2πR/v = 2πR³
+const K = x => .5 * v(x) * v(x), Pr = x => E0 - K(x);      // ½v² and p/ρ
+const SEC = [.07, .215, .36, .5, .64, .785, .93], phase = SEC.map(() => 0);
+const parts = Array.from({ length: 300 }, () => ({ x: Math.random(), q: Math.random() * 1.84 - .92, s: .6 + Math.random() * .8 }));
+const mix = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
+const hue = t => t < .5 ? mix([70, 190, 255], [255, 184, 77], t * 2) : mix([255, 184, 77], [255, 255, 255], (t - .5) * 2);
+function size() { const w = cv.parentElement.clientWidth; D = Math.min(devicePixelRatio || 1, 2); const k = w < 560 ? .92 : .6; W = Math.round(w * D); H = Math.round(w * k * D); cv.width = W; cv.height = H; cv.style.height = (w * k) + 'px'; }
+function draw(dt) {
+  const X = x => W * (.04 + .92 * x), f = Math.max(10 * D, W / 62), vmax = v(.5);
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#07101f'); bg.addColorStop(1, '#040810'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  // ---- energy columns: ½v² (amber) stacked on p/ρ (cyan), always reaching the same head line ----
+  const yb = H * .37, hE = H * .27, bw = Math.min(W * .05, 46 * D);
+  g.font = `600 ${f}px Consolas, monospace`; g.textBaseline = 'alphabetic';
+  for (const x of SEC) {
+    const hp = Pr(x) / E0 * hE, hk = K(x) / E0 * hE, cx = X(x);
+    let gr = g.createLinearGradient(0, yb - hp, 0, yb); gr.addColorStop(0, 'rgba(98,216,255,.95)'); gr.addColorStop(1, 'rgba(20,90,150,.55)');
+    g.fillStyle = gr; g.fillRect(cx - bw / 2, yb - hp, bw, hp);
+    gr = g.createLinearGradient(0, yb - hp - hk, 0, yb - hp); gr.addColorStop(0, '#fff3c9'); gr.addColorStop(1, '#ff9d3c');
+    g.shadowColor = 'rgba(255,170,70,.9)'; g.shadowBlur = 14 * D * Math.min(1, hk / (hE * .2)); g.fillStyle = gr; g.fillRect(cx - bw / 2, yb - hp - hk, bw, hk); g.shadowBlur = 0;
+    g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = D; g.strokeRect(cx - bw / 2, yb - hE, bw, hE);
+    g.strokeStyle = 'rgba(98,216,255,.25)'; g.beginPath(); g.moveTo(cx, yb); g.lineTo(cx, H * .56 - R(x) * H * .105); g.stroke();   // tap into the pipe
+  }
+  g.setLineDash([6 * D, 6 * D]); g.strokeStyle = '#ffdf9a'; g.lineWidth = 1.5 * D; g.beginPath(); g.moveTo(X(0), yb - hE); g.lineTo(X(1), yb - hE); g.stroke(); g.setLineDash([]);
+  g.fillStyle = '#ffdf9a'; g.textAlign = 'left'; g.fillText('head  E = ½v² + p/ρ = const   (L²T⁻²)', X(0), yb - hE - f * .6);
+  g.textAlign = 'right'; g.fillStyle = '#ffb84d'; g.fillText('■ ½v²', X(1), yb - hE - f * .6); g.fillStyle = '#62d8ff'; g.fillText('■ p/ρ   ', X(1) - f * 4.2, yb - hE - f * .6);
+  // ---- the pipe ----
+  const cy = H * .56, S = H * .105;
+  const body = new Path2D(); for (let i = 0; i <= 120; i++) { const x = i / 120; i ? body.lineTo(X(x), cy - R(x) * S) : body.moveTo(X(x), cy - R(x) * S); } for (let i = 120; i >= 0; i--) { const x = i / 120; body.lineTo(X(x), cy + R(x) * S); } body.closePath();
+  const pg = g.createLinearGradient(0, cy - S, 0, cy + S); pg.addColorStop(0, 'rgba(40,90,150,.30)'); pg.addColorStop(.5, 'rgba(10,30,60,.10)'); pg.addColorStop(1, 'rgba(40,90,150,.30)'); g.fillStyle = pg; g.fill(body);
+  g.save(); g.clip(body); g.globalCompositeOperation = 'lighter'; g.lineCap = 'round';
+  for (const p of parts) {                                   // streaks: length and colour follow the local speed
+    p.x += dt * .055 * v(p.x) * p.s; if (p.x > 1) { p.x -= 1; p.q = Math.random() * 1.84 - .92; }
+    const u = v(p.x), t = vmax > 1.02 ? (u - 1) / (vmax - 1) : 0, c = hue(Math.min(1, t)), len = W * .012 * u, y = cy + p.q * R(p.x) * S, y2 = cy + p.q * R(Math.max(0, p.x - len / (W * .92))) * S;
+    g.strokeStyle = `rgba(${c},${.35 + .5 * t})`; g.lineWidth = Math.max(1.5, W / 420) * (1 + .6 * t); g.beginPath(); g.moveTo(X(p.x) - len, y2); g.lineTo(X(p.x), y); g.stroke();
+  }
+  g.restore(); g.globalCompositeOperation = 'lighter';
+  for (const sg of [-1, 1]) { g.beginPath(); for (let i = 0; i <= 120; i++) { const x = i / 120; i ? g.lineTo(X(x), cy + sg * R(x) * S) : g.moveTo(X(x), cy + sg * R(x) * S); }
+    g.strokeStyle = 'rgba(98,216,255,.18)'; g.lineWidth = 9 * D; g.stroke(); g.strokeStyle = 'rgba(190,235,255,.95)'; g.lineWidth = 2 * D; g.stroke(); }
+  g.globalCompositeOperation = 'source-over';
+  // ---- LT clocks: a ring of the section's radius, one turn per its own period T = 2πR/v ∝ R³ ----
+  const ky = H * .845, kS = Math.min(H * .085, W * .052);
+  g.textAlign = 'center';
+  SEC.forEach((x, i) => {
+    const cx = X(x), rr = R(x) * kS; phase[i] = (phase[i] + dt * TAU / T(x) * 1.5) % TAU;
+    g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = D; g.beginPath(); g.moveTo(cx, cy + R(x) * S); g.lineTo(cx, ky - rr); g.stroke();
+    g.strokeStyle = 'rgba(242,194,91,.35)'; g.lineWidth = 2 * D; g.beginPath(); g.arc(cx, ky, rr, 0, TAU); g.stroke();
+    g.strokeStyle = '#ffdf9a'; g.lineWidth = 3 * D; g.lineCap = 'round'; g.beginPath(); g.arc(cx, ky, rr, phase[i] - 1.5, phase[i]); g.stroke();   // comet tail
+    g.fillStyle = '#fff'; g.shadowColor = '#ffb84d'; g.shadowBlur = 12 * D; g.beginPath(); g.arc(cx + rr * Math.cos(phase[i]), ky + rr * Math.sin(phase[i]), 3.5 * D, 0, TAU); g.fill(); g.shadowBlur = 0;
+    g.fillStyle = '#93a4bb'; g.font = `${f * .86}px Consolas, monospace`; g.fillText('T ' + (T(x) / TAU).toFixed(2), cx, ky + kS + f * 1.25);
+  });
+  g.textAlign = 'left'; g.fillStyle = '#93a4bb'; g.font = `600 ${f}px Consolas, monospace`; g.fillText('LT clocks: ring R, period T = 2πR/v  (T / T₀ shown)', X(0), ky - kS - f * .7);
+  g.textAlign = 'right'; g.fillStyle = '#62d8ff'; g.fillText('flow Q = πR²v = const  (L³T⁻¹)', X(1), cy + S + f * 1.5);
+}
+function table() {
+  const row = (n, x) => `<tr><td>${n}</td><td>${R(x).toFixed(2)}</td><td>${(T(x) / TAU).toFixed(3)}</td><td>${v(x).toFixed(2)}</td><td class="inv">${(R(x) * R(x) * v(x)).toFixed(3)}</td><td>${K(x).toFixed(2)}</td><td>${Pr(x).toFixed(2)}</td><td class="inv">${(K(x) + Pr(x)).toFixed(2)}</td></tr>`;
+  document.getElementById('tb').innerHTML = '<tr><th>Section</th><th>R<small>L</small></th><th>T / T₀<small>T</small></th><th>v<small>LT⁻¹</small></th><th>Q / π<small>L³T⁻¹</small></th><th>½v²<small>L²T⁻²</small></th><th>p/ρ<small>L²T⁻²</small></th><th>head E<small>L²T⁻²</small></th></tr>' + row('inlet', 0) + row('throat', .5);
+}
+function loop(now) { const dt = Math.min(.05, (now - last) / 1000 || 0); last = now; draw(dt); requestAnimationFrame(loop); }
+sl.oninput = () => { r1 = sl.value / 100; document.getElementById('sv').textContent = r1.toFixed(2); table(); };
+addEventListener('resize', size); size(); table(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

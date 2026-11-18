@@ -1,236 +1,389 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BaseReal-OS</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #0f0f0f;
-            color: #e0e0e0;
-            line-height: 1.6;
-        }
-        header {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            padding: 60px 20px;
-            text-align: center;
-        }
-        h1 {
-            font-size: 3rem;
-            margin: 0;
-            color: #00ffcc;
-        }
-        .subtitle {
-            font-size: 1.3rem;
-            color: #aaaaaa;
-            margin-top: 10px;
-        }
-        .container {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
-        .demo {
-            background: #1a1a2e;
-            margin: 25px 0;
-            padding: 30px;
-            border-radius: 12px;
-        }
-        .demo h2 {
-            color: #00ffcc;
-            margin-top: 0;
-        }
-        .btn {
-            display: inline-block;
-            padding: 14px 28px;
-            margin-top: 15px;
-            background: #00ffcc;
-            color: #000;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            font-size: 1.1rem;
-        }
-        .btn:hover {
-            background: #00ccaa;
-        }
-        footer {
-            text-align: center;
-            padding: 50px;
-            color: #666;
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#04070e">
+<title>BaseReal-OS — a universe built from two numbers</title>
+<meta name="description" content="BaseReal-OS is the operating system of a shared virtual universe. Every body in it is defined by two numbers: its radius and its period. Sandbox demo, roadmap and papers.">
+<meta property="og:title" content="BaseReal-OS — a universe built from two numbers">
+<meta property="og:description" content="Sandbox demo, roadmap and the foundation of a shared virtual universe.">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://basereal-os.dev/">
+<meta property="og:url" content="https://basereal-os.dev/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2304070e'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%2362d8ff' stroke-width='1.6'/%3E%3Cpath d='M16 4a12 12 0 0 1 10.2 5.7' fill='none' stroke='%23ffb84d' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#04070e;--panel:rgba(10,17,30,.72);--line:rgba(130,190,240,.14);--line2:rgba(130,190,240,.3);
+  --cyan:#62d8ff;--cyan2:#b4efff;--amber:#ffb84d;--amber2:#ffe0a8;--violet:#b99cff;--green:#7dffb8;
+  --text:#e6eef8;--soft:#b9c6d8;--mut:#8696ad;--dim:#56647a;
+  --ui:'Exo 2',system-ui,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --w:1080px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--ui);font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+::selection{background:rgba(98,216,255,.3)}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:-2;pointer-events:none}
+.glow{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(70vmax 46vmax at 82% -6%,rgba(52,120,190,.18),transparent 62%),
+  radial-gradient(60vmax 44vmax at -8% 46%,rgba(120,84,210,.09),transparent 62%)}
+.wrap{width:100%;max-width:var(--w);margin:0 auto;padding:0 max(22px,env(safe-area-inset-right)) 0 max(22px,env(safe-area-inset-left))}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:10;backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%);background:rgba(4,7,14,.72);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:26px;height:62px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:500;font-size:16px;letter-spacing:.14em}
+.brand svg{width:26px;height:26px}
+.brand i{font-style:normal;color:var(--cyan)}
+nav{margin-left:auto;display:flex;gap:26px;font-size:13.5px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+nav a{transition:color .2s}
+nav a:hover{color:var(--text)}
+.lang{display:flex;gap:2px;padding:3px;border:1px solid var(--line2);border-radius:999px}
+.lang button{font:500 11.5px var(--ui);letter-spacing:.08em;color:var(--mut);background:transparent;border:0;border-radius:999px;min-width:34px;height:26px;cursor:pointer;transition:color .2s,background .2s}
+.lang button:hover{color:var(--text)}
+.lang button.on{color:var(--cyan2);background:rgba(98,216,255,.16)}
+.lang button:focus-visible,.btn:focus-visible,nav a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ---------- hero ---------- */
+.hero{display:grid;grid-template-columns:1.08fr .92fr;gap:40px;align-items:center;padding:clamp(54px,9vh,104px) 0 clamp(46px,7vh,80px)}
+.kick{font:400 12px var(--mono);letter-spacing:.3em;text-transform:uppercase;color:var(--cyan)}
+h1{margin-top:20px;font-weight:200;font-size:clamp(38px,6.1vw,70px);line-height:1.06;letter-spacing:.01em}
+h1 em{font-style:normal;background:linear-gradient(100deg,var(--cyan),#fff 55%,var(--amber2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{margin-top:24px;max-width:33em;font-size:clamp(16px,1.75vw,18.5px);color:var(--soft)}
+.cta{margin-top:34px;display:flex;flex-wrap:wrap;gap:14px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:11px;font:500 13.5px var(--ui);letter-spacing:.16em;text-transform:uppercase;padding:14px 28px;border-radius:999px;cursor:pointer;border:1px solid var(--line2);color:var(--text);background:rgba(12,22,38,.6);transition:background .25s,border-color .25s,box-shadow .25s,transform .15s,gap .25s}
+.btn:hover{border-color:var(--cyan);background:rgba(40,90,140,.3)}
+.btn:active{transform:scale(.97)}
+.btn.play{color:#04121c;font-weight:600;border-color:transparent;background:linear-gradient(100deg,var(--cyan),#9be9ff);box-shadow:0 0 0 1px rgba(98,216,255,.4),0 10px 34px rgba(98,216,255,.26)}
+.btn.play:hover{gap:16px;box-shadow:0 0 0 1px rgba(98,216,255,.7),0 12px 44px rgba(98,216,255,.42);background:linear-gradient(100deg,#7fe0ff,#c4f3ff)}
+.btn.play svg{width:11px;height:12px}
+.hint{flex-basis:100%;min-height:20px;font:400 12px var(--mono);color:var(--amber2);opacity:0;transition:opacity .3s}
+.hint.on{opacity:1}
+.emblem{justify-self:center;width:min(100%,430px);text-align:center}
+.emblem svg{width:100%;height:auto;overflow:visible}
+.emblem figcaption{margin-top:6px;font:400 11px var(--mono);letter-spacing:.14em;color:var(--dim)}
+
+.facts{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:16px;background:var(--panel);overflow:hidden}
+.facts div{padding:22px 26px;border-left:1px solid var(--line)}
+.facts div:first-child{border-left:0}
+.facts b{display:block;font:400 26px var(--mono);color:var(--cyan2);letter-spacing:.02em}
+.facts span{display:block;margin-top:6px;font-size:14px;color:var(--mut)}
+
+/* ---------- sections ---------- */
+section{padding:clamp(64px,10vh,110px) 0 0}
+.sh{display:flex;align-items:baseline;gap:18px;margin-bottom:38px}
+.sh .n{font:400 12px var(--mono);letter-spacing:.2em;color:var(--dim)}
+h2{font-weight:300;font-size:clamp(26px,3.4vw,36px);letter-spacing:.02em}
+.sh p{margin-left:auto;max-width:26em;text-align:right;font-size:14.5px;color:var(--mut)}
+
+/* roadmap */
+.road{position:relative;display:grid;gap:18px;padding-left:44px}
+.road::before{content:'';position:absolute;left:11px;top:14px;bottom:14px;width:1px;background:linear-gradient(180deg,var(--cyan),rgba(98,216,255,.28) 26%,var(--line) 60%,transparent)}
+.stage{--c:var(--mut);position:relative;display:grid;grid-template-columns:76px 1fr;gap:6px 22px;padding:28px 30px 28px 26px;border:1px solid var(--line);border-radius:18px;background:var(--panel);transition:border-color .3s,transform .3s}
+.stage:hover{border-color:var(--line2);transform:translateX(3px)}
+.stage::before{content:'';position:absolute;left:-39px;top:36px;width:13px;height:13px;border-radius:50%;background:var(--bg);border:1.5px solid var(--c)}
+.stage.now{--c:var(--cyan);border-color:rgba(98,216,255,.42);background:linear-gradient(180deg,rgba(98,216,255,.07),var(--panel) 60%)}
+.stage.now::before{background:var(--cyan);box-shadow:0 0 0 5px rgba(98,216,255,.16),0 0 18px var(--cyan)}
+.stage.s2{--c:var(--amber)}.stage.s3{--c:var(--green)}.stage.s4{--c:var(--violet)}
+.num{grid-row:1/4;font:200 46px/1 var(--ui);color:var(--c);opacity:.9;letter-spacing:.02em}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.role{font:500 11.5px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--c)}
+.chip{font:400 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--mut);border:1px solid var(--line2);border-radius:999px;padding:3px 10px}
+.stage.now .chip{color:#04121c;background:var(--cyan);border-color:transparent;font-weight:500}
+h3{font-weight:400;font-size:clamp(20px,2.4vw,24px);letter-spacing:.02em}
+.stage p{max-width:44em;color:var(--soft);font-size:16px}
+.stage p + p{margin-top:10px}
+.stage .btn{grid-column:2;justify-self:start;margin-top:14px;padding:11px 24px;font-size:12.5px}
+
+/* foundation */
+.found{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{padding:26px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}
+.f{font:400 19px var(--mono);color:var(--cyan2);letter-spacing:.01em;white-space:nowrap;min-height:34px}
+.f sup{font-size:.62em}
+.card h3{margin-top:16px;font-size:18px}
+.card p{margin-top:8px;font-size:15px;color:var(--soft)}
+.only{margin-top:22px;font:400 12.5px var(--mono);letter-spacing:.08em;color:var(--mut);text-align:center}
+.only b{font-weight:400;color:var(--amber2)}
+
+/* papers */
+.papers{border-top:1px solid var(--line)}
+.paper{display:grid;grid-template-columns:1fr auto;gap:4px 24px;align-items:center;padding:20px 4px;border-bottom:1px solid var(--line);transition:background .25s,padding .25s}
+.paper:hover{background:rgba(98,216,255,.04);padding-left:14px}
+.paper b{font-weight:400;font-size:18px}
+.paper span{grid-column:1;font-size:14.5px;color:var(--mut)}
+.paper code{grid-row:1/3;grid-column:2;font:400 12px var(--mono);color:var(--cyan2);white-space:nowrap}
+.paper code::after{content:'  ↗';color:var(--dim)}
+
+footer{margin-top:clamp(70px,11vh,120px);border-top:1px solid var(--line);padding:30px 0 max(34px,env(safe-area-inset-bottom));font:400 11.5px var(--mono);letter-spacing:.14em;color:var(--dim)}
+footer .wrap{display:flex;flex-wrap:wrap;gap:10px 26px;justify-content:space-between}
+footer b{font-weight:400;color:var(--mut)}
+
+.rv{opacity:0;transform:translateY(18px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+
+@media (max-width:860px){
+  .hero{grid-template-columns:1fr;gap:26px}
+  .emblem{order:-1;width:min(74%,300px)}
+  .found{grid-template-columns:1fr}
+  .sh{flex-wrap:wrap}.sh p{margin-left:0;text-align:left;flex-basis:100%}
+  nav{display:none}.lang{margin-left:auto}
+}
+@media (max-width:560px){
+  .facts{grid-template-columns:1fr}.facts div{border-left:0;border-top:1px solid var(--line);padding:16px 20px}.facts div:first-child{border-top:0}
+  .road{padding-left:30px}.road::before{left:5px}
+  .stage{grid-template-columns:1fr;padding:22px 20px}.stage::before{left:-31px;top:28px}
+  .num{grid-row:auto;font-size:34px}.stage .btn{grid-column:1}
+  .paper{grid-template-columns:1fr}.paper code{grid-row:auto;grid-column:1;margin-top:4px}
+  .btn{padding:13px 22px}
+}
+</style>
 </head>
 <body>
+<canvas id="sky"></canvas><div class="glow"></div>
 
-    <header>
-        <h1>BaseReal-OS</h1>
-         <!-- WHAT WE ARE BUILDING -->
-  <section id="s1">
-    <p class="section-label">Mission</p>
-    <h2 class="section-title">What We Are Building</h2>
-    <p class="body-text">
-<h2>BaseReal is the ultimate platform for launching unique universes!</h2>
+<header><div class="wrap bar">
+  <a class="brand" href="#top" aria-label="BaseReal-OS">
+    <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round"><circle cx="16" cy="16" r="5.5" stroke="#62d8ff" stroke-width="1.5"/><path d="M16 5.5a10.5 10.5 0 0 1 8.9 4.9" stroke="#ffb84d" stroke-width="1.5"/><path d="M16 1a15 15 0 0 1 8 2.3" stroke="#ffb84d" stroke-width="1.5" opacity=".5"/></svg>
+    <span>BaseReal<i>-OS</i></span></a>
+  <nav><a href="#roadmap" data-i="nav1">Roadmap</a><a href="#foundation" data-i="nav2">Foundation</a><a href="#demos" data-i="nav4">Demos</a><a href="#papers" data-i="nav3">Papers</a></nav>
+  <div class="lang" role="group" aria-label="Language"><button data-lang="en">EN</button><button data-lang="ru">RU</button></div>
+</div></header>
 
-<p>Imagine an operating system — <strong>for an entire reality</strong>. The platform is fully decentralized: each launch creates an independent, autonomous world. All it takes is setting the mono-cursor of resources <code>R</code> and pressing <code>Enter</code>.</p>
-
-<p>The position of this slider (from <strong>0.1 to 0.9</strong>) sets the fundamental, unique character of the world:</p>
-
-<ul>
-  <li>
-    <strong>Total Unity (Low R):</strong> A space where all egoistic boundaries are erased, and thoughts and resources are shared in a single collective mind. Users will gain a unique experience of complete dissolution in the shared flow and unrepeatable inner exultation!
-  </li>
-  <li>
-    <strong>Absolute Autonomy (High R):</strong> A world of pure individualism, where every inhabitant relies only on themselves, forging a steel will and independence under conditions of sharp scarcity.
-  </li>
-</ul>
-
-<p>You choose the rules of the game, and the Governing Neural Network ensures a flawless decentralized simulation. Where this choice leads and how the superposition unfolds is the main intrigue of your personal adventure!</p>
-    </p>
- 
-    <div class="charter">
-      <p class="charter-text">
-        Resource distribution &nbsp;·&nbsp; Engagement algorithms &nbsp;·&nbsp;
-        Reward systems &nbsp;·&nbsp; Event scheduling &nbsp;·&nbsp;
-        Behavioral correction protocols &nbsp;·&nbsp; <em>...and more</em>
-      </p>
-    </div>
-    </header>
-
-    <div class="container">
-
-        <h2>Interactive Demos</h2>
-        
-<!-- 0. Universe Initialization -->
-<div class="demo">
-    <h2>0. Universe Initialization</h2>
-    <p><strong>The single parameter required to launch a virtual universe:</strong></p>
-    <ol>
-        <li>Set the Free Will Core slider anywhere between full Collectivism and maximum Individualism</li>
-        <li>Values near the left edge produce an Environment-dominant universe, governed by collective structure</li>
-        <li>Values near the right edge produce a User-dominant universe, governed by individual agency</li>
-        <li>The center point yields Symbiosis — a balanced universe with no dominant pole</li>
-        <li>Release the slider to fix this value as the universe's founding constant at launch</li>
-    </ol>
-    <a href="demo/FreeWill.html" class="btn">▶ Open Free Will Core Demo</a>
-</div>
-        <!-- 1. Planet Creation -->
-        <div class="demo">
-            <h2>1. Planet Creation Procedure</h2>
-            <p><strong>Step-by-step planet creation instructions:</strong></p>
-            <ol>
-                <li>Approach the star close enough so that the year is not too long</li>
-                <li>Set the power of the gravitational field</li>
-                <li>Set the height of the synchronous orbit so that the year has an acceptable number of days</li>
-                <li>Set the axial tilt to get the winter/summer effect</li>
-                <li>Press the "Create Planet" button</li>
-            </ol>
-            <a href="demo/Creo_Planets.html" class="btn">▶ Open Planet Creation Demo</a>
+<main id="top">
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <div class="kick rv">Seed of Reality</div>
+        <h1 class="rv" data-i="h1">A universe built from <em>two numbers.</em></h1>
+        <p class="lead rv" data-i="lead">BaseReal-OS is the operating system of a shared virtual universe. Every body in it — a star, a planet, a moon — is set by its radius and its period. Everything else follows from them.</p>
+        <div class="cta rv">
+          <a class="btn play" data-play href="demo/genesis.html"><svg viewBox="0 0 11 12" fill="currentColor"><path d="M0 0l11 6-11 6z"/></svg><span data-i="play">Play</span></a>
+          <a class="btn" href="#roadmap" data-i="plan">See the plan</a>
+          <a class="btn" href="https://github.com/VitalyDeCoder/BaseReal-OS" target="_blank" rel="noopener" aria-label="GitHub repository" title="Source code, papers and demos on GitHub"><svg viewBox="0 0 16 16" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg><span>GitHub</span></a>
+          <div class="hint" id="hint" data-i="soon" role="status"></div>
         </div>
-        
-        <!-- 2. Galaxy Booster -->
-        <div class="demo">
-            <h2>2. Galaxy Booster</h2>
-            <p><strong>A primitive simulation of the galactic accelerator mechanism:</strong></p>
-            <a href="demo/galaxy_booster.html" class="btn">▶ Open Galaxy Booster Demo</a>
-        </div>
-
-        <!-- 2.1. Star Ignition -->
-        <div class="demo">
-            <h2>2.1. Star Ignition Procedure</h2>
-            <p><strong>Step-by-step star ignition instructions:</strong></p>
-            <ol>
-                <li>Find a black hole (the place where stars are ignited)</li>
-                <li>Enter the black hole</li>
-                <li>Set the power of the gravitational field</li>
-                <li>Set the height of the synchronous orbit</li>
-                <li>Set the star type</li>
-                <li>Press the "Ignite Star" button</li>
-            </ol>
-            <a href="demo/Creo_Star.html" class="btn">▶ Open Star Ignition Demo</a>
-        </div>
-
-        <!-- 3. Geometric Mass -->
-        <div class="demo">
-            <h2>3. Geometric Mass - Visualization</h2>
-            <p><strong>20-layer simulation growth model with equal volumes</strong></p>
-            <a href="demo/geometric-mass.html" class="btn">▶ Open Geometric Mass Demo</a>
-        </div>
-
-        <!-- 4. Speed Distribution -->
-        <div class="demo">
-            <h2>4. Speed Distribution</h2>
-            <p><strong>Inverse 3/2 Law — Performance Analysis & Speed Distribution</strong></p>
-            <a href="demo/speed.html" class="btn">▶ Open Speed Distribution</a>
-        </div>
-
-        <!-- 4.1. Seed of Reality -->
-<div class="demo">
-    <h2>3. Seed of Reality</h2>
-    <p><strong>Live registry of reality "seeds" tracked against the present moment:</strong></p>
-    <ol>
-        <li>Each seed — anonymous or user-owned — travels along a Past ↔ Future timeline, crossing the Present Time marker</li>
-        <li>Your own seed carries a HUD: event description, a live countdown/count-up timer to its Collapse point, and its relative position</li>
-        <li>A radar view tracks your gaze cone against the seed's fixed coordinates on the horizon</li>
-        <li>Distance, bearing, and time-to-collapse update continuously as the seed drifts through spacetime</li>
-        <li>Watch a single intention move from anonymous background noise into a tracked, resolving event</li>
-    </ol>
-    <a href="demo/Seed_of_Reality.html" class="btn">▶ Open Seed of Reality Demo</a>
-</div>
-        
-        <!-- 5. Code Reality Generation -->
-        <div class="demo">
-            <h2>5. Genetic Code of Reality</h2>
-            <p><strong>Reality Born from Code: The 5KB Universe</strong></p>
-            <p>Interactive procedural generation demonstrating how infinite complexity emerges from pure mathematical iterations without any external assets.</p>
-            <a href="demo/Codereality.html" class="btn">▶ Open Code Reality Demo</a>
-        </div>
-
-        <h2 class="section-title">Scientific Publication & Theoretical Foundation</h2>
-
-        <div style="margin-top: 25px; display: flex; flex-direction: column; gap: 16px;">
-            
-            <a href="https://zenodo.org/records/19929621" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Inverse 3/2 Law
-            </a>
-            
-            <a href="https://zenodo.org/records/20377051" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Black Hole as Galactic Speed Booster
-            </a>
-            
-            <a href="https://zenodo.org/records/20376632" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Adaptive Perceptual Resolution: A Relative Information Scale
-            </a>
-
-            <a href="https://zenodo.org/records/20434805" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Adaptive Rendering
-            </a>
-
-            <a href="https://zenodo.org/records/20467276" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Mycelium: The Universe of Communism
-            </a>
-
-            <a href="https://zenodo.org/records/20788306" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Geometrization of Physical Quantities (Bartini LT-System)
-            </a>
-
-            <a href="https://zenodo.org/records/21479461" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → Duet of Algorithms - Infinite Diversity
-            </a>
-            
-             <a href="https://zenodo.org/records/22060040" style="color:#00ffcc; text-decoration: none; font-size: 1.08rem;">
-                → General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model
-             </a> 
-        </div>
+      </div>
+      <figure class="emblem rv"><div id="tail"></div><figcaption data-i="cap">the 3/2 tail · in one period, every spark covers its own arc</figcaption></figure>
     </div>
 
-    <footer>
-        BaseReal-OS • 
-        <a href="https://github.com/VitalyDeCoder/BaseReal-OS" style="color:#00ffcc;">GitHub Repository</a>
-    </footer>
+    <div class="facts rv">
+      <div><b>R, T</b><span data-i="f1">Two numbers define a body: radius and period.</span></div>
+      <div><b>3/2</b><span data-i="f2">One law sets every orbit.</span></div>
+      <div><b>π</b><span data-i="f3">The only constant the universe starts with.</span></div>
+    </div>
 
+    <section id="roadmap">
+      <div class="sh rv"><span class="n">01</span><h2 data-i="r_h">Roadmap</h2><p data-i="r_p">Four stages. Each one opens the universe to a new kind of inhabitant.</p></div>
+      <div class="road">
+        <article class="stage now rv">
+          <div class="num">01</div>
+          <div class="meta"><span class="role" data-i="s1_role">Demo</span><span class="chip" data-i="s1_chip">Open now</span></div>
+          <h3 data-i="s1_h">The Sandbox</h3>
+          <div><p data-i="s1_a">A free playground. Dive into the star forge, light a star, give it planets and moons — and watch real celestial mechanics at work. Years, days and seasons come straight from the numbers you set.</p><p data-i="s1_b">Two modes: <b>Genesis</b> keeps your systems stable. <b>Limitless</b> removes every prohibition and lets you see the consequences yourself.</p></div>
+          <a class="btn play" data-play href="demo/genesis.html"><svg viewBox="0 0 11 12" fill="currentColor"><path d="M0 0l11 6-11 6z"/></svg><span data-i="play">Play</span></a>
+        </article>
+        <article class="stage s2 rv">
+          <div class="num">02</div>
+          <div class="meta"><span class="role" data-i="s2_role">Founders</span><span class="chip" data-i="s2_chip">Next</span></div>
+          <h3 data-i="s2_h">The Interactive Universe</h3>
+          <div><p data-i="s2_a">The first inhabitants arrive. Founders light stars, push planets off their paths and send whole stars racing across the galaxy. At this stage the universe is a place to play — at full scale.</p><p data-i="s2_b">Whatever a Founder creates carries their name and can always be found again.</p></div>
+        </article>
+        <article class="stage s3 rv">
+          <div class="num">03</div>
+          <div class="meta"><span class="role" data-i="s3_role">Miners</span><span class="chip" data-i="s3_chip">Planned</span></div>
+          <h3 data-i="s3_h">Real Matter</h3>
+          <div><p data-i="s3_a">Until someone looks inside, a planet is a shell: what it is made of has not been decided. Miners are the ones who look. They dig — and what they find becomes real matter, fixed once and for everyone.</p><p data-i="s3_b">They need it for a reason. Cities and spaceships cannot be built from numbers alone — they are built from matter that someone has actually mined.</p></div>
+        </article>
+        <article class="stage s4 rv">
+          <div class="num">04</div>
+          <div class="meta"><span class="role" data-i="s4_role">Everyone</span><span class="chip" data-i="s4_chip">Horizon</span></div>
+          <h3 data-i="s4_h">The Universe and its State Registry</h3>
+          <div><p data-i="s4_a">A complete virtual universe with one shared record: what exists, who made it, what has been measured. What is written stays written.</p><p data-i="s4_b">What nobody is looking at is neither computed nor stored — so the universe can be as large as the people in it need.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="foundation">
+      <div class="sh rv"><span class="n">02</span><h2 data-i="fd_h">Foundation</h2><p data-i="fd_p">Why it holds together: the whole engine stands on a few lines.</p></div>
+      <div class="found">
+        <div class="card rv"><div class="f">μ = 4π²R³ / T²</div><h3 data-i="c1_h">A body is two numbers</h3><p data-i="c1_p">Mass is not a separate ingredient. It follows from the radius R and the period T of an orbit at the very surface.</p></div>
+        <div class="card rv"><div class="f">P = T · (a / R)<sup>3/2</sup></div><h3 data-i="c2_h">The 3/2 law</h3><p data-i="c2_p">One rule gives every orbit its period: the closer to the star, the shorter the year. Moons, planets and double stars obey the same line.</p></div>
+        <div class="card rv"><div class="f" data-i="c3_f">measure → fix</div><h3 data-i="c3_h">Measured, not assumed</h3><p data-i="c3_p">Nothing is defined before the first measurement. Properties and laws load when someone needs them — and once measured, they no longer change.</p></div>
+      </div>
+      <p class="only rv" data-i="only">Only length and time. <b>No kilograms. G = 1.</b></p>
+    </section>
+
+    <section id="demos">
+      <div class="sh rv"><span class="n">03</span><h2 data-i="d_h">Demos</h2><p data-i="d_p">Everything runs in the browser. No install.</p></div>
+      <div class="papers rv">
+        <a class="paper" href="demo/genesis.html"><b data-i="d1_t">Genesis</b><span data-i="d1_d">The sandbox: build stars, planets and moons from R and T, and watch real orbits, days and seasons.</span><code>demo/genesis.html</code></a>
+        <a class="paper" href="demo/galaxy-booster.html"><b data-i="d2_t">Galaxy Booster</b><span data-i="d2_d">3D. One booster slowly releases stars, turns and precesses — and a spiral galaxy grows. Fly into its core.</span><code>demo/galaxy-booster.html</code></a>
+        <a class="paper" href="demo/kepler-3-2-tool.html"><b data-i="d3_t">The 3/2 tool</b><span data-i="d3_d">Kepler's third law drawn as arcs: how far a body travels in one period at every distance.</span><code>demo/kepler-3-2-tool.html</code></a>
+        <a class="paper" href="demo/bernoulli-lt.html"><b data-i="d4_t">Bernoulli in length and time</b><span data-i="d4_d">A fluid in a pipe described with R and T only: squeeze the pipe, watch speed and pressure trade places.</span><code>demo/bernoulli-lt.html</code></a>
+      </div>
+    </section>
+
+    <section id="papers">
+      <div class="sh rv"><span class="n">04</span><h2 data-i="p_h">Papers</h2><p data-i="p_p">The groundwork, as preprints. Most are open on Zenodo.</p></div>
+      <div class="papers rv">
+        <a class="paper" href="docs/Galaxy-Booster.pdf" target="_blank" rel="noopener"><b data-i="p4_t">Galaxy Booster v2</b><span data-i="p4_d">Growing a spiral galaxy from one rotating, precessing source: a game mechanic adapted from observations.</span><code>PDF · preprint</code></a>
+        <a class="paper" href="https://doi.org/10.5281/zenodo.24016736" target="_blank" rel="noopener"><b data-i="p1_t">LT-System v2</b><span data-i="p1_d">A dimensional system for near-realistic simulations: every quantity through length and time.</span><code>10.5281/zenodo.24016736</code></a>
+        <a class="paper" href="https://doi.org/10.5281/zenodo.22060039" target="_blank" rel="noopener"><b data-i="p2_t">General Architecture of BaseReal-OS</b><span data-i="p2_d">The hybrid four-layer computational model.</span><code>10.5281/zenodo.22060039</code></a>
+        <a class="paper" href="https://doi.org/10.5281/zenodo.21283080" target="_blank" rel="noopener"><b data-i="p3_t">Adaptive Perception and Lazy Rendering</b><span data-i="p3_d">Relative-change thresholds for attention-driven, resource-efficient rendering.</span><code>10.5281/zenodo.21283080</code></a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer><div class="wrap"><span><b>BaseReal-OS</b> · Seed of Reality</span><span>© 2026 Vitali Colesnicenco</span><span><a href="https://github.com/VitalyDeCoder/BaseReal-OS" target="_blank" rel="noopener" style="color:inherit">GitHub</a> · basereal-os.dev</span></div></footer>
+
+<script>
+'use strict';
+/* ====== АДРЕС ДЕМО: вставить сюда адрес папки / страницы с игрой ====== */
+const PLAY_URL = 'demo/genesis.html';
+/* ===================================================================== */
+
+const TX = {
+en: {
+  nav1: 'Roadmap', nav2: 'Foundation', nav3: 'Papers',
+  h1: 'A universe built from <em>two numbers.</em>',
+  lead: 'BaseReal-OS is the operating system of a shared virtual universe. Every body in it — a star, a planet, a moon — is set by its radius and its period. Everything else follows from them.',
+  play: 'Play', plan: 'See the plan', soon: 'The demo address is being connected — it will open here shortly.',
+  cap: 'the 3/2 tail · in one period, every spark covers its own arc',
+  f1: 'Two numbers define a body: radius and period.', f2: 'One law sets every orbit.', f3: 'The only constant the universe starts with.',
+  r_h: 'Roadmap', r_p: 'Four stages. Each one opens the universe to a new kind of inhabitant.',
+  s1_role: 'Demo', s1_chip: 'Open now', s1_h: 'The Sandbox',
+  s1_a: 'A free playground. Dive into the star forge, light a star, give it planets and moons — and watch real celestial mechanics at work. Years, days and seasons come straight from the numbers you set.',
+  s1_b: 'Two modes: <b>Genesis</b> keeps your systems stable. <b>Limitless</b> removes every prohibition and lets you see the consequences yourself.',
+  s2_role: 'Founders', s2_chip: 'Next', s2_h: 'The Interactive Universe',
+  s2_a: 'The first inhabitants arrive. Founders light stars, push planets off their paths and send whole stars racing across the galaxy. At this stage the universe is a place to play — at full scale.',
+  s2_b: 'Whatever a Founder creates carries their name and can always be found again.',
+  s3_role: 'Miners', s3_chip: 'Planned', s3_h: 'Real Matter',
+  s3_a: 'Until someone looks inside, a planet is a shell: what it is made of has not been decided. Miners are the ones who look. They dig — and what they find becomes real matter, fixed once and for everyone.',
+  s3_b: 'They need it for a reason. Cities and spaceships cannot be built from numbers alone — they are built from matter that someone has actually mined.',
+  s4_role: 'Everyone', s4_chip: 'Horizon', s4_h: 'The Universe and its State Registry',
+  s4_a: 'A complete virtual universe with one shared record: what exists, who made it, what has been measured. What is written stays written.',
+  s4_b: 'What nobody is looking at is neither computed nor stored — so the universe can be as large as the people in it need.',
+  fd_h: 'Foundation', fd_p: 'Why it holds together: the whole engine stands on a few lines.',
+  c1_h: 'A body is two numbers', c1_p: 'Mass is not a separate ingredient. It follows from the radius R and the period T of an orbit at the very surface.',
+  c2_h: 'The 3/2 law', c2_p: 'One rule gives every orbit its period: the closer to the star, the shorter the year. Moons, planets and double stars obey the same line.',
+  c3_f: 'measure → fix', c3_h: 'Measured, not assumed', c3_p: 'Nothing is defined before the first measurement. Properties and laws load when someone needs them — and once measured, they no longer change.',
+  only: 'Only length and time. <b>No kilograms. G = 1.</b>',
+  p_h: 'Papers', p_p: 'The groundwork, as preprints. Most are open on Zenodo.',
+  p1_t: 'LT-System v2', p1_d: 'A dimensional system for near-realistic simulations: every quantity through length and time.',
+  p2_t: 'General Architecture of BaseReal-OS', p2_d: 'The hybrid four-layer computational model.',
+  p3_t: 'Adaptive Perception and Lazy Rendering', p3_d: 'Relative-change thresholds for attention-driven, resource-efficient rendering.',
+  p4_t: 'Galaxy Booster v2', p4_d: 'Growing a spiral galaxy from one rotating, precessing source: a game mechanic adapted from observations.',
+  nav4: 'Demos', d_h: 'Demos', d_p: 'Everything runs in the browser. No install.',
+  d1_t: 'Genesis', d1_d: 'The sandbox: build stars, planets and moons from R and T, and watch real orbits, days and seasons.',
+  d2_t: 'Galaxy Booster', d2_d: '3D. One booster slowly releases stars, turns and precesses — and a spiral galaxy grows. Fly into its core.',
+  d3_t: 'The 3/2 tool', d3_d: 'Kepler\'s third law drawn as arcs: how far a body travels in one period at every distance.',
+  d4_t: 'Bernoulli in length and time', d4_d: 'A fluid in a pipe described with R and T only: squeeze the pipe, watch speed and pressure trade places.'
+},
+ru: {
+  nav1: 'План', nav2: 'Основа', nav3: 'Статьи',
+  h1: 'Вселенная <em>из двух чисел.</em>',
+  lead: 'BaseReal-OS — операционная система общей виртуальной вселенной. Любое тело в ней — звезда, планета, луна — задаётся радиусом и периодом. Всё остальное следует из них.',
+  play: 'Играть', plan: 'Смотреть план', soon: 'Адрес демо подключается — скоро игра откроется отсюда.',
+  cap: 'хвост 3/2 · за один период каждая искра проходит свою дугу',
+  f1: 'Два числа задают тело: радиус и период.', f2: 'Один закон для любой орбиты.', f3: 'Единственная постоянная, с которой стартует вселенная.',
+  r_h: 'План развития', r_p: 'Четыре этапа. Каждый открывает вселенную для новых жителей.',
+  s1_role: 'Демо', s1_chip: 'Открыто', s1_h: 'Песочница',
+  s1_a: 'Свободная площадка. Нырни в кузницу звёзд, зажги звезду, дай ей планеты и луны — и смотри, как работает настоящая небесная механика. Годы, сутки и времена года получаются прямо из чисел, которые ты задал.',
+  s1_b: 'Два режима: <b>Genesis</b> бережёт устойчивость твоих систем. <b>Limitless</b> снимает все запреты — последствия ты видишь сам.',
+  s2_role: 'Основатели', s2_chip: 'Следующий этап', s2_h: 'Интерактивная вселенная',
+  s2_a: 'Приходят первые жители. Основатели зажигают звёзды, сталкивают планеты с орбит и разгоняют целые звёзды поперёк галактики. На этом этапе вселенная — место для игры в полный масштаб.',
+  s2_b: 'Всё, что создал Основатель, носит его имя, и к этому всегда можно вернуться.',
+  s3_role: 'Майнеры', s3_chip: 'В планах', s3_h: 'Настоящая материя',
+  s3_a: 'Пока внутрь никто не заглянул, планета — оболочка: из чего она состоит, ещё не решено. Заглядывают майнеры. Они копают — и то, что они находят, становится настоящим веществом, определённым один раз и для всех.',
+  s3_b: 'Им это нужно не просто так. Города и космические корабли не построить из одних чисел — их строят из материи, которую кто-то действительно добыл.',
+  s4_role: 'Все', s4_chip: 'Горизонт', s4_h: 'Вселенная и реестр состояний',
+  s4_a: 'Полноценная виртуальная вселенная с единой общей записью: что существует, кто это создал, что уже измерено. Записанное остаётся записанным.',
+  s4_b: 'То, на что никто не смотрит, не вычисляется и не хранится — поэтому вселенная может быть такой большой, какой она нужна людям.',
+  fd_h: 'Основа', fd_p: 'Почему это держится: весь движок стоит на нескольких строках.',
+  c1_h: 'Тело — это два числа', c1_p: 'Масса — не отдельный ингредиент. Она следует из радиуса R и периода T обращения у самой поверхности.',
+  c2_h: 'Закон 3/2', c2_p: 'Одно правило даёт период любой орбиты: чем ближе к звезде, тем короче год. Луны, планеты и двойные звёзды подчиняются одной строке.',
+  c3_f: 'измерил → закрепил', c3_h: 'Измерено, а не задано', c3_p: 'Ничто не определено до первого измерения. Свойства и законы подгружаются, когда они кому-то нужны, — и после измерения больше не меняются.',
+  only: 'Только длина и время. <b>Без килограммов. G = 1.</b>',
+  p_h: 'Статьи', p_p: 'Основа в виде препринтов. Большинство открыто на Zenodo.',
+  p1_t: 'LT-система v2', p1_d: 'Система размерностей для реалистичных симуляций: все величины через длину и время.',
+  p2_t: 'Общая архитектура BaseReal-OS', p2_d: 'Гибридная четырёхслойная вычислительная модель.',
+  p3_t: 'Адаптивное восприятие и ленивый рендеринг', p3_d: 'Пороги относительного изменения для рендеринга, управляемого вниманием.',
+  p4_t: 'Галактический бустер v2', p4_d: 'Спиральная галактика из одного вращающегося источника с прецессией: игровая механика по мотивам наблюдений.',
+  nav4: 'Демо', d_h: 'Демо', d_p: 'Всё работает в браузере. Ничего не нужно устанавливать.',
+  d1_t: 'Genesis', d1_d: 'Песочница: звёзды, планеты и луны из R и T — настоящие орбиты, сутки и времена года.',
+  d2_t: 'Галактический бустер', d2_d: '3D. Один бустер медленно выпускает звёзды, вращается и прецессирует — и вырастает спиральная галактика. Можно влететь в ядро.',
+  d3_t: 'Инструмент 3/2', d3_d: 'Третий закон Кеплера дугами: сколько тело проходит за один период на каждом расстоянии.',
+  d4_t: 'Бернулли в длине и времени', d4_d: 'Жидкость в трубе только через R и T: сожми трубу — скорость и давление меняются местами.'
+}};
+const TITLE = { en: 'BaseReal-OS — a universe built from two numbers', ru: 'BaseReal-OS — вселенная из двух чисел' };
+let LANG = 'en';
+try { const s = localStorage.getItem('br.lang'); if (TX[s]) LANG = s; } catch (e) { } // the site opens in English; RU only if the visitor picked it
+function applyLang() {
+  document.documentElement.lang = LANG; document.title = TITLE[LANG];
+  document.querySelectorAll('[data-i]').forEach(e => { e.innerHTML = TX[LANG][e.dataset.i] || TX.en[e.dataset.i] || ''; });
+  document.querySelectorAll('.lang [data-lang]').forEach(b => { const on = b.dataset.lang === LANG; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+}
+document.querySelector('.lang').addEventListener('click', e => {
+  const b = e.target.closest('[data-lang]'); if (!b || b.dataset.lang === LANG) return;
+  LANG = b.dataset.lang; try { localStorage.setItem('br.lang', LANG); } catch (err) { } applyLang();
+});
+applyLang();
+
+/* play buttons */
+document.querySelectorAll('[data-play]').forEach(a => {
+  if (PLAY_URL) { a.href = PLAY_URL; return; }
+  a.addEventListener('click', e => { e.preventDefault(); const h = document.getElementById('hint'); h.classList.add('on'); h.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); clearTimeout(a._t); a._t = setTimeout(() => h.classList.remove('on'), 5000); });
+});
+
+/* emblem: ring of radius R and the 3/2 tail — arcs of radius n·R and angle 2π / n^(3/2);
+   every spark runs its arc in the same time, exactly as a body at n·R does in one period T */
+(function () {
+  const R = 21, T = 7, N = 8; let s = '<svg viewBox="-180 -182 360 356" aria-hidden="true"><defs><radialGradient id="st"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#b4efff"/><stop offset="1" stop-color="#62d8ff" stop-opacity="0"/></radialGradient></defs>';
+  s += '<circle r="' + (R * .62) + '" fill="url(#st)"/><circle r="' + R + '" fill="none" stroke="#62d8ff" stroke-width="1.3"/>';
+  s += '<g><circle cy="' + (-R) + '" r="2.6" fill="#fff"/><animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="' + T + 's" repeatCount="indefinite"/></g>';
+  for (let n = 2; n <= N; n++) {
+    const r = n * R, th = 2 * Math.PI / Math.pow(n, 1.5), x = r * Math.sin(th), y = -r * Math.cos(th), k = 1 - (n - 2) / (N - 1) * .62;
+    const d = 'M0,' + (-r) + 'A' + r + ',' + r + ' 0 0 1 ' + x.toFixed(2) + ',' + y.toFixed(2);
+    s += '<circle r="' + r + '" fill="none" stroke="rgba(130,190,240,' + (.2 * k + .05).toFixed(2) + ')" stroke-width=".7"/>';
+    s += '<path d="' + d + '" fill="none" stroke="#ffb84d" stroke-opacity="' + k.toFixed(2) + '" stroke-width="1.5" stroke-linecap="round"/>';
+    s += '<circle r="2.4" fill="#ffe0a8"><animateMotion dur="' + T + 's" repeatCount="indefinite" path="' + d + '"/></circle>';
+  }
+  s += '<line x1="0" y1="' + (-R) + '" x2="0" y2="' + (-N * R - 8) + '" stroke="rgba(130,190,240,.22)" stroke-width=".7" stroke-dasharray="2 5"/></svg>';
+  document.getElementById('tail').innerHTML = s;
+})();
+
+/* quiet sky: drawn once, no animation loop */
+(function () {
+  const c = document.getElementById('sky'), x = c.getContext('2d');
+  let seed = 20261116; const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
+  function draw() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+    c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+    seed = 20261116; const n = Math.min(520, Math.round(W * H / 3400));
+    for (let i = 0; i < n; i++) {
+      const k = rnd(), r = Math.pow(rnd(), 3) * 1.2 + .3, a = .25 + rnd() * .55;
+      x.fillStyle = 'rgba(' + (k < .1 ? '255,214,160' : k < .3 ? '170,225,255' : '226,236,248') + ',' + a.toFixed(2) + ')';
+      x.beginPath(); x.arc(rnd() * W, rnd() * H, r, 0, 6.283); x.fill();
+    }
+  }
+  let t; addEventListener('resize', () => { clearTimeout(t); t = setTimeout(draw, 150); }); draw();
+})();
+
+/* reveal on scroll */
+(function () {
+  const els = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('in')); return; }
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .12, rootMargin: '0px 0px -6% 0px' });
+  els.forEach(e => io.observe(e));
+})();
+</script>
 </body>
 </html>

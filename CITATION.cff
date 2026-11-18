@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use BaseReal-OS or its ideas, please cite it as below."
+title: "BaseReal-OS"
+type: software
+authors:
+  - family-names: "Colesnicenco"
+    given-names: "Vitali"
+    affiliation: "Independent Researcher, London, United Kingdom"
+repository-code: "https://github.com/VitalyDeCoder/BaseReal-OS"
+url: "https://basereal-os.dev"
+license: MIT
+date-released: "2026-11-18"
+keywords:
+  - simulation
+  - celestial mechanics
+  - Kepler's third law
+  - LT system
+  - education
+preferred-citation:
+  type: report
+  title: "LT-System v2: A Dimensional System for Near-Realistic Simulations"
+  authors:
+    - family-names: "Colesnicenco"
+      given-names: "Vitali"
+  year: 2026
+  publisher:
+    name: "Zenodo"
+  doi: "10.5281/zenodo.24016736"

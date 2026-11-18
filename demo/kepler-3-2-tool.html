@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>3/2 · Planet Builder's Tool</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="c"></canvas></div>
+<script>
+function renderMilkyWay(w, h) {
+  'use strict';
+  // Procedural Milky Way background. Deterministic, no assets, no libraries.
+  //   pass L1, L2 : low-frequency fields (warp, star clouds) into small textures
+  //   pass S      : full-resolution sky in tiles. RGB = diffuse light, A = sqrt(star density behind the dust)
+  //   JS          : stars stamped in linear light, then written to an opaque 2D canvas
+  w = Math.max(1, Math.round(+w) || 1);
+  h = Math.max(1, Math.round(+h) || 1);
+
+  // Page units: page height = 1, x spans 0..0.7071, y runs top-down.
+  var BX = 0.195, BY = 0.690;       // bulge centre
+  var THETA = 25 * Math.PI / 180;   // band tilt off vertical
+
+  var out = document.createElement('canvas');
+  out.width = w; out.height = h;
+
+  // ---------------------------------------------------------------- GLSL
+  var COMMON = `
+precision highp float;
+uniform vec2 uOff; uniform vec2 uRes;
+uniform sampler2D uN;
+const mat2 R = mat2(0.8, 0.6, -0.6, 0.8);
+// Gradient noise on a JS-generated table of unit vectors, so the result does not depend on GPU float hashing.
+float gn(vec2 p){
+  vec2 i = floor(p), f = p - i;
+  vec2 u = f*f*f*(f*(f*6.-15.)+10.);
+  vec2 a = texture2D(uN,(i+vec2(.5,.5))/512.).xy*2.-1.;
+  vec2 b = texture2D(uN,(i+vec2(1.5,.5))/512.).xy*2.-1.;
+  vec2 c = texture2D(uN,(i+vec2(.5,1.5))/512.).xy*2.-1.;
+  vec2 d = texture2D(uN,(i+vec2(1.5,1.5))/512.).xy*2.-1.;
+  float va = dot(a,f), vb = dot(b,f-vec2(1.,0.)), vc = dot(c,f-vec2(0.,1.)), vd = dot(d,f-vec2(1.,1.));
+  return 1.45*mix(mix(va,vb,u.x),mix(vc,vd,u.x),u.y);
+}
+#define DEF_FBM(name,N) float name(vec2 p){ float s=0., a=.5; for(int i=0;i<N;i++){ s+=a*gn(p); p=R*p*2.03+vec2(17.3,-9.1); a*=.5; } return s; }
+// Dave Hoskins hash without sine, for the dither
+vec3 hash32(vec2 p){ vec3 p3 = fract(vec3(p.xyx)*vec3(.1031,.1030,.0973)); p3 += dot(p3,p3.yxz+33.33); return fract((p3.xxy+p3.yzz)*p3.zyx); }
+vec2 pageQ(vec2 fc){ return vec2((fc.x-.5*uRes.x)/uRes.y+.35355, 1.-fc.y/uRes.y); }
+const vec2 DIR = vec2(0.42262,-0.90631), NOR = vec2(0.90631,0.42262);
+vec2 bandUV(vec2 q){
+  vec2 r = q-vec2(${BX.toFixed(4)},${BY.toFixed(4)});
+  float u = dot(r,DIR), v = dot(r,NOR);
+  v += .09*u*u;   // gentle bow, as in a wide lens
+  return vec2(u,v);
+}
+`;
+  var ENC = 'vec4 enc(vec4 v, vec2 fc){ vec3 h = hash32(fc+vec2(3.5,9.5)); vec3 g = hash32(fc+vec2(41.5,17.5)); return v*.6+.5+(vec4(h,g.x)-.5)/255.; }\n';
+
+  // warp fields
+  var L1 = COMMON + ENC + `
+DEF_FBM(fbm4,4)
+void main(){
+  vec2 fc = gl_FragCoord.xy; vec2 q = pageQ(fc);
+  vec2 w1 = vec2(fbm4(q*2.3+vec2(3.1,7.7)), fbm4(q*2.3+vec2(11.9,1.3)));
+  vec2 w2 = vec2(fbm4(q*7.9+w1*2.5+vec2(5.2,1.1)), fbm4(q*7.9+w1*2.5+vec2(1.7,9.4)));
+  gl_FragColor = enc(vec4(w1,w2), fc);
+}`;
+  // star clouds and other slow fields
+  var L2 = COMMON + ENC + `
+uniform sampler2D uL1;
+DEF_FBM(fbm3,3)
+DEF_FBM(fbm4,4)
+DEF_FBM(fbm5,5)
+void main(){
+  vec2 fc = gl_FragCoord.xy; vec2 q = pageQ(fc);
+  vec4 W = (texture2D(uL1, fc/uRes)-.5)/.6;
+  vec2 uv = bandUV(q);
+  float U = uv.x+.075*W.x+.022*W.z, V = uv.y+.045*W.y+.017*W.w;
+  float c1 = fbm5(vec2(U*3.1,V*5.7)+W.xy*.9+vec2(21.,4.));
+  float c2 = fbm4(vec2(U*11.,V*17.)+W.zw*.4+vec2(3.,31.));
+  float soft = fbm3(q*4.3+W.xy+vec2(13.,29.));
+  float bg = fbm3(q*2.7+vec2(31.,5.));
+  gl_FragColor = enc(vec4(c1,c2,soft,bg), fc);
+}`;
+
+  function skySource(res) {
+    var s = Math.sqrt(res / (1240 * 1754));
+    var extra = s > 1.9 ? 2 : (s > 1.3 ? 1 : 0), low = s < 0.6 ? 1 : 0;
+    return COMMON + `
+uniform sampler2D uL1, uL2;
+DEF_FBM(fbm2,2)
+DEF_FBM(fbm3,3)
+DEF_FBM(fbmHi,${4 + extra - low})
+float ridged(vec2 p){
+  float s=0., a=.55, w=1.;
+  for(int i=0;i<${6 + extra - low};i++){
+    float n = 1.-abs(gn(p)); n *= n;
+    s += a*n*w; w = clamp(n*1.7,0.,1.);
+    p = R*p*2.11+vec2(-5.7,13.3); a *= .55;
+  }
+  return s;
+}
+float lane(float d, float hw){ d /= hw; return exp(-d*d); }
+vec3 knot(vec2 uv, vec2 c, float r, float amp, vec2 wob, float det, vec3 tint){
+  vec2 e = (uv-c)/r + wob;
+  float d2 = dot(e,e);
+  float k = exp(-d2*1.2);
+  return tint*amp*(pow(k,1.6)*(.18+1.7*smoothstep(-.28,.55,det))+.10*exp(-d2*.22));
+}
+void main(){
+  vec2 fc = gl_FragCoord.xy + uOff;
+  vec2 q = pageQ(fc), tc = fc/uRes;
+  vec4 W = (texture2D(uL1,tc)-.5)/.6, L = (texture2D(uL2,tc)-.5)/.6;
+  vec2 w1 = W.xy, w2 = W.zw;
+  vec2 uv = bandUV(q);
+  float u = uv.x, v = uv.y;
+  vec2 w3 = vec2(fbm2(q*27.+w2*2.+vec2(2.2,8.3)), fbm2(q*27.+w2*2.+vec2(9.1,3.7)));
+  float U = u+.075*w1.x+.022*w2.x+.0065*w3.x;
+  float V = v+.045*w1.y+.017*w2.y+.0075*w3.y;
+
+  // ---- large-scale light
+  float sig = .058+.040*exp(-u*u/.06);
+  float Vs = v+.030*w1.y+.012*w2.y;
+  float disc = exp(-pow(abs(Vs)/sig,1.85));
+  float halo = exp(-Vs*Vs/(2.*.15*.15));
+  float along = mix(.50,1.,exp(-max(u,0.)/.26))*mix(.10,1.,exp(max(-u,0.)*-6.5));
+  float bulge = exp(-pow(length(vec2(u/.115,v/.080)),1.2));
+  float bulgeW = exp(-pow(length(vec2(u/.23,v/.14)),1.4));
+  float clouds = clamp(.60+1.55*L.x+.70*L.y,.06,2.6); clouds *= clouds;
+  float mid = fbm3(q*31.+w2*.3+vec2(3.,17.));
+  float fine1 = fbm3(q*93.+w3*.4);
+  float fine2 = fbm2(q*390.);
+
+  // ---- dust: a log-normal column density, as measured in real molecular clouds
+  float main0 = lane(V-(.006+.012*sin(U*7.+1.)), .012+.013*(.5+.5*sin(U*11.+2.)));
+  float brA = lane(V-.085*smoothstep(.26,.95,U), .010+.012*smoothstep(.3,.8,U))*smoothstep(.20,.34,U);
+  float brB = lane(V+.052*smoothstep(.42,.05,U)*smoothstep(-.2,.05,U), .010)*smoothstep(.46,.34,U)*smoothstep(-.22,-.05,U);
+  float brC = lane(V+.070*smoothstep(.40,.9,U), .012+.008*smoothstep(.5,.9,U))*smoothstep(.34,.46,U);
+  vec2 st = vec2(U-.03,V-.015); float sL = st.x*.60+st.y*.80, sT = -st.x*.80+st.y*.60;
+  float stem = lane(sT+.25*sL*sL,.011)*smoothstep(-.01,.03,sL)*smoothstep(.18,.09,sL);
+  vec2 st2 = vec2(U+.11,V+.02); float s2L = -st2.x*.45-st2.y*.89, s2T = st2.x*.89-st2.y*.45;
+  float stem2 = lane(s2T-.3*s2L*s2L,.010)*smoothstep(-.01,.03,s2L)*smoothstep(.13,.07,s2L);
+  float macro = max(max(max(main0,brA),brB),brC);
+  macro = max(macro, max(stem,stem2)*.75);
+  float envD = exp(-pow(abs(V)/.14,2.4));
+
+  // sharp in places, soft in others: the high octaves are gated by a slow field
+  vec2 dp = vec2(U*7.6,V*13.5)+w2*.40+vec2(7.,2.);
+  float Flow = fbm3(dp);
+  float Fhi = fbmHi(R*dp*8.4+vec2(11.,-3.));
+  float sharp = smoothstep(.28,-.22,L.z);
+  float F = Flow+Fhi*.125*mix(.45,1.9,sharp);
+  float Rm = ridged(vec2(U*4.7,V*8.3)+w1*1.2+w3*.3+vec2(40.,11.));
+  float Rf = clamp(Rm/1.05,0.,1.); Rf *= Rf*Rf;
+  float Rm2 = ridged(vec2(U*13.,V*23.)+w3*.35+w2*.25+vec2(-13.,27.));
+  float Rg = clamp(Rm2/1.05,0.,1.); Rg *= Rg;
+  float zone = smoothstep(-.25,.30,Flow+.35*macro);
+  float mott = fbm2(q*170.+w3*.3+vec2(29.,-7.));
+  float tau = .055*exp(6.0*F+2.9*Rf+2.0*Rg*zone+2.0*macro+1.1*mott)*envD;
+  // the broad soft river that ties the dense knots into one rift
+  float river = max(lane(V-(.006+.012*sin(U*7.+1.)), .030+.020*(.5+.5*sin(U*5.+.7))),
+                max(lane(V-.085*smoothstep(.26,.95,U), .026)*smoothstep(.20,.40,U),
+                    lane(V+.070*smoothstep(.40,.9,U), .022)*smoothstep(.34,.52,U)));
+  tau += .72*river*(1.-.55*bulge)*clamp(.65+1.9*Flow+.35*Fhi,.10,1.6)*envD;
+  tau *= 1.+.55*bulge;
+  float tmax = mix(2.5,5.2,smoothstep(-.14,.24,Flow));
+  tau = tmax*(1.-exp(-tau/tmax));
+  tau += .35*Rf*envD*smoothstep(.1,.6,macro+.3);
+  vec3 T = exp(-tau*vec3(.86,1.,1.17));
+
+  // ---- compose light
+  vec3 cool = vec3(.54,.67,1.), warm = vec3(1.,.77,.60);
+  float warmth = clamp(bulgeW*1.2+.6*bulge+.28*smoothstep(.05,.45,L.x)*disc,0.,1.);
+  vec3 bandCol = mix(cool,warm,warmth);
+  float I = .29*disc*along*clouds*(1.+.55*mid)*(1.+.32*fine1)*(1.+.16*fine2)
+          + .50*bulge*(.60+.40*clouds)*(1.+.34*mid)*(1.+.20*fine1)*(1.+.08*fine2)
+          + .075*bulgeW*(.7+.3*clouds)*(1.+.35*mid);
+  // keep the instrument axis calm
+  float axisDim = 1.-.26*exp(-(q.x-.3535)*(q.x-.3535)/(2.*.075*.075));
+  float cornerDim = mix(.42,1.,smoothstep(.03,.34,length(q-vec2(0.,1.))));
+  axisDim *= cornerDim;
+  I *= axisDim;
+  vec3 col = bandCol*I*(T*.95+.018+.055*smoothstep(-.25,.55,mid+fine1*.8));
+  col += vec3(.22,.145,.10)*I*(1.-T.g)*T.g*.22;       // dust edges glow a little brown
+  col += vec3(.50,.64,.98)*.0040*halo*(.8+.5*L.w)*mix(vec3(1.),T,.5);
+
+  // ---- nebulae, in band coordinates so they follow the band
+  vec2 wob = w3*1.0+w2*.35+vec2(fine1,mid)*.55;
+  float det = fine1*1.5+fine2*.9+mid*.5;
+  vec3 ha = vec3(1.,.27,.56), bl = vec3(.40,.58,1.);
+  vec3 neb = vec3(0.);
+  neb += knot(uv,vec2(.135,.040),.015,.14,wob,det,ha);
+  neb += knot(uv,vec2(.176,.020),.008,.10,wob,det,ha);
+  neb += knot(uv,vec2(.290,.125),.010,.07,wob,det,ha);
+  neb += knot(uv,vec2(.500,.045),.007,.07,wob,det,ha);
+  neb += knot(uv,vec2(.610,.058),.012,.06,wob,det,ha);
+  neb += knot(uv,vec2(.700,-.040),.016,.055,wob,det,ha);
+  neb += knot(uv,vec2(-.135,.052),.010,.10,wob,det,ha);
+  neb += knot(uv,vec2(-.235,-.030),.008,.07,wob,det,ha);
+  neb += knot(uv,vec2(.105,-.092),.024,.075,wob*.45,det*.35,bl);
+  neb += knot(uv,vec2(.186,.024),.007,.08,wob*.45,det*.35,bl);
+  neb += knot(uv,vec2(-.055,.118),.020,.055,wob*.45,det*.35,bl);
+  neb += knot(uv,vec2(.640,.098),.018,.045,wob*.45,det*.35,bl);
+  col += neb*mix(vec3(1.),T,.85);
+
+  // ---- sky and vignette
+  float vg = length(vec2((q.x-.3535)/.3535,(q.y-.5)/.5));
+  col += vec3(.0016,.0028,.0072)*(.8+.6*L.w)*(1.-.75*smoothstep(.25,1.25,vg));
+  float vign = 1.-.62*smoothstep(.50,1.38,vg);
+  col *= vign;
+
+  // ---- tone map + sRGB
+  col = 1.-exp(-col*1.25);
+  vec3 sr = mix(col*12.92, 1.055*pow(max(col,vec3(1e-5)),vec3(1./2.4))-.055, step(.0031308,col));
+  sr = mix(sr, sr*sr*(3.-2.*sr), .30);
+
+  // ---- TPDF dither over about one LSB, with a whisper of sensor noise
+  vec3 d1 = hash32(fc+vec2(.5,3.5)), d2 = hash32(fc+vec2(47.5,11.5));
+  sr += (d1+d2-1.)*1.4/255.;
+
+  // ---- alpha: the star density the JS layer samples, clumped, and behind the dust
+  float D = (.86*disc*along*clouds+.85*bulge+.20*bulgeW+.006*halo)*axisDim*vign*(T.g*.97+.03)*clamp(1.+1.3*mid+1.1*fine1+.7*fine2,.03,3.4);
+  gl_FragColor = vec4(sr, sqrt(clamp(D,0.,1.)));
+}`;
+  }
+
+  // ---------------------------------------------------------------- GL sky
+  // Returns a Uint8Array RGBA of w*h (top row first), or null.
+  function renderSkyGL() {
+    var TILE = 256;
+    var c = document.createElement('canvas');
+    c.width = TILE; c.height = TILE;
+    var opts = { alpha: true, premultipliedAlpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: true };
+    var gl = c.getContext('webgl', opts) || c.getContext('experimental-webgl', opts);
+    if (!gl) return null;
+    var prec = gl.getShaderPrecisionFormat ? gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT) : null;
+    if (prec && prec.precision === 0) return null;
+    function sh(type, src) {
+      var o = gl.createShader(type);
+      gl.shaderSource(o, src); gl.compileShader(o);
+      if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { if (window.console) console.warn('renderMilkyWay shader:', gl.getShaderInfoLog(o)); return null; }
+      return o;
+    }
+    var vs = sh(gl.VERTEX_SHADER, 'attribute vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }');
+    if (!vs) return null;
+    function program(src) {
+      var fs = sh(gl.FRAGMENT_SHADER, src);
+      if (!fs) return null;
+      var p = gl.createProgram();
+      gl.attachShader(p, vs); gl.attachShader(p, fs);
+      gl.bindAttribLocation(p, 0, 'p');
+      gl.linkProgram(p);
+      if (!gl.getProgramParameter(p, gl.LINK_STATUS)) return null;
+      return p;
+    }
+    var pL1 = program(L1), pL2 = program(L2), pS = program(skySource(w * h));
+    if (!pL1 || !pL2 || !pS) return null;
+
+    var buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    gl.disable(gl.BLEND); gl.disable(gl.DITHER); gl.disable(gl.DEPTH_TEST);
+    gl.enable(gl.SCISSOR_TEST);
+    gl.pixelStorei(gl.PACK_ALIGNMENT, 1);
+
+    // gradient table, 512 x 512, from a fixed-seed PRNG
+    var seed = 0x2F6E2B1;
+    function rnd() {
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    var tbl = new Uint8Array(512 * 512 * 4);
+    for (var i = 0; i < tbl.length; i += 4) {
+      var a = rnd() * 6.2831853;
+      tbl[i] = Math.round((Math.cos(a) * .5 + .5) * 255);
+      tbl[i + 1] = Math.round((Math.sin(a) * .5 + .5) * 255);
+      tbl[i + 3] = 255;
+    }
+    function texture(unit, wrap, filter, tw, th, data) {
+      var t = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE0 + unit);
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, wrap);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, wrap);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, tw, th, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+      return t;
+    }
+    texture(0, gl.REPEAT, gl.NEAREST, 512, 512, tbl);
+
+    // The low-frequency fields have a fixed size, so the picture matches at every output resolution.
+    var LH = 1024, LW = Math.max(16, Math.round(LH * w / h));
+    function lowPass(prog, unit) {
+      var t = texture(unit, gl.CLAMP_TO_EDGE, gl.LINEAR, LW, LH, null);
+      var fb = gl.createFramebuffer();
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+      if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) return false;
+      gl.useProgram(prog);
+      gl.uniform2f(gl.getUniformLocation(prog, 'uRes'), LW, LH);
+      gl.uniform1i(gl.getUniformLocation(prog, 'uN'), 0);
+      var l1 = gl.getUniformLocation(prog, 'uL1');
+      if (l1) gl.uniform1i(l1, 1);
+      gl.viewport(0, 0, LW, LH);
+      for (var y = 0; y < LH; y += 256) {
+        gl.scissor(0, y, LW, 256);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.finish();
+      }
+      return true;
+    }
+    // A texture bound as the render target cannot also be sampled, so unit 1 is only sampled once L1 is done.
+    if (!lowPass(pL1, 1) || !lowPass(pL2, 2)) return null;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+    gl.useProgram(pS);
+    var uOff = gl.getUniformLocation(pS, 'uOff');
+    gl.uniform2f(gl.getUniformLocation(pS, 'uRes'), w, h);
+    gl.uniform1i(gl.getUniformLocation(pS, 'uN'), 0);
+    gl.uniform1i(gl.getUniformLocation(pS, 'uL1'), 1);
+    gl.uniform1i(gl.getUniformLocation(pS, 'uL2'), 2);
+    gl.viewport(0, 0, TILE, TILE);
+
+    var px = new Uint8Array(w * h * 4);
+    var tile = new Uint8Array(TILE * TILE * 4);
+    for (var y0 = 0; y0 < h; y0 += TILE) {
+      var th = Math.min(TILE, h - y0);
+      for (var x0 = 0; x0 < w; x0 += TILE) {
+        var tw = Math.min(TILE, w - x0);
+        gl.scissor(0, 0, tw, th);
+        gl.uniform2f(uOff, x0, h - y0 - th);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.finish();
+        gl.readPixels(0, 0, tw, th, gl.RGBA, gl.UNSIGNED_BYTE, tile);
+        for (var r = 0; r < th; r++) {
+          var src = r * tw * 4, dst = ((y0 + th - 1 - r) * w + x0) * 4;
+          px.set(tile.subarray(src, src + tw * 4), dst);
+        }
+        if (gl.isContextLost()) return null;
+      }
+    }
+    var lose = gl.getExtension('WEBGL_lose_context');
+    if (lose) lose.loseContext();
+    // A dead context reads back zeros: refuse an all-black frame.
+    var probe = 0;
+    for (var p = 0, n = px.length; p < n; p += 4099 * 4) probe += px[p] + px[p + 1] + px[p + 2];
+    return probe > 0 ? px : null;
+  }
+
+  // ---------------------------------------------------------------- 2D fallback sky
+  function renderSkyFallback() {
+    var px = new Uint8Array(w * h * 4);
+    var st = Math.sin(THETA), ct = Math.cos(THETA);
+    for (var y = 0; y < h; y++) {
+      var qy = y / h;
+      for (var x = 0; x < w; x++) {
+        var qx = (x - .5 * w) / h + .35355;
+        var rx = qx - BX, ry = qy - BY;
+        var u = rx * st - ry * ct, v = rx * ct + ry * st;
+        var band = Math.exp(-v * v / .012) * (.25 + .75 * Math.exp(-Math.abs(u) / .35));
+        var bulge = Math.exp(-(u * u / .03 + v * v / .014));
+        var vx = (qx - .3535) / .3535, vy = (qy - .5) / .5;
+        var vg = Math.max(0, 1 - .55 * (vx * vx + vy * vy));
+        var d = (x * 7 + y * 13) % 5 / 5 - .4;
+        var i = (y * w + x) * 4;
+        px[i] = 6 * vg + 62 * band + 110 * bulge + d;
+        px[i + 1] = 10 * vg + 68 * band + 92 * bulge + d;
+        px[i + 2] = 24 * vg + 84 * band + 72 * bulge + d;
+        px[i + 3] = 255 * Math.sqrt(Math.min(1, .6 * band + bulge));
+      }
+    }
+    return px;
+  }
+
+  // ---------------------------------------------------------------- stars
+  function composite(px) {
+    var n = w * h, s = Math.sqrt(n / (1240 * 1754));
+    var S = new Float32Array(n * 3);
+    var seed = 0x51ED270B;
+    function rnd() {
+      seed = (seed + 0x6D2B79F5) | 0;
+      var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+    function dens(x, y) { var a = px[(((y | 0) * w + (x | 0)) * 4) + 3] / 255; return a * a; }
+
+    // temperature ramp, blue-white to orange (linear light)
+    var RAMP = [[.54, .68, 1.], [.72, .83, 1.], [.94, .95, 1.], [1., .94, .84], [1., .83, .62], [1., .68, .40], [1., .55, .28]];
+    var LUTN = 128, lr = new Float32Array(LUTN), lg = new Float32Array(LUTN), lb = new Float32Array(LUTN);
+    for (var li = 0; li < LUTN; li++) {
+      var f = li / (LUTN - 1) * (RAMP.length - 1), k = Math.min(RAMP.length - 2, f | 0), fr = f - k;
+      lr[li] = RAMP[k][0] + (RAMP[k + 1][0] - RAMP[k][0]) * fr;
+      lg[li] = RAMP[k][1] + (RAMP[k + 1][1] - RAMP[k][1]) * fr;
+      lb[li] = RAMP[k][2] + (RAMP[k + 1][2] - RAMP[k][2]) * fr;
+    }
+    // Colour index: the bulge is an old, red population, the disc mixed.
+    var bcx = BX + (.5 * w / h - .35355);
+    var GC = 16, GW = (w >> 4) + 2, GH = (h >> 4) + 2, gA = new Float32Array(GW * GH), gB = new Float32Array(GW * GH);
+    for (var gy = 0; gy < GH; gy++) for (var gx = 0; gx < GW; gx++) {
+      var gdx = (gx + .5) * GC / h - bcx, gdy = (gy + .5) * GC / h - BY, gd = gdx * gdx + gdy * gdy;
+      gA[gy * GW + gx] = Math.exp(-gd / .022); gB[gy * GW + gx] = Math.exp(-gd / .012);
+    }
+    function ctemp(x, y, t) {
+      var b = gA[(y >> 4) * GW + (x >> 4)];
+      var v = t * .76 + b * .28 * (1 - t) + b * .10;
+      return Math.max(0, Math.min(LUTN - 1, v * (LUTN - 1) | 0));
+    }
+    function plaw(alpha, fmin, fmax) {
+      // inverse transform of a truncated power law N(F) ~ F^-(alpha+1)
+      var a = Math.pow(fmin, -alpha), b = Math.pow(fmax, -alpha);
+      return Math.pow(a + (b - a) * rnd(), -1 / alpha);
+    }
+    function add(x, y, r, g, b) { var i = (y * w + x) * 3; S[i] += r; S[i + 1] += g; S[i + 2] += b; }
+    function stampB(x, y, f, c) {
+      // bilinear splat, for the masses of faint stars
+      var fx = x - .5, fy = y - .5, ix = Math.floor(fx), iy = Math.floor(fy);
+      if (ix < 0 || iy < 0 || ix >= w - 1 || iy >= h - 1) return;
+      var ax = fx - ix, ay = fy - iy, r = lr[c] * f, g = lg[c] * f, b = lb[c] * f;
+      var w00 = (1 - ax) * (1 - ay), w10 = ax * (1 - ay), w01 = (1 - ax) * ay, w11 = ax * ay;
+      var i = (iy * w + ix) * 3, j = i + w * 3;
+      S[i] += r * w00; S[i + 1] += g * w00; S[i + 2] += b * w00;
+      S[i + 3] += r * w10; S[i + 4] += g * w10; S[i + 5] += b * w10;
+      S[j] += r * w01; S[j + 1] += g * w01; S[j + 2] += b * w01;
+      S[j + 3] += r * w11; S[j + 4] += g * w11; S[j + 5] += b * w11;
+    }
+    function stampG(x, y, peak, c, sigma) {
+      var rad = Math.ceil(sigma * 3.2), x0 = Math.max(0, Math.floor(x - rad)), x1 = Math.min(w - 1, Math.ceil(x + rad));
+      var y0 = Math.max(0, Math.floor(y - rad)), y1 = Math.min(h - 1, Math.ceil(y + rad));
+      var q = 1 / (2 * sigma * sigma), r = lr[c] * peak, g = lg[c] * peak, b = lb[c] * peak;
+      for (var yy = y0; yy <= y1; yy++) for (var xx = x0; xx <= x1; xx++) {
+        var dx = xx + .5 - x, dy = yy + .5 - y, e = Math.exp(-(dx * dx + dy * dy) * q);
+        if (e > .004) add(xx, yy, r * e, g * e, b * e);
+      }
+    }
+    function stampHalo(x, y, amp, c, radius) {
+      // Moffat wing with a soft cut, for the tight glow around the brightest stars
+      var rad = Math.ceil(radius), x0 = Math.max(0, Math.floor(x - rad)), x1 = Math.min(w - 1, Math.ceil(x + rad));
+      var y0 = Math.max(0, Math.floor(y - rad)), y1 = Math.min(h - 1, Math.ceil(y + rad));
+      var core = radius * .13, r = lr[c] * amp, g = lg[c] * amp, b = lb[c] * amp;
+      for (var yy = y0; yy <= y1; yy++) for (var xx = x0; xx <= x1; xx++) {
+        var dx = xx + .5 - x, dy = yy + .5 - y, d2 = dx * dx + dy * dy;
+        if (d2 >= radius * radius) continue;
+        var e = Math.pow(1 + d2 / (core * core), -1.45), t = 1 - d2 / (radius * radius);
+        e *= t * t;
+        add(xx, yy, r * e, g * e, b * e);
+      }
+    }
+    var sig0 = Math.max(.45, .50 * Math.pow(s, .85));  // the PSF is 1 to 2 px at any size, tracking the page scale
+    var smallSig = sig0 * .78, smallNorm = Math.min(1, 1.5 / (6.2832 * smallSig * smallSig));  // same integrated flux as a bilinear splat, a little crisper
+    function sigFor(peak) { return sig0 * (1 + .40 * Math.max(0, Math.log(peak / .1) / Math.LN10)); }
+
+    // 1. the unresolved mass: its Poisson noise is the grain of the star clouds
+    var N1 = Math.min(4.4e7, 1.0e7 * s * s), i1, pa = Math.pow(.007, -1.25), pb = Math.pow(.20, -1.25) - pa, pe = -1 / 1.25;
+    for (i1 = 0; i1 < N1; i1++) {
+      var x1 = rnd() * w, y1 = rnd() * h, keep = rnd();
+      if (keep >= dens(x1, y1)) continue;
+      stampB(x1, y1, Math.pow(pa + pb * rnd(), pe) * (1 - .5 * gB[(y1 >> 4) * GW + (x1 >> 4)]), ctemp(x1, y1, rnd()));
+    }
+    // 1b. the just-resolved stars of the clouds: this is what keeps the band granular at 1:1 at large sizes
+    seed = 0x1B873593;
+    var N1b = Math.round(3.4e5 * s * s), i1b;
+    for (i1b = 0; i1b < N1b; i1b++) {
+      var xb = rnd() * w, yb = rnd() * h, kb = rnd();
+      if (kb >= Math.pow(dens(xb, yb), .8)) continue;
+      var fb = plaw(1.3, .035, .36), cb = ctemp(xb, yb, rnd());
+      if (s < 1.2) stampB(xb, yb, fb, cb); else stampG(xb, yb, fb * smallNorm, cb, smallSig);
+    }
+    // 2. faint field, weakly tied to the band
+    seed = 0x0C9E2D51;
+    var N2 = Math.round(38000 * Math.pow(s, 1.8)), i2;
+    for (i2 = 0; i2 < N2; i2++) {
+      var x2 = rnd() * w, y2 = rnd() * h, k2 = rnd(), f2 = plaw(1.1, .014, .12), t2 = rnd();
+      if (k2 >= .20 / Math.pow(s, .8) + (1 - .20 / Math.pow(s, .8)) * Math.pow(dens(x2, y2), .45)) continue;
+      if (s < 1.2) stampB(x2, y2, f2, ctemp(x2, y2, t2)); else stampG(x2, y2, f2 * smallNorm, ctemp(x2, y2, t2), smallSig);
+    }
+    // 3. medium, clear gaussian points
+    seed = 0x2545F491;
+    var N3 = Math.round(2600 * Math.pow(s, 1.5)), i3;
+    for (i3 = 0; i3 < N3; i3++) {
+      var x3 = rnd() * w, y3 = rnd() * h, k3 = rnd(), f3 = plaw(1.35, .08, .9), t3 = rnd();
+      if (k3 >= .30 + .70 * Math.pow(dens(x3, y3), .4)) continue;
+      stampG(x3, y3, f3, ctemp(x3, y3, t3), sigFor(f3));
+    }
+    // 4. clusters
+    seed = 0x1E3779B9;
+    var CL = [[.60, .23, .014, 120], [.36, .50, .010, 70], [.11, .47, .017, 90], [.80, .31, .013, 60], [.68, .06, .013, 80], [.22, .90, .012, 70], [.42, .62, .008, 45]];
+    for (var cc = 0; cc < CL.length; cc++) {
+      var cl = CL[cc], cn = Math.round(cl[3] * Math.sqrt(s));
+      for (var cs = 0; cs < cn; cs++) {
+        var cr = cl[2] * h * Math.sqrt(1 / Math.max(.03, Math.pow(1 - rnd(), .9)) - 1) * .7, ca = rnd() * 6.28318;
+        var cx = cl[0] * w + Math.cos(ca) * cr, cy = cl[1] * h + Math.sin(ca) * cr;
+        var cf = plaw(1.5, .025, .42);
+        if (cx >= 2 && cy >= 2 && cx < w - 2 && cy < h - 2) stampG(cx, cy, cf, ctemp(cx, cy, rnd() * .55), sigFor(cf));
+      }
+    }
+    // 5. bright: a few dozen, power law, tight halo
+    seed = 0x05EBCA6B;   // a fixed sequence, so the bright stars keep their page position at every size
+    var N5 = 40, i5;
+    for (i5 = 0; i5 < N5; i5++) {
+      var x5 = rnd() * w, y5 = rnd() * h, f5 = plaw(.9, 1.1, 9), t5 = rnd();
+      // keep them off the instrument axis so they never read as part of it
+      if (Math.abs(x5 / w - .5) < .025) x5 += (x5 / w < .5 ? -1 : 1) * .05 * w;
+      var c5 = ctemp(x5, y5, t5);
+      stampG(x5, y5, Math.min(f5, 3), c5, sigFor(f5) * 1.1);
+      stampHalo(x5, y5, .075 * f5, c5, (5 + 6 * Math.log(1 + f5)) * Math.pow(s, .95));
+    }
+
+    // ---- composite in linear light with a soft shoulder
+    var dec = new Float32Array(256);
+    for (var d0 = 0; d0 < 256; d0++) { var c0 = d0 / 255; dec[d0] = c0 <= .04045 ? c0 / 12.92 : Math.pow((c0 + .055) / 1.055, 2.4); }
+    var EN = 8192, XMAX = 4, enc = new Float32Array(EN + 1);
+    for (var e0 = 0; e0 <= EN; e0++) {
+      var x0n = e0 / EN; x0n = x0n * x0n * XMAX;  // sqrt-spaced so the darks are precise
+      var sh = x0n < .72 ? x0n : .72 + .28 * (1 - Math.exp(-(x0n - .72) / .28));
+      enc[e0] = 255 * (sh <= .0031308 ? 12.92 * sh : 1.055 * Math.pow(sh, 1 / 2.4) - .055);
+    }
+    seed = 0x42B2AE35;
+    var ctx = out.getContext('2d', { alpha: false });
+    var img = ctx.createImageData(w, h), o = img.data, kk = EN / Math.sqrt(XMAX);
+    for (var i = 0, j = 0, l = 0; i < n; i++, j += 4, l += 3) {
+      var sr = S[l], sg = S[l + 1], sb = S[l + 2];
+      if (sr === 0 && sg === 0 && sb === 0) {
+        o[j] = px[j]; o[j + 1] = px[j + 1]; o[j + 2] = px[j + 2];
+      } else {
+        var d = rnd() - .5;
+        o[j] = enc[Math.min(EN, Math.sqrt(dec[px[j]] + sr) * kk | 0)] + d;
+        o[j + 1] = enc[Math.min(EN, Math.sqrt(dec[px[j + 1]] + sg) * kk | 0)] + d;
+        o[j + 2] = enc[Math.min(EN, Math.sqrt(dec[px[j + 2]] + sb) * kk | 0)] + d;
+      }
+      o[j + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  // ---------------------------------------------------------------- run, never throw
+  try {
+    var sky = null;
+    try { sky = renderSkyGL(); } catch (e0) { if (window.console) console.warn('renderMilkyWay GL failed:', e0); sky = null; }
+    if (!sky) sky = renderSkyFallback();
+    composite(sky);
+  } catch (e1) {
+    try {
+      var c2 = out.getContext('2d', { alpha: false }) || out.getContext('2d');
+      var g = c2.createLinearGradient(0, h, w, 0);
+      g.addColorStop(0, '#04060c'); g.addColorStop(.35, '#141a2a'); g.addColorStop(.6, '#0a0f1c'); g.addColorStop(1, '#020308');
+      c2.fillStyle = g; c2.fillRect(0, 0, w, h);
+      var t = 12345;
+      for (var ii = 0; ii < 3000; ii++) {
+        t = (t * 1664525 + 1013904223) >>> 0; var fx = t / 4294967296;
+        t = (t * 1664525 + 1013904223) >>> 0; var fy = t / 4294967296;
+        t = (t * 1664525 + 1013904223) >>> 0; var fa = t / 4294967296;
+        c2.fillStyle = 'rgba(235,240,255,' + (.15 + .7 * fa * fa * fa).toFixed(3) + ')';
+        c2.fillRect(fx * w, fy * h, 1, 1);
+      }
+    } catch (e2) { /* nothing left to try */ }
+  }
+  return out;
+}
+
+</script>
+<script>
+/* 3/2 — the planet builder's tool of the LT system. One period T: a body at n·R sweeps an arc of 2π/n^{3/2}.
+   Drawn like the template in Genesis_LT.html (the star forge): same amber, same glow, same dots, same hologram.
+   Everything loops seamlessly over LOOP seconds. ?t=seconds freezes a frame, ?w=pixels sets the exact width. */
+const TAU = Math.PI * 2;
+const LOOP = 48, T = 8;                 // one turn of the tool; one period T (as in the forge chapter of the demo, ≈7.8 s)
+const ARCS = 12;                        // n = 1 is the ring itself, n = 2…12 are the tail
+const AMBER = [255, 184, 77], HOLO = [255, 158, 66];
+const START = -.5;                      // the tool's turn at t = 0, so the first frame is not flat-on
+const CAM_D = 34, CAM_Y = 5.4;          // the camera looks at the middle of the tool: y from −1.2 to 12
+const FILL = .79;                       // share of the page height the tool takes
+
+const rgba = (c, a) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+const params = new URLSearchParams(location.search);
+const fixedT = params.has('t') ? +params.get('t') : null, fixedW = params.has('w') ? +params.get('w') : 0;
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const layer = document.createElement('canvas'), tc = layer.getContext('2d');   // the tool alone, on black
+const blurH = document.createElement('canvas'), blurA = document.createElement('canvas'), blurB = document.createElement('canvas');
+const bgFit = document.createElement('canvas');
+let W = 0, H = 0, focal = 0, unit = 0, bgSrc = null;
+
+const haloSprite = (() => {   // the soft glow around every spark
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), rg = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  rg.addColorStop(0, 'rgba(255,240,205,1)'); rg.addColorStop(.1, 'rgba(255,214,140,.62)'); rg.addColorStop(.32, 'rgba(255,176,70,.17)'); rg.addColorStop(1, 'rgba(255,150,40,0)');
+  g.fillStyle = rg; g.fillRect(0, 0, 128, 128); return c;
+})();
+
+// a few stars breathe, each a whole number of times per loop
+const twinkles = (() => {
+  let s = 90210; const rnd = () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+  return Array.from({ length: 64 }, () => ({ x: rnd(), y: rnd(), k: 2 + Math.floor(rnd() * 7), p: rnd() * TAU, a: .22 + rnd() * .5, r: .0011 + rnd() * .0012, c: rnd() < .3 ? [190, 215, 255] : rnd() < .5 ? [255, 225, 190] : [235, 238, 250] }));
+})();
+
+// the sky must not compete with the gold: darker, nearly neutral and slightly cool; only the brightest stars keep their light and colour
+function gradeSky(c) {
+  const g = c.getContext('2d', { willReadFrequently: true }), im = g.getImageData(0, 0, c.width, c.height), d = im.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const r = d[i] / 255, gr = d[i + 1] / 255, b = d[i + 2] / 255, L = .2126 * r + .7152 * gr + .0722 * b;
+    const star = smooth(.62, .95, L), sat = .22 + .6 * star, k = .55 * Math.pow(L, .22), gain = (k + (1 - k) * star * star) * 255;
+    d[i] = (L + (r - L) * sat) * .9 * gain; d[i + 1] = (L + (gr - L) * sat) * .97 * gain; d[i + 2] = (L + (b - L) * sat) * 1.14 * gain;
+  }
+  g.putImageData(im, 0, 0); return c;
+}
+
+function resize() {
+  const cw = Math.min(innerWidth, innerHeight * 210 / 297), dpr = devicePixelRatio || 1;
+  const full = Math.round(cw * dpr);
+  let bw = fixedW || full;
+  if (!fixedW) bw = Math.min(bw, 1800);   // stays smooth on big screens
+  W = bw; H = Math.round(bw * 297 / 210);
+  cv.width = layer.width = W; cv.height = layer.height = H;
+  const pixelExact = bw === full;         // one canvas pixel = one screen pixel, no resampling
+  cv.style.width = (pixelExact ? W / dpr : cw) + 'px'; cv.style.height = (pixelExact ? H / dpr : cw * 297 / 210) + 'px';
+  blurH.width = Math.ceil(W / 2); blurH.height = Math.ceil(H / 2);
+  blurA.width = Math.ceil(W / 4); blurA.height = Math.ceil(H / 4);
+  blurB.width = Math.ceil(W / 8); blurB.height = Math.ceil(H / 8);
+  focal = FILL * H * CAM_D / 13.2; unit = focal / CAM_D;
+  // the sky is built once, for the whole screen, so enlarging the window later does not freeze the page
+  const onScreen = Math.round(Math.min(screen.width, screen.height * 210 / 297) * dpr);
+  const need = fixedW || Math.max(1240, Math.min(1800, onScreen));
+  if (!bgSrc || bgSrc.width < W * .75) bgSrc = gradeSky(renderMilkyWay(need, Math.round(need * 297 / 210)));
+  bgFit.width = W; bgFit.height = H;
+  const b = bgFit.getContext('2d'); b.imageSmoothingEnabled = true; b.imageSmoothingQuality = 'high'; b.drawImage(bgSrc, 0, 0, W, H);
+}
+
+function drawFrame(t) {
+  const ph = (t / T) % 1, turn = START + TAU * t / LOOP, ct = Math.cos(turn), st = Math.sin(turn);
+  // tool plane: x to the right, y up the axis, z its normal; the whole tool turns around the axis
+  const pr = (x, y, z) => { const X = x * ct + z * st, Z = -x * st + z * ct, s = focal / (CAM_D - Z); return { x: W / 2 + X * s, y: H / 2 - (y - CAM_Y) * s, s, z: Z }; };
+  const onArc = (th, rad) => pr(rad * Math.sin(th), rad * Math.cos(th), 0);   // th = 0 on the axis, clockwise
+  const arcPath = (a0, a1, rad, steps) => { const p = new Path2D(); for (let k = 0; k <= steps; k++) { const q = onArc(a0 + (a1 - a0) * k / steps, rad); k ? p.lineTo(q.x, q.y) : p.moveTo(q.x, q.y); } return p; };
+  const glow = (path, col, w, a = 1) => {   // the demo's strokeGlow, with one more step so the edge of the glow stays soft
+    tc.strokeStyle = rgba(col, .07 * a); tc.lineWidth = w * 5; tc.stroke(path);
+    tc.strokeStyle = rgba(col, .1 * a); tc.lineWidth = w * 2.6; tc.stroke(path);
+    tc.strokeStyle = rgba(mix(col, [255, 255, 255], .45), .9 * a); tc.lineWidth = w; tc.stroke(path);
+  };
+  const dot = (q, col, rad, a = 1) => { tc.fillStyle = rgba(col, a); tc.beginPath(); tc.arc(q.x, q.y, rad, 0, TAU); tc.fill(); };
+  const halo = (q, rad, a = 1) => { tc.globalAlpha = a; tc.drawImage(haloSprite, q.x - rad, q.y - rad, rad * 2, rad * 2); tc.globalAlpha = 1; };
+
+  tc.setTransform(1, 0, 0, 1, 0, 0); tc.globalCompositeOperation = 'source-over'; tc.clearRect(0, 0, W, H);
+  tc.globalCompositeOperation = 'lighter'; tc.lineCap = 'round'; tc.lineJoin = 'round';
+  const c0 = pr(0, 0, 0), lw = .03 * unit;
+
+  // the star-to-be inside the hologram
+  const R0 = c0.s * .55 * (1 + .05 * Math.sin(TAU * 12 * t / LOOP)) * 1.8;
+  const core = tc.createRadialGradient(c0.x, c0.y, 0, c0.x, c0.y, R0);
+  core.addColorStop(0, rgba(mix(HOLO, [255, 255, 255], .5), .55)); core.addColorStop(.4, rgba(HOLO, .22)); core.addColorStop(1, rgba(HOLO, 0));
+  tc.fillStyle = core; tc.beginPath(); tc.arc(c0.x, c0.y, R0, 0, TAU); tc.fill();
+
+  // hologram sphere, as in the demo: the ring is its equator, the pole on the ring's normal; it spins tangentially
+  // with the sparks, one turn in 4T (its 16 meridians repeat every 2 s, so the loop still closes)
+  const rh = .8, spin = TAU * t / (4 * T), camL = Math.hypot(CAM_Y, CAM_D);
+  const BINS = 16, bins = Array.from({ length: BINS }, () => new Path2D());   // front solid, back faint, with no seam at the limb
+  const curve = pts => {
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], x = (a[0] + b[0]) / 2, y = (a[1] + b[1]) / 2, z = (a[2] + b[2]) / 2;
+      const d = (y * CAM_Y + (-x * st + z * ct) * CAM_D) / camL / rh, path = bins[Math.round(smooth(-.22, .22, d) * (BINS - 1))];
+      const p = pr(a[0], a[1], a[2]), q = pr(b[0], b[1], b[2]); path.moveTo(p.x, p.y); path.lineTo(q.x, q.y);
+    }
+  };
+  const sph = (la, th) => [rh * Math.cos(la) * Math.sin(th), rh * Math.cos(la) * Math.cos(th), rh * Math.sin(la)];
+  for (let m = 0; m < 16; m++) { const lo = spin + m * TAU / 16, pts = []; for (let k = 0; k <= 60; k++) pts.push(sph(-Math.PI / 2 + Math.PI * k / 60, lo)); curve(pts); }
+  for (let p = -2; p <= 2; p++) { const pts = []; for (let k = 0; k <= 120; k++) pts.push(sph(p * Math.PI / 6, k / 120 * TAU)); curve(pts); }
+  tc.lineCap = 'butt';
+  bins.forEach((path, i) => { const e = i / (BINS - 1); tc.strokeStyle = rgba(HOLO, .14 + .46 * e); tc.lineWidth = Math.max(.8, (.017 + .003 * e) * unit); tc.stroke(path); });
+  tc.lineCap = 'round';
+
+  // the tail: arcs of 2π/n^{3/2}, thin as in the demo
+  for (let n = 2; n <= ARCS; n++) {
+    const al = TAU / Math.pow(n, 1.5), node = pr(0, n, 0);
+    glow(arcPath(0, al, n, Math.ceil(al * n * 12)), AMBER, Math.max(.8, .025 * node.s), .8);
+  }
+  // the axis (the handle) and the ring (n = 1)
+  { const a = pr(0, 0, 0), b = pr(0, ARCS, 0), p = new Path2D(); p.moveTo(a.x, a.y); p.lineTo(b.x, b.y); glow(p, AMBER, lw); }
+  glow(arcPath(0, TAU, 1, 128), AMBER, lw * 1.4);
+  glow(arcPath(0, TAU, .45, 64), AMBER, lw * .6, .35);
+
+  // nodes on the axis: when the period restarts, all the sparks leave the axis together
+  const pulse = Math.exp(-ph * 16) + Math.exp(-(1 - ph) * 60) * .6;
+  for (let n = 2; n <= ARCS; n++) {
+    const q = pr(0, n, 0); dot(q, [210, 250, 255], .04 * q.s);
+    halo(q, .3 * q.s, .55 * pulse);
+  }
+
+  // sparks: all start on the axis; after one period T each has swept its own arc
+  const TRAIL = .24, fade = 1 - smooth(.965, 1, ph);
+  for (let n = 1; n <= ARCS; n++) {
+    const al = n === 1 ? TAU : TAU / Math.pow(n, 1.5), rad = n, th = al * ph, q = onArc(th, rad), big = n === 1 ? 1.25 : 1;
+    const from = Math.max(0, ph - TRAIL), K = 14;
+    tc.lineCap = 'butt';
+    for (let k = 0; k < K; k++) {   // a comet tail along the arc
+      const u0 = from + (ph - from) * k / K, u1 = from + (ph - from) * (k + 1.06) / K, e = (k + 1) / K;
+      const a = onArc(al * u0, rad), b = onArc(al * u1, rad);
+      tc.strokeStyle = rgba([255, 205, 120], .75 * e * e * fade); tc.lineWidth = (.012 + .05 * e * e) * q.s * big;
+      tc.beginPath(); tc.moveTo(a.x, a.y); tc.lineTo(b.x, b.y); tc.stroke();
+    }
+    tc.lineCap = 'round';
+    const flick = 1 + .12 * Math.sin(TAU * (t / T * 3 + n * .37));
+    halo(q, .42 * q.s * big * flick, .95 * fade);
+    dot(q, n === 1 ? [255, 255, 255] : [255, 236, 190], .055 * q.s * big, .98 * fade);
+  }
+
+  // composite: sky, breathing stars, bloom, the tool
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+  ctx.drawImage(bgFit, 0, 0);
+  ctx.globalCompositeOperation = 'lighter';
+  for (const s of twinkles) {
+    const a = s.a * Math.pow(.5 + .5 * Math.sin(TAU * s.k * t / LOOP + s.p), 2); if (a < .01) continue;
+    ctx.fillStyle = rgba(s.c, a); ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r * H * .5, 0, TAU); ctx.fill();
+  }
+  // bloom, same look at any resolution: halving step by step keeps thin lines from shimmering, and stays fast on big screens
+  const half = blurH.getContext('2d'); half.globalCompositeOperation = 'source-over'; half.clearRect(0, 0, blurH.width, blurH.height);
+  half.imageSmoothingQuality = 'low'; half.drawImage(layer, 0, 0, blurH.width, blurH.height);
+  let src = blurH;
+  for (const [cv2, blur, amt] of [[blurA, 2 * W / 1000, .5], [blurB, 3.4 * W / 1000, .75]]) {
+    const g = cv2.getContext('2d'); g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, cv2.width, cv2.height);
+    g.imageSmoothingQuality = 'low'; if ('filter' in g) g.filter = `blur(${blur}px)`;
+    g.drawImage(src, 0, 0, cv2.width, cv2.height); src = cv2;
+    ctx.globalAlpha = amt; ctx.imageSmoothingQuality = 'low'; ctx.drawImage(cv2, 0, 0, W, H);
+  }
+  ctx.globalAlpha = 1; ctx.drawImage(layer, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+window.renderAt = drawFrame;
+window.addEventListener('resize', () => { resize(); if (fixedT !== null) drawFrame(fixedT); });
+resize();
+if (fixedT !== null) drawFrame(fixedT);
+else (function loop(now) { drawFrame((now / 1000) % LOOP); requestAnimationFrame(loop); })(performance.now());
+</script>
+</body>
+</html>

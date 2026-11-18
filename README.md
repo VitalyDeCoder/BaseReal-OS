@@ -1,137 +1,75 @@
 # BaseReal-OS
 
-**Architectural framework for reality simulation.**  
-Geometric Inverse 3/2 Law • Interest-based rendering • Immutable Reality Registry
+**A universe built from two numbers.**
+Every body is set by its radius **R** and its surface orbital period **T**. Mass, gravity, density, orbits, days and years follow from them through one law: Kepler's third law read as the **inverse 3/2 law**, P = T·(a/R)^{3/2}.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Play Genesis](https://img.shields.io/badge/▶_Play-Genesis-ffb84d?style=for-the-badge)](https://basereal-os.dev)
+[![License: MIT](https://img.shields.io/badge/code-MIT-62d8ff?style=for-the-badge)](LICENSE)
 
-## What We Are Building
+| Body = two numbers | One law | No hidden constants |
+|---|---|---|
+| R (length) and T (time) | P = T·(a/R)^{3/2} | μ = 4π²R³/T², G = 1, ρ = 3π/T² |
 
-<h2>BaseReal is the ultimate platform for launching unique universes!</h2>
+BaseReal-OS is a space game in the browser where the physics is real. Most space games fake their orbits, and most physics software is not a game; this project sits in between. You build stars, planets and moons, and what you see — years, days, seasons, moons that stay or get lost — is real celestial mechanics, computed from two numbers per body. Every quantity is expressed in length and time only (an LT system, after Bartini). At galaxy scale the game borrows from astronomical observations and turns them into mechanics: it does not claim to explain them.
 
-<p>Imagine an operating system — <strong>for an entire reality</strong>. The platform is fully decentralized: each launch creates an independent, autonomous world. All it takes is setting the mono-cursor of resources <code>R</code> and pressing <code>Enter</code>.</p>
-
-<p>The position of this slider (from <strong>0.1 to 0.9</strong>) sets the fundamental, unique character of the world:</p>
-
-<ul>
-  <li>
-    <strong>Total Unity (Low R):</strong> A space where all egoistic boundaries are erased, and thoughts and resources are shared in a single collective mind. Users will gain a unique experience of complete dissolution in the shared flow and unrepeatable inner exultation!
-  </li>
-  <li>
-    <strong>Absolute Autonomy (High R):</strong> A world of pure individualism, where every inhabitant relies only on themselves, forging a steel will and independence under conditions of sharp scarcity.
-  </li>
-</ul>
-
-<p>You choose the rules of the game, and the Governing Neural Network ensures a flawless decentralized simulation. Where this choice leads and how the superposition unfolds is the main intrigue of your personal adventure!</p>
-
-**The fundamental immutable law remains:**  
-**T² ∝ R³** — the **Inverse 3/2 principle**.  
-The universe can change. The geometry does not.
+A one-person, independent project, built in spare time. The papers below are preprints, not peer-reviewed.
 
 ---
 
-## New Additions (June 2026)
+## Interactive demos
 
-### New Publications on Zenodo
+All demos are single HTML files: open them online or download and double-click.
 
-- **Geometrization of Physical Quantities: A Modification of Bartini's LT-System Based on the Inverse 3/2 Law**  
-  The State Controller as an Architectural Condition for Evolution in Systems with Frozen Computational Cores. BaseReal-OS.  
-  [Zenodo](https://zenodo.org/records/20788306) | [PDF](https://zenodo.org/records/20788306/files/LT_system_final.pdf)
+| Demo | What it shows |
+|---|---|
+| **[Genesis](https://vitalydecoder.github.io/BaseReal-OS/demo/genesis.html)** | The main sandbox. Build stars, binary stars, planets, moons and moons of moons from R and T; real periods, seasons, axial tilt, Hill spheres. Two modes: *Genesis* (guided) and *Limitless* (no limits, no undo: bodies leave orbit, bounce, collide). Six languages. |
+| **[Kepler 3/2 tool](https://vitalydecoder.github.io/BaseReal-OS/demo/kepler-3-2-tool.html)** | Kepler's third law as geometry: arcs of radius n·R and length 2π/n^{3/2} show how far a body travels in one period T at each distance. |
+| **[Bernoulli in LT cells](https://vitalydecoder.github.io/BaseReal-OS/demo/bernoulli-lt.html)** | An ideal fluid in a pipe written with R and T only: continuity, the LT clock T ∝ R³ and the constant head ½v² + p/ρ. |
+| **[Galaxy Booster](https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy-booster.html)** | 3D. One booster at the heart of a young galaxy slowly releases stars; it turns slowly and its nozzle precesses, and a spiral galaxy with star clusters, nebulae and dust lanes grows from nothing. Rotate, zoom, fly into the core. |
 
-- **General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Models**  
-  Research on a universal mechanism of nonlinear transitions in dynamical systems through the "Duet of Algorithms".
- [Zenodo](https://zenodo.org/records/22060040) |  [PDF](https://zenodo.org/records/22060040/files/BaseReal-OS_General_Architecture_4_Layer_v2_EN.pdf)
+## Papers
 
+Preprints on Zenodo. The English texts are in [`docs/`](docs/). The two papers on adaptive perception come as a pair on purpose: one starts from perception, the other from rendering.
 
-### Documents in `docs/` folder (19 files)
+| Paper | Text | DOI |
+|---|---|---|
+| Inverse 3/2 Law: a geometric interpretation of Kepler's third law | [PDF](docs/Inverse-3-2-Law.pdf) | [10.5281/zenodo.19799606](https://doi.org/10.5281/zenodo.19799606) |
+| LT-System v2: a dimensional system for near-realistic simulations | [MD](docs/LT-System-v2.md) | [10.5281/zenodo.24016736](https://doi.org/10.5281/zenodo.24016736) |
+| General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model | [MD](docs/General-Architecture-4-Layer.md) | [10.5281/zenodo.22060039](https://doi.org/10.5281/zenodo.22060039) |
+| Duet of Algorithms: a two-process architecture of threshold transitions (v2.0) | [MD](docs/Duet-of-Algorithms.md) · [code](code/duet-vix-replication/) | [10.5281/zenodo.20804271](https://doi.org/10.5281/zenodo.20804271) |
+| Adaptive Perception and Lazy Rendering | [MD](docs/Adaptive-Perception-Lazy-Rendering.md) | [10.5281/zenodo.21283080](https://doi.org/10.5281/zenodo.21283080) |
+| Adaptive Perceptual Resolution: a relative information scale for living systems | [MD](docs/Adaptive-Perceptual-Resolution.md) | [zenodo.org/records/20376632](https://zenodo.org/records/20376632) |
+| Galaxy Booster v2: growing a spiral galaxy from one rotating, precessing source | [PDF](docs/Galaxy-Booster.pdf) · [MD](docs/Galaxy-Booster.md) · [code](code/galaxy-booster/) | not yet on Zenodo |
 
-| File | Type | Description |
-|------|------|-----------|
-| `ARCHITECTURE.md` | MD | Core architecture (English) |
-| `ARCHITECTURE.ru.md` | MD | Архитектура проекта (Russian) |
-| `AI_for_inverse_3_2_law.md` | MD | Essay "Inverse 3/2 Law" for AI |
-| `BaseReal_core_EN.md` | MD | BaseReal core concepts (English) |
-| `BaseReal_core_RU.md` | MD | Основные концепции BaseReal (Russian) |
-| `LT-systemENG.md` | MD | LT-system modification (English) |
-| `LT-sistemRUS.md` | MD | Модификация LT-системы (Russian) |
-| `Duet_Algorithm_PreprintENG.md` | MD | Duet of Algorithms (English) |
-| `Duet_Algorithm_PreprintRUS.md` | MD | Дуэт алгоритмов (Russian) |
-| `BlackHole_Booster_EN.md` | MD | Black Hole as Galactic Speed Booster (English) |
-| `BlackHole_Booster_RU.md` | MD | Чёрная дыра как ускоритель галактик (Russian) |
-| `PerceptualScale_EN.md` | MD | Adaptive Perceptual Resolution (English) |
-| `PerceptualScale_RU.md` | MD | Адаптивное разрешение восприятия (Russian) |
-| `AdaptiveRendering_RU.md` | MD | Adaptive Rendering (Russian) |
-| `Mycelium_Communism_RU_final.md` | MD | Mycelium Communism (Russian) |
-| `BaseReal-OS_General_Architecture_4_Layer_v2_EN.md` | MD | General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model(English) |
-| `BaseReal-OS_General_Architecture_4_Layer_v2_RU.md` | MD | Общая архитектура гибридной четырёхслойной вычислительной модели BaseReal-OS (Russian) |
-| `Full Essy 3_2 Eng.pdf` | PDF | Main Inverse 3/2 Law paper (English) |
-| `Essy 3_2 Rus.pdf` | PDF | Основная работа Inverse 3/2 Law (Russian) |
+![The 3/2 tail: arcs 2π/n^{3/2} turn into the inverse-square law](assets/inverse-3-2-tail.svg)
 
-Все материалы доступны в папке [`docs/`](docs/).
+## Reproducibility
 
----
+- [`code/duet-vix-replication/`](code/duet-vix-replication/) — one Python script reproduces every number in Section 8 of *Duet of Algorithms* (VIX spikes 1990–2026, surrogate tests).
+- [`code/galaxy-booster/`](code/galaxy-booster/) — the numbers and Figure 2 of *Galaxy Booster v2* (Python, no dependencies). Figures 1, 3–5 are frames of the demo opened with links such as `demo/galaxy-booster.html#t=150&view=core`.
+- Genesis computes everything from R and T at run time; the Solar System is built from measured radii and GM values, so its years, months and days come out real.
 
-## Core Publications
+## Roadmap
 
-- **[Inverse 3/2 Law: The Geometric Foundation of Discrete Reality and Artificial Intelligence](https://zenodo.org/records/19929621)**
-- **[Black Hole as Galactic Speed Booster: An Alternative to Dark Matter](https://zenodo.org/records/20377051)**
-- **[Adaptive Perceptual Resolution: A Relative Information Scale for Living System](https://zenodo.org/records/20376632)**
+| Stage | Status |
+|---|---|
+| **01 Sandbox** — build bodies from R and T, real celestial mechanics in the browser | open: [Genesis](https://basereal-os.dev) |
+| **02 Founders** — an interactive universe: ignite stars, push planets, send stars across the galaxy | design |
+| **03 Miners** — real matter: dig into planets; matter is defined by what players need for cities and ships | concept |
+| **04 State registry** — a universe that keeps a registry of states and computes only what is observed | concept |
 
----
+## Status and limitations
 
-## Interactive Demos
+- The physics core is classical Newtonian gravity rewritten in length and time. It reproduces known orbits; it does not claim new physics.
+- The Galaxy Booster is a game mechanic inspired by observations (stars ejected by central black holes, star formation in outflows), not a model of real galaxies.
+- Genesis moves bodies along analytic orbits ("on rails"), not by N-body integration.
 
-### 0. Universe Initialization
-**The single control parameter that launches a virtual universe — from full Collectivism to maximum Individualism**
-[![▶ Open Free Will Core](https://img.shields.io/badge/▶_Open_Free_Will_Core-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/FreeWill.html)
+## Cite
 
-### 1. Planet Creation
-**Step-by-step interactive visualization of planet creation**
-
-[![▶ Open Planet Creator](https://img.shields.io/badge/▶_Open_Planet_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Creo_Planets.html)
-
-### 2. Galaxy Booster
-**The cosmic cradle where stars are ignited and worlds begin**
-
-[![▶ Open Galaxy Booster](https://img.shields.io/badge/▶_Open_Galaxy_Booster-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy_booster.html)
-
-### 3. Star Creation
-**Step-by-step interactive visualization of star creation**
-
-[![▶ Open Star Creator](https://img.shields.io/badge/▶_Open_Star_Creator-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Creo_Star.html)
-
-### 4. Geometric Mass
-**20-layer simulation growth model with equal volumes**
-
-[![▶ Open Geometric Mass](https://img.shields.io/badge/▶_Open_Geometric_Mass-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/geometric-mass.html)
-
-### 5. Speed Distribution
-**Inverse 3/2 Law — Performance Analysis & Speed Distribution**
-
-[![▶ Open Speed Distribution](https://img.shields.io/badge/▶_Open_Speed_Distribution-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/speed.html)
-
-### 5.1. Seed of Reality
-**A live timeline registry tracking reality "seeds" as they approach, cross, and recede from the present moment**
-[![▶ Open Seed of Reality](https://img.shields.io/badge/▶_Open_Seed_of_Reality-00ff66?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Seed_of_Reality.html)
-
-### 6. CodeReality — Fractal Fern
-**Classic Barnsley Fern generated from Code Reality**
-
-[![▶ Open CodeReality Fern](https://img.shields.io/badge/▶_Open_CodeReality_Fern-00ffcc?style=for-the-badge&logo=html5&logoColor=black)](https://vitalydecoder.github.io/BaseReal-OS/demo/Codereality.html)
-
----
+See [`CITATION.cff`](CITATION.cff), or use the DOI of the paper you rely on.
 
 ## License
 
-MIT License
+Code: [MIT](LICENSE). Papers: as stated on their Zenodo records.
 
----
-
-**Repository:** [github.com/VitalyDeCoder/BaseReal-OS](https://github.com/VitalyDeCoder/BaseReal-OS)  
-**Live Demo:** [vitalydecoder.github.io/BaseReal-OS/](https://vitalydecoder.github.io/BaseReal-OS/)
-
----
-
-Готово. README стал чище, современнее и полностью актуальным.  
-
-Хочешь внести правки (добавить/убрать что-то, изменить стиль, сделать короче и т.д.) — просто скажи.
+**Author:** Vitali Colesnicenco · [basereal-os.dev](https://basereal-os.dev) · [github.com/VitalyDeCoder/BaseReal-OS](https://github.com/VitalyDeCoder/BaseReal-OS)

@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite it and the accompanying paper."
+title: "Duet of Algorithms — VIX replication code"
+version: "2.0"
+date-released: "2026-11-07"
+license: MIT
+type: software
+authors:
+  - family-names: "Colesnicenco"
+    given-names: "Vitali"
+    email: "vitalydecoder@gmail.com"
+    affiliation: "Independent Researcher, London, UK"
+url: "https://vitalydecoder.github.io/BaseReal-OS/"
+keywords:
+  - critical transitions
+  - early warning signals
+  - VIX
+  - volatility
+  - surrogate data
+  - replication
+preferred-citation:
+  type: article
+  title: "Duet of Algorithms: A Two-Process Architecture of Threshold Transitions, from Dissipative Systems to Topological and Measurement-Induced Phases, and the Role of Conditional Intent as a Directing Operator"
+  authors:
+    - family-names: "Colesnicenco"
+      given-names: "Vitali"
+  year: 2026
+  notes: "Version 2.0"

@@ -1,0 +1,9 @@
+event,v1_class,date,prev_close,streak_before,win90_max_streak,rel_calm_share_90
+Feb 2007 (Shanghai / subprime onset),endo,2007-02-27,11.15,136,90,0.82
+Feb 2018 Volmageddon,endo,2018-02-02,13.47,115,90,0.56
+Aug 2015 yuan devaluation,endo,2015-08-11,12.23,10,23,0.2
+Aug 2024 yen carry unwind,endo,2024-08-01,16.36,0,55,0.48
+Aug 1998 Russia / LTCM,exo,1998-08-17,34.34,0,0,0.32
+Sep 2001 attacks,exo,2001-09-17,31.84,0,0,0.26
+May 2010 Flash Crash,exo,2010-05-06,24.91,0,0,0.82
+Mar 2026 oil shock,exo,2026-03-02,19.86,0,11,0.24

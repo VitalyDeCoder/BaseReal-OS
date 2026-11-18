@@ -1,0 +1,2 @@
+hazard_ratio,rate_top_tercile,rate_bottom_tercile,null_mean,null_lo95,null_hi95,p_one_sided,n_surrogates
+1.241,0.283,0.228,1.184,0.678,1.845,0.347,120

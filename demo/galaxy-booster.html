@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Galaxy Booster · BaseReal-OS</title>
+<style>
+:root{--fg:#e9eef7;--mut:#8fa1ba;--line:rgba(120,160,220,.18);--cy:#62d8ff;--am:#ffb84d;--gold:#ffdf9a;--glass:rgba(8,14,26,.55)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#000;color:var(--fg);font:14px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none;outline:none}
+.ui{transition:opacity .4s}
+body.hide .ui{opacity:0;pointer-events:none}
+#brand{position:fixed;left:max(18px,env(safe-area-inset-left));top:16px;pointer-events:none}
+#brand .k{font-size:10.5px;letter-spacing:.36em;text-transform:uppercase;color:var(--am)}
+#brand h1{margin:4px 0 2px;font-size:26px;font-weight:300;letter-spacing:.06em}
+#brand p{margin:0;color:var(--mut);font-size:12.5px;max-width:330px}
+#stats{position:fixed;right:max(18px,env(safe-area-inset-right));top:16px;text-align:right;font:12px Consolas,monospace;color:var(--mut);pointer-events:none}
+#stats b{display:block;font:300 22px "Segoe UI",system-ui,sans-serif;color:var(--fg);letter-spacing:.02em}
+#stats div{margin-bottom:10px}
+#bar{position:fixed;left:12px;right:12px;margin:0 auto;width:fit-content;max-width:calc(100vw - 24px);bottom:max(16px,env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;
+  padding:10px 14px;background:var(--glass);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.grp{display:flex;gap:6px;align-items:center}
+.sep{width:1px;height:26px;background:var(--line)}
+button{font:inherit;font-size:13px;color:var(--fg);background:rgba(30,45,70,.45);border:1px solid var(--line);border-radius:10px;height:34px;min-width:34px;padding:0 10px;cursor:pointer;transition:.15s}
+button:hover{border-color:rgba(98,216,255,.55)}
+button.on{border-color:var(--cy);background:rgba(40,90,140,.55);box-shadow:0 0 12px rgba(98,216,255,.25)}
+label.sl{display:flex;flex-direction:column;gap:1px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);min-width:118px}
+label.sl span{display:flex;justify-content:space-between}
+label.sl em{font:600 11px Consolas,monospace;color:var(--gold);font-style:normal;letter-spacing:0}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;touch-action:none;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--am),var(--cy))}
+input[type=range]::-moz-range-track{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--am),var(--cy))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-6px;border-radius:50%;background:#dff6ff;box-shadow:0 0 10px rgba(98,216,255,.9)}
+input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:#dff6ff}
+#hint{margin-top:10px;font-size:11.5px;color:rgba(160,180,210,.6);max-width:330px;transition:opacity 1.5s}
+#hint.gone{opacity:0}
+#eye{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:3}
+#err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--mut)}
+@media (max-width:720px){
+  #brand h1{font-size:20px} #brand p,#hint{display:none} #stats b{font-size:17px}
+  #bar{gap:8px;padding:8px 10px;bottom:max(10px,env(safe-area-inset-bottom));right:60px;max-width:calc(100vw - 72px)}
+  label.sl{min-width:96px} .sep{display:none} #hint{display:none}
+}
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body>
+<div id="brand" class="ui"><div class="k">BaseReal-OS</div><h1>GALAXY BOOSTER</h1><p>One booster at the heart of a young galaxy slowly releases stars. It turns slowly and its nozzle precesses — and a spiral galaxy grows.</p><div id="hint">drag — rotate · scroll / pinch — zoom · right-drag — pan · Core — fly to the booster · H — hide interface</div></div>
+<div id="stats" class="ui"><div>galaxy age<b id="sAge">0 Myr</b></div><div>stars released<b id="sStars">0</b></div></div>
+
+<div id="bar" class="ui">
+  <div class="grp"><button id="bPlay" title="Pause (space)">❚❚</button><button id="bRestart" title="Start a new galaxy">⟲</button><button id="bForm" title="Skip ahead: grow the galaxy">⏩</button></div>
+  <div class="sep"></div>
+  <label class="sl"><span>time <em id="vSpeed">×2</em></span><input id="iSpeed" type="range" min="0" max="100" value="38"></label>
+  <label class="sl"><span>booster spin <em id="vSpin">55 s</em></span><input id="iSpin" type="range" min="28" max="110" value="55"></label>
+  <label class="sl"><span>precession <em id="vPrec">6°</em></span><input id="iPrec" type="range" min="0" max="16" value="6"></label>
+  <div class="sep"></div>
+  <div class="grp"><button id="bN1" title="Nozzle with one exit: one arm">1</button><button id="bN2" class="on" title="Nozzle with two opposite exits: two arms">2</button></div>
+  <div class="sep"></div>
+  <div class="grp"><button id="bOrbit" class="on" title="Slow camera orbit">◎</button><button id="bTop" title="Face-on view">Top</button><button id="bEdge" title="Edge-on view">Edge</button><button id="bCore" title="Fly to the booster">Core</button><button id="bFull" title="Full screen">⛶</button></div>
+</div>
+<button id="eye" title="Hide interface (H)">◐</button>
+<div id="err">WebGL is not available in this browser, so the galaxy cannot be drawn.</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+
+const $ = id => document.getElementById(id);
+const TAU = Math.PI * 2;
+
+// ------------------------------------------------------------------ model
+// A star is released at radius R0 and drifts out as r = (R0 + C)·e^{K·age} − C (slow near the centre, faster outside,
+// so the disk is bright in the middle and fades outward). It orbits at OMS. The booster's nozzle turns at OMN, so the
+// stars released over one life draw a logarithmic spiral that turns with the booster: a sprinkler that builds a galaxy.
+const S = 100;                    // galaxy radius in scene units
+const LIFE = 120;                 // seconds (at ×1) from release to the rim
+const R0 = 0.022, C = 0.28, RMAX = 1.04;
+const K = Math.log((RMAX + C) / (R0 + C)) / LIFE;
+const OMS = TAU / 210;            // star orbit: one turn in 210 s
+let OMN = TAU / 55;               // booster spin
+const OMP = TAU / 170;            // precession of the nozzle
+const MYR_PER_S = 4;              // story clock: 1 s = 4 Myr, a full life = 480 Myr
+
+const small = Math.min(innerWidth, innerHeight) < 720 || (navigator.hardwareConcurrency || 8) <= 4;
+const Q = small ? 0.5 : 1;
+const N_ARM = Math.round(80000 * Q), N_DISK = Math.round(60000 * Q), N_NEB = Math.round(1600 * Q), N_DUST = Math.round(11000 * Q), N_BULGE = Math.round(18000 * Q);
+const STARS_PER_PARTICLE = 1e6;
+
+// ------------------------------------------------------------------ renderer
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' }); }
+catch (e) { $('err').style.display = 'flex'; throw e; }
+const PR = Math.min(devicePixelRatio || 1, small ? 1.5 : 2);
+renderer.setPixelRatio(PR);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.05, 30000);
+camera.position.set(0, 26, 50);              // starts close to the booster and pulls back as the galaxy grows
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.06;
+controls.rotateSpeed = 0.55; controls.zoomSpeed = 0.9; controls.panSpeed = 0.6;
+controls.minDistance = 1.6; controls.maxDistance = 900;
+controls.autoRotate = true; controls.autoRotateSpeed = 0.22;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+// safety net before the bloom: a single NaN/Inf pixel would be smeared by the bloom into big black squares
+composer.addPass(new ShaderPass({
+  uniforms: { tDiffuse: { value: null } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); if (any(isnan(c)) || any(isinf(c))) c = vec4(0.0); gl_FragColor = vec4(clamp(c.rgb, 0.0, 64.0), 1.0); }'
+}));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.75, 0.6, 0.12);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// ------------------------------------------------------------------ shared uniforms
+const U = {
+  uT: { value: 0 }, uPhase: { value: 0 }, uOmN: { value: OMN }, uOmS: { value: OMS }, uK: { value: K }, uC: { value: C }, uR0: { value: R0 },
+  uLife: { value: LIFE }, uPsi: { value: 0 }, uOmP: { value: OMP }, uEps: { value: 6 * Math.PI / 180 }, uNoz: { value: 2 },
+  uS: { value: S }, uViewH: { value: innerHeight * PR * 0.5 }, uPR: { value: PR }, uForm: { value: 0 }
+};
+
+const galaxyVS = /* glsl */`
+uniform float uT, uPhase, uOmN, uOmS, uK, uC, uR0, uLife, uPsi, uOmP, uEps, uNoz, uS, uViewH, uPR, uForm;
+attribute vec4 aA;   // birth time | angular jitter | vertical jitter | luminosity
+attribute vec4 aB;   // kind | odd | temperature | radial jitter
+varying vec3 vCol; varying float vA; varying float vKind;
+void hide(){ gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; vA = 0.0; }
+void main(){
+  float kind = aB.x; vKind = kind;
+  vec3 pos; float world; float lum = aA.w; vec3 col; float a = 1.0;
+  if (kind > 3.5) {                         // bulge: old stars that build up as the galaxy forms
+    float ang = aA.y + uOmS * 1.7 * uT;
+    pos = vec3(aA.x * cos(ang), aA.z, aA.x * sin(ang));
+    col = mix(vec3(1.0, 0.86, 0.62), vec3(1.0, 0.66, 0.42), aB.z);
+    a = lum * 0.30 * uForm * smoothstep(0.0, 0.25, uForm);
+    world = 0.0030;
+  } else {
+    float since = uT - aA.x;
+    if (since < 0.0) { hide(); return; }
+    float age = mod(since, uLife), u = age / uLife;
+    float r = (uR0 + uC) * exp(uK * age) - uC;
+    float sig, thick, rj;
+    if (kind < 0.5)      { sig = 0.15 + 0.30 * u;  thick = 0.006 + 0.012 * r; rj = 0.045; }   // arm stars (clusters share jitter)
+    else if (kind < 1.5) { sig = 1.1 + 1.6 * u;    thick = 0.012 + 0.026 * r; rj = 0.22; }    // old disk stars
+    else if (kind < 2.5) { sig = 0.15 + 0.30 * u;  thick = 0.005;              rj = 0.045; }   // nebulae ride their clusters
+    else                 { sig = 0.07 + 0.12 * u;  thick = 0.004;              rj = 0.016; r -= 0.012 + 0.012 * r; } // dust: inner edge of the arm
+    r = max(r * (1.0 + aB.w * rj), 0.004);
+    float ang = uPhase - uOmN * age + uOmS * age + aA.y * sig + ((uNoz > 1.5 && aB.y > 0.5) ? 3.14159265 : 0.0);
+    float eps = uEps * sin(uPsi - uOmP * age);              // nozzle tilt at the moment of release
+    float y = r * sin(eps) * 0.85 + aA.z * thick;
+    pos = vec3(r * cos(ang), y, r * sin(ang));
+    float fin = smoothstep(0.0, 0.004, u), fout = 1.0 - smoothstep(0.86, 1.0, u);
+    if (kind < 0.5) {
+      col = mix(vec3(0.30, 0.50, 1.0), vec3(0.55, 0.70, 1.0), smoothstep(0.0, 0.5, u));
+      col = mix(col, vec3(1.0, 0.90, 0.78), 0.8 * smoothstep(0.55, 1.0, u));
+      if (aB.z > 0.88) col = vec3(1.0, 0.66, 0.40);
+      else if (aB.z > 0.80) col = vec3(1.0, 0.95, 0.88);
+      a = lum * (0.36 + 0.62 * exp(-2.2 * u)) + 0.8 * (1.0 - smoothstep(0.0, 0.010, u));
+      world = 0.0030;
+    } else if (kind < 1.5) {
+      col = mix(vec3(1.0, 0.90, 0.76), vec3(1.0, 0.66, 0.42), aB.z);
+      a = lum * 0.55;
+      world = 0.0026;
+    } else if (kind < 2.5) {
+      col = aB.z < 0.75 ? vec3(1.0, 0.26, 0.46) : vec3(0.40, 0.56, 1.0);
+      a = lum * 0.16 * smoothstep(0.02, 0.06, u) * (1.0 - smoothstep(0.30, 0.55, u));
+      world = 0.016 + 0.020 * lum;
+    } else {
+      col = vec3(0.05, 0.028, 0.015);
+      a = lum * 0.16 * smoothstep(0.03, 0.10, u) * (1.0 - smoothstep(0.35, 0.6, u));
+      world = 0.020;
+    }
+    if (kind < 1.5) a *= 0.35 + 0.65 * smoothstep(0.0, 0.14, r);
+    a *= fin * fout * (1.0 - smoothstep(RMAXV, RMAXV + 0.06, r));
+  }
+  vec4 mv = modelViewMatrix * vec4(pos * uS, 1.0);
+  gl_Position = projectionMatrix * mv;
+  float dz = -mv.z;
+  a *= smoothstep(0.6, 5.0, dz);                                         // no sprite floods the lens up close
+  if (kind > 1.5 && kind < 3.5) a *= smoothstep(6.0, 30.0, dz);          // nebulae and dust only from afar
+  if (kind > 3.5) a *= 0.35 + 0.65 * smoothstep(4.0, 40.0, length(cameraPosition));
+  float px = world * uS * projectionMatrix[1][1] * uViewH / max(dz, 0.001);
+  float lo = 1.15 * uPR;
+  float hi = (kind > 1.5 && kind < 3.5) ? 340.0 * uPR : 7.0 * uPR;
+  if (px < lo) { a *= (px / lo) * (px / lo); px = lo; }
+  gl_PointSize = min(px, hi);
+  vCol = col; vA = a;
+}`.replace(/RMAXV/g, RMAX.toFixed(3));
+
+const galaxyFS = /* glsl */`
+varying vec3 vCol; varying float vA; varying float vKind;
+void main(){
+  vec2 p = gl_PointCoord * 2.0 - 1.0; float d2 = dot(p, p);
+  if (d2 > 1.0 || vA <= 0.0) discard;
+  float f = (vKind > 1.5 && vKind < 3.5) ? exp(-d2 * 3.2) * (1.0 - d2) : exp(-d2 * 9.0) + 0.10 * exp(-d2 * 2.4) * (1.0 - d2);
+  #ifdef DUST
+    gl_FragColor = vec4(vCol, vA * f);
+  #else
+    gl_FragColor = vec4(max(vCol * vA * f, 0.0), 1.0);
+  #endif
+}`;
+
+// ------------------------------------------------------------------ particles
+const gauss = () => { let u = 0, v = 0; while (u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
+const starLum = () => Math.pow(Math.random(), 2.4) * 1.5 + 0.22;
+// one particle: [kind, birth, angular jitter, vertical jitter, luminosity, nozzle, temperature, radial jitter]
+function genParticles(kind, count) {
+  const out = [];
+  if (kind === 0) {                                   // arm stars come in clusters; big clusters light up nebulae
+    while (out.length < count) {
+      const field = Math.random() < 0.38;
+      const size = field ? 1 : Math.min(count - out.length, 2 + Math.floor(80 * Math.pow(Math.random(), 3.2)));
+      const b = Math.random() * LIFE, j0 = gauss(), y0 = gauss() * 0.6, r0 = gauss(), noz = Math.random() < 0.5 ? 1 : 0;
+      for (let k = 0; k < size; k++) {
+        const cl = size > 1;
+        out.push([0, b + (cl ? gauss() * 0.22 : 0), cl ? j0 + gauss() * 0.16 : gauss(), cl ? y0 + gauss() * 0.45 : gauss(), starLum(), noz, Math.random(), cl ? r0 + gauss() * 0.22 : gauss()]);
+      }
+      if (size > 16) for (let k = 0; k < 1 + (size / 22 | 0); k++)
+        nebulae.push([2, b + gauss() * 0.2, j0 + gauss() * 0.12, y0, 0.4 + Math.random() * 0.8, noz, Math.random(), r0 + gauss() * 0.15]);
+    }
+    return out;
+  }
+  for (let k = 0; k < count; k++) {
+    if (kind === 4) {                                 // bulge: 3-D exponential, flattened
+      const rr = -0.055 * Math.log(1 - Math.random() * 0.995), th = Math.random() * TAU, ph = Math.acos(2 * Math.random() - 1);
+      out.push([4, Math.abs(rr * Math.sin(ph)), th, rr * Math.cos(ph) * 0.62, 0.5 + Math.random() * 0.7, 0, Math.random(), 0]);
+    } else out.push([kind, Math.random() * LIFE, gauss(), gauss(), kind === 3 ? 0.5 + Math.random() * 0.5 : starLum(), Math.random() < 0.5 ? 1 : 0, Math.random(), gauss()]);
+  }
+  return out;
+}
+const nebulae = [];
+function makeCloud(parts) {
+  const n = parts.length;
+  const pos = new Float32Array(n * 3), A = new Float32Array(n * 4), B = new Float32Array(n * 4);
+  parts.forEach((p, i) => { A.set([p[1], p[2], p[3], p[4]], i * 4); B.set([p[0], p[5], p[6], p[7]], i * 4); });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('aA', new THREE.BufferAttribute(A, 4));
+  g.setAttribute('aB', new THREE.BufferAttribute(B, 4));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), S * 2);
+  return g;
+}
+const starMat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: galaxyVS, fragmentShader: galaxyFS, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
+const armParts = genParticles(0, N_ARM);
+const stars = new THREE.Points(makeCloud([...genParticles(4, N_BULGE), ...genParticles(1, N_DISK), ...armParts, ...nebulae.slice(0, N_NEB)]), starMat);
+stars.frustumCulled = false; scene.add(stars);
+const dustMat = new THREE.ShaderMaterial({ uniforms: U, vertexShader: galaxyVS, fragmentShader: galaxyFS, defines: { DUST: 1 }, transparent: true, depthWrite: false, blending: THREE.NormalBlending });
+const dust = new THREE.Points(makeCloud(genParticles(3, N_DUST)), dustMat);
+dust.frustumCulled = false; dust.renderOrder = 2; scene.add(dust);
+
+// ------------------------------------------------------------------ distant sky
+{
+  const n = 7000, p = new Float32Array(n * 3), c = new Float32Array(n * 3), s = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const v = new THREE.Vector3(gauss(), gauss(), gauss()).normalize().multiplyScalar(9000);
+    p.set([v.x, v.y, v.z], i * 3);
+    const t = Math.random(), b = 0.25 + Math.pow(Math.random(), 4) * 1.6;
+    const col = t < 0.2 ? [0.7, 0.8, 1] : t < 0.8 ? [1, 0.97, 0.92] : [1, 0.78, 0.6];
+    c.set(col.map(x => x * b), i * 3); s[i] = 0.8 + Math.pow(Math.random(), 6) * 2.2;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('color', new THREE.BufferAttribute(c, 3)); g.setAttribute('size', new THREE.BufferAttribute(s, 1));
+  const m = new THREE.ShaderMaterial({
+    uniforms: { uPR: U.uPR },
+    vertexShader: `uniform float uPR; attribute float size; attribute vec3 color; varying vec3 vC; void main(){ vC = color; vec4 mv = modelViewMatrix * vec4(position,1.); gl_Position = projectionMatrix * mv; gl_PointSize = size * uPR; }`,
+    fragmentShader: `varying vec3 vC; void main(){ vec2 p = gl_PointCoord*2.-1.; float d = dot(p,p); if(d>1.) discard; gl_FragColor = vec4(vC * exp(-d*5.), 1.); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+  });
+  const sky = new THREE.Points(g, m); sky.frustumCulled = false; scene.add(sky);
+}
+
+// ------------------------------------------------------------------ the booster
+const core = new THREE.Group(); scene.add(core);
+const HOLE = 0.34;
+const hole = new THREE.Mesh(new THREE.SphereGeometry(HOLE, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+hole.renderOrder = -1; core.add(hole);
+
+const diskMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 }, uIn: { value: HOLE * 1.45 }, uOut: { value: HOLE * 4.6 } },
+  vertexShader: `varying vec2 vP; void main(){ vP = position.xy; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader: `uniform float uTime, uIn, uOut; varying vec2 vP;
+    void main(){
+      float r = length(vP), a = atan(vP.y, vP.x), t = clamp((r - uIn) / (uOut - uIn), 0., 1.);
+      float sw = a + uTime * (1.6 / (0.35 + t));
+      float n = 0.55 + 0.25 * sin(sw * 3.0 + r * 9.0) + 0.2 * sin(sw * 11.0 - r * 23.0);
+      vec3 c = mix(vec3(1.0, 0.96, 0.88), vec3(1.0, 0.56, 0.20), smoothstep(0.0, 0.45, t));
+      c = mix(c, vec3(0.55, 0.12, 0.04), smoothstep(0.45, 1.0, t));
+      float I = max(smoothstep(0.0, 0.05, t) * pow(1.0 - t, 1.6) * n * (1.0 + 0.55 * cos(a)), 0.0);
+      gl_FragColor = vec4(c * I * 3.2, 1.0);
+    }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+});
+const disk = new THREE.Mesh(new THREE.RingGeometry(HOLE * 1.45, HOLE * 4.6, 160, 4), diskMat);
+disk.rotation.x = -Math.PI / 2; core.add(disk);
+
+const ringMat = new THREE.ShaderMaterial({
+  uniforms: { uR: { value: 0.30 } },
+  vertexShader: `varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader: `uniform float uR; varying vec2 vU; void main(){ float d = length(vU - 0.5) * 2.0;
+    float q1 = (d - uR) / 0.022, q2 = (d - uR) / 0.11;           // squares, not pow(): pow of a negative number is NaN on many GPUs,
+    float ring = exp(-q1 * q1) * 1.6 + exp(-q2 * q2) * 0.25;      // and the bloom pass spreads a NaN pixel into big black squares
+    gl_FragColor = vec4(vec3(1.0, 0.86, 0.62) * ring, 1.0); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
+});
+const photon = new THREE.Mesh(new THREE.PlaneGeometry(HOLE * 8.4, HOLE * 8.4), ringMat);
+core.add(photon);
+
+const beamGeo = new THREE.CylinderGeometry(1, 0.08, 1, 40, 1, true); beamGeo.translate(0, 0.5, 0);
+const beamMat = new THREE.ShaderMaterial({
+  uniforms: { uTime: { value: 0 } },
+  vertexShader: `varying vec2 vU; varying vec3 vN; varying vec3 vV; void main(){ vU = uv; vN = normalize(normalMatrix * normal); vec4 mv = modelViewMatrix * vec4(position,1.); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+  fragmentShader: `uniform float uTime; varying vec2 vU; varying vec3 vN; varying vec3 vV;
+    void main(){ float along = vU.y; float face = abs(dot(vN, vV));
+      float fl = 0.85 + 0.15 * sin(uTime * 13.0 + along * 30.0);
+      float I = pow(clamp(face, 0.0, 1.0), 2.2) * pow(clamp(1.0 - along, 0.0, 1.0), 1.7) * smoothstep(0.0, 0.05, along) * fl;
+      vec3 c = mix(vec3(0.85, 0.95, 1.0), vec3(0.35, 0.7, 1.0), along);
+      gl_FragColor = vec4(c * I * 1.1, 1.0); }`,
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+});
+const beams = [0, 1].map(() => { const b = new THREE.Mesh(beamGeo, beamMat); b.scale.set(0.32, 10, 0.32); core.add(b); return b; });
+
+function glowTex(stops) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
+  const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); stops.forEach(([o, s]) => gr.addColorStop(o, s));
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 256); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const coreGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex([[0, 'rgba(255,226,180,1)'], [0.18, 'rgba(255,196,130,.45)'], [0.5, 'rgba(255,160,90,.10)'], [1, 'rgba(0,0,0,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+scene.add(coreGlow);
+const boosterGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex([[0, 'rgba(200,235,255,.9)'], [0.25, 'rgba(120,200,255,.25)'], [1, 'rgba(0,0,0,0)']]), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+boosterGlow.scale.set(4, 4, 1); boosterGlow.material.opacity = 0.6; scene.add(boosterGlow);
+
+// ------------------------------------------------------------------ simulation clock and controls
+let t = 0, phase = 0, psi = 0, speed = 2, paused = false;
+const speedOf = v => v <= 30 ? 0.25 + (v / 30) * 0.75 : v <= 60 ? 1 + ((v - 30) / 30) * 3 : 4 + ((v - 60) / 40) * 26;
+function setSpeed() { speed = speedOf(+$('iSpeed').value); $('vSpeed').textContent = '×' + (speed < 1 ? speed.toFixed(2) : speed < 10 ? speed.toFixed(1).replace('.0', '') : Math.round(speed)); }
+$('iSpeed').oninput = setSpeed; setSpeed();
+$('iSpin').oninput = e => { OMN = TAU / +e.target.value; U.uOmN.value = OMN; $('vSpin').textContent = e.target.value + ' s'; };
+$('iPrec').oninput = e => { U.uEps.value = +e.target.value * Math.PI / 180; $('vPrec').textContent = e.target.value + '°'; };
+const tog = (id, on) => $(id).classList.toggle('on', on);
+function pause(p = !paused) { paused = p; $('bPlay').textContent = paused ? '▶' : '❚❚'; }
+$('bPlay').onclick = () => pause();
+$('bRestart').onclick = () => { t = 0; phase = 0; psi = 0; pause(false); if (!userCam) camera.position.set(0, 26, 50); };
+let ff = 0;                                      // fast-forward seconds still to run
+$('bForm').onclick = () => { ff = Math.max(0, LIFE * 1.05 - t) || LIFE * 0.5; };
+$('bN1').onclick = () => { U.uNoz.value = 1; tog('bN1', true); tog('bN2', false); };  // one exit: a one-armed spiral
+$('bN2').onclick = () => { U.uNoz.value = 2; tog('bN1', false); tog('bN2', true); };
+$('bOrbit').onclick = () => { controls.autoRotate = !controls.autoRotate; tog('bOrbit', controls.autoRotate); };
+let userCam = false;                              // after the first touch the camera is the user's
+controls.addEventListener('start', () => { fly = null; userCam = true; $('hint').classList.add('gone'); });
+setTimeout(() => $('hint').classList.add('gone'), 12000);
+$('bFull').onclick = () => { const d = document; if (!d.fullscreenElement) (d.documentElement.requestFullscreen || d.documentElement.webkitRequestFullscreen)?.call(d.documentElement); else d.exitFullscreen?.(); };
+const hideUI = () => document.body.classList.toggle('hide');
+$('eye').onclick = hideUI;
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); pause(); }
+  else if (e.key === 'h' || e.key === 'H') hideUI();
+});
+
+// smooth camera flights
+let fly = null;
+function flyTo(pos, target = new THREE.Vector3()) { userCam = true; fly = { p0: camera.position.clone(), p1: pos, t0: controls.target.clone(), t1: target, k: 0 }; }
+$('bTop').onclick = () => flyTo(new THREE.Vector3(0.01, 270, 0.01));
+$('bEdge').onclick = () => flyTo(new THREE.Vector3(0, 6, 260));
+$('bCore').onclick = () => flyTo(new THREE.Vector3(0, 1.7, 4.6));
+
+// ------------------------------------------------------------------ frame
+const clock = new THREE.Clock();
+const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
+function fmtStars(x) { return x >= 1e9 ? (x / 1e9).toFixed(1) + ' billion' : x >= 1e6 ? Math.round(x / 1e6) + ' million' : '0'; }
+let statT = 0;
+function frame() {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (!paused) {
+    let h = dt * speed;
+    if (ff > 0) { const j = Math.min(ff, dt * 40); h += j; ff -= j; }
+    t += h; phase = (phase + OMN * h) % TAU; psi = (psi + OMP * h) % TAU;
+  }
+  U.uT.value = t; U.uPhase.value = phase; U.uPsi.value = psi;
+  U.uForm.value = Math.min(1, t / (LIFE * 0.75));
+  diskMat.uniforms.uTime.value += dt; beamMat.uniforms.uTime.value += dt;
+
+  // booster nozzle(s): current direction with precession tilt
+  const eps = U.uEps.value * Math.sin(psi);
+  beams.forEach((b, i) => {
+    const a = phase + i * Math.PI;                 // same tilt for both exits, as the stars get in the shader
+    dir.set(Math.cos(a) * Math.cos(eps), Math.sin(eps), Math.sin(a) * Math.cos(eps));
+    b.quaternion.setFromUnitVectors(up, dir);
+    b.visible = i < U.uNoz.value;
+  });
+  photon.quaternion.copy(camera.quaternion);
+  const f = U.uForm.value;
+  const nearK = THREE.MathUtils.smoothstep(camera.position.length(), 8, 45);
+  coreGlow.scale.setScalar(4 + 22 * f); coreGlow.material.opacity = (0.10 + 0.25 * f) * nearK;
+  bloom.strength = 0.35 + 0.40 * nearK;
+
+  if (!userCam && !fly) {                           // cinematic pull-back while the galaxy forms
+    const want = 52 + 172 * THREE.MathUtils.smoothstep(t / LIFE, 0.02, 0.9);
+    const d = camera.position.distanceTo(controls.target);
+    camera.position.sub(controls.target).multiplyScalar(1 + (want - d) / d * Math.min(1, dt * 1.5)).add(controls.target);
+  }
+  if (fly) {
+    fly.k = Math.min(1, fly.k + dt / 1.6); const e = fly.k < 0.5 ? 4 * fly.k ** 3 : 1 - Math.pow(-2 * fly.k + 2, 3) / 2;
+    camera.position.lerpVectors(fly.p0, fly.p1, e); controls.target.lerpVectors(fly.t0, fly.t1, e);
+    if (fly.k >= 1) fly = null;
+  }
+  controls.update();
+  composer.render();
+
+  statT += dt;
+  if (statT > 0.25) {
+    statT = 0;
+    const age = t * MYR_PER_S;
+    $('sAge').textContent = age < 1000 ? Math.round(age) + ' Myr' : (age / 1000).toFixed(2) + ' Gyr';
+    $('sStars').textContent = fmtStars((N_ARM + N_DISK) * (t / LIFE) * STARS_PER_PARTICLE);
+  }
+  requestAnimationFrame(frame);
+}
+function resize() {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight);
+  U.uViewH.value = innerHeight * PR * 0.5;
+}
+addEventListener('resize', resize);
+
+// link options, for sharing a view and for figures: #t=130&view=top&ui=0&orbit=0
+const opt = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+if (opt.t) { t = +opt.t || 0; phase = (OMN * t) % TAU; psi = (OMP * t) % TAU; }
+const views = { top: [0.01, 270, 0.01], edge: [0, 6, 260], core: [0, 1.7, 4.6], wide: [0, 105, 200] };
+if (views[opt.view]) { userCam = true; camera.position.set(...views[opt.view]); }
+if (opt.ui === '0') { document.querySelectorAll('.ui,#eye').forEach(e => e.style.display = 'none'); }
+if (opt.orbit === '0') { controls.autoRotate = false; tog('bOrbit', false); }
+if (opt.noz === '1') $('bN1').onclick();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

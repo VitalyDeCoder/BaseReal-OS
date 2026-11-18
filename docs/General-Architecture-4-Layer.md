@@ -163,7 +163,7 @@ This work was carried out by a single author as part of the independent research
 
 ## How to Cite This Work
 
-> Colesnicenco, V. (2026). *General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model: The State Controller as an Architectural Condition for Evolution in Systems with Frozen Computational Cores*. BaseReal-OS Technical Preprint Series, Part 1. Zenodo. DOI: [to be assigned upon publication].
+> Colesnicenco, V. (2026). *General Architecture of the BaseReal-OS Hybrid Four-Layer Computational Model: The State Controller as an Architectural Condition for Evolution in Systems with Frozen Computational Cores*. BaseReal-OS Technical Preprint Series, Part 1. Zenodo. https://doi.org/10.5281/zenodo.22060039.
 
 ---
 

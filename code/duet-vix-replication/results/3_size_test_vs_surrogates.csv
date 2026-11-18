@@ -1,0 +1,7 @@
+calm,size,rho,p_parametric,null_mean,null_lo95,null_hi95,p_one_sided_vs_null
+calm_rel_streak,log_ratio,-0.022,0.891,0.012,-0.267,0.297,0.588
+calm_rel_streak,jump,-0.059,0.716,-0.264,-0.549,0.018,0.076
+calm_abs15,log_ratio,0.123,0.451,0.027,-0.269,0.276,0.259
+calm_abs15,jump,-0.392,0.012,-0.439,-0.649,-0.162,0.365
+calm_lowvar,log_ratio,0.046,0.776,-0.021,-0.284,0.252,0.332
+calm_lowvar,jump,-0.036,0.824,-0.22,-0.482,0.043,0.1
