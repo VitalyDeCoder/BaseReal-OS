@@ -39,7 +39,7 @@ Preprints on Zenodo. The English texts are in [`docs/`](docs/). The two papers o
 | Duet of Algorithms: a two-process architecture of threshold transitions (v2.0) | [MD](docs/Duet-of-Algorithms.md) · [code](code/duet-vix-replication/) | [10.5281/zenodo.20804271](https://doi.org/10.5281/zenodo.20804271) |
 | Adaptive Perception and Lazy Rendering | [MD](docs/Adaptive-Perception-Lazy-Rendering.md) | [10.5281/zenodo.21283080](https://doi.org/10.5281/zenodo.21283080) |
 | Adaptive Perceptual Resolution: a relative information scale for living systems | [MD](docs/Adaptive-Perceptual-Resolution.md) | [zenodo.org/records/20376632](https://zenodo.org/records/20376632) |
-| Galaxy Booster v2: growing a spiral galaxy from one rotating, precessing source | [PDF](docs/Galaxy-Booster.pdf) · [MD](docs/Galaxy-Booster.md) · [code](code/galaxy-booster/) | not yet on Zenodo |
+| Galaxy Booster v2: growing a spiral galaxy from one rotating, precessing source | [PDF](docs/Galaxy-Booster.pdf) · [MD](docs/Galaxy-Booster.md) · [code](code/galaxy-booster/) | [10.5281/zenodo.24406046](https://doi.org/10.5281/zenodo.24406046) |
 
 ![The 3/2 tail: arcs 2π/n^{3/2} turn into the inverse-square law](assets/inverse-3-2-tail.svg)
 

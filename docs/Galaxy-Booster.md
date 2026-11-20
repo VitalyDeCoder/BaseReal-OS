@@ -13,6 +13,8 @@
 
 Previous version: v1, *Black Hole as Galactic Speed Booster: An Alternative to Dark Matter*, Zenodo, 2026 — <https://zenodo.org/records/20377051>
 
+DOI: <https://doi.org/10.5281/zenodo.24406046>
+
 Interactive model: <https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy-booster.html>
 
 > **What changed from v1.** Version 1 proposed that the central black hole "boosts" stars and so replaces dark matter. Version 2 withdraws that claim (Section 7 gives the reason in one line: a circular orbit needs the inward acceleration $v^2/r$ at every radius, and a push from the centre does not supply it). The booster is now what it works best as: a **game mechanic**. One source at the centre of a young galaxy slowly releases stars, slowly turns, and its nozzle slowly precesses; the stars it releases draw a spiral galaxy that grows from nothing in front of the player. Version 2 gives the mechanic in closed form, maps every parameter to what the player sees, lists the observations it borrows, and ships as a 3D interactive model.
