@@ -3,19 +3,32 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Galaxy Booster · BaseReal-OS</title>
 <style>
 :root{--fg:#e9eef7;--mut:#8fa1ba;--line:rgba(120,160,220,.18);--cy:#62d8ff;--am:#ffb84d;--gold:#ffdf9a;--glass:rgba(8,14,26,.55)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:#000;color:var(--fg);font:14px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:#000;color:var(--fg);font:14px/1.4 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
 canvas{display:block;position:fixed;inset:0;width:100%;height:100%;touch-action:none;outline:none}
 .ui{transition:opacity .4s}
 body.hide .ui{opacity:0;pointer-events:none}
-#brand{position:fixed;left:max(18px,env(safe-area-inset-left));top:16px;pointer-events:none}
+#brand{position:fixed;left:max(18px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));pointer-events:none;max-width:calc(100vw - 230px)}
 #brand .k{font-size:10.5px;letter-spacing:.36em;text-transform:uppercase;color:var(--am)}
 #brand h1{margin:4px 0 2px;font-size:26px;font-weight:300;letter-spacing:.06em}
 #brand p{margin:0;color:var(--mut);font-size:12.5px;max-width:330px}
-#stats{position:fixed;right:max(18px,env(safe-area-inset-right));top:16px;text-align:right;font:12px Consolas,monospace;color:var(--mut);pointer-events:none}
+#stats{position:fixed;right:max(18px,env(safe-area-inset-right));top:calc(max(16px,env(safe-area-inset-top)) + 54px);text-align:right;font:12px Consolas,monospace;color:var(--mut);pointer-events:none}
+/* top right: the amber arrow home (as in Genesis) and the languages */
+#top{position:fixed;right:max(14px,env(safe-area-inset-right));top:max(14px,env(safe-area-inset-top));display:flex;gap:8px;align-items:flex-start;z-index:5}
+.rb{width:38px;height:38px;min-width:38px;padding:0;border-radius:50%;display:flex;align-items:center;justify-content:center}
+#btnHome{color:#ffe0a8;background:rgba(60,34,6,.55);border-color:rgba(255,184,77,.7)}
+#btnHome:hover{background:rgba(120,70,10,.6);border-color:var(--am);box-shadow:0 0 22px rgba(255,184,77,.45)}
+#langs{display:flex;gap:2px;padding:3px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#langs button{height:30px;min-width:32px;padding:0 7px;border-radius:999px;border-color:transparent;background:transparent;color:var(--mut);font-size:11.5px;font-weight:600;letter-spacing:.08em}
+#langs button.on{color:#b4efff;background:rgba(98,216,255,.18);border-color:rgba(98,216,255,.6)}
+/* bottom right: full screen next to the eye that hides the interface */
+#corner{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:3;display:flex;gap:8px}
+#bSet{display:none}
+#sets{display:contents}
 #stats b{display:block;font:300 22px "Segoe UI",system-ui,sans-serif;color:var(--fg);letter-spacing:.02em}
 #stats div{margin-bottom:10px}
 #bar{position:fixed;left:12px;right:12px;margin:0 auto;width:fit-content;max-width:calc(100vw - 24px);bottom:max(16px,env(safe-area-inset-bottom));display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;
@@ -26,7 +39,7 @@ button{font:inherit;font-size:13px;color:var(--fg);background:rgba(30,45,70,.45)
 button:hover{border-color:rgba(98,216,255,.55)}
 button.on{border-color:var(--cy);background:rgba(40,90,140,.55);box-shadow:0 0 12px rgba(98,216,255,.25)}
 label.sl{display:flex;flex-direction:column;gap:1px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);min-width:118px}
-label.sl span{display:flex;justify-content:space-between}
+label.sl>span{display:flex;justify-content:space-between;gap:8px;white-space:nowrap}
 label.sl em{font:600 11px Consolas,monospace;color:var(--gold);font-style:normal;letter-spacing:0}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;touch-action:none;cursor:pointer;margin:0}
 input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--am),var(--cy))}
@@ -35,12 +48,32 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
 input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radius:50%;background:#dff6ff}
 #hint{margin-top:10px;font-size:11.5px;color:rgba(160,180,210,.6);max-width:330px;transition:opacity 1.5s}
 #hint.gone{opacity:0}
-#eye{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:3}
 #err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:30px;color:var(--mut)}
-@media (max-width:720px){
-  #brand h1{font-size:20px} #brand p,#hint{display:none} #stats b{font-size:17px}
-  #bar{gap:8px;padding:8px 10px;bottom:max(10px,env(safe-area-inset-bottom));right:60px;max-width:calc(100vw - 72px)}
-  label.sl{min-width:96px} .sep{display:none} #hint{display:none}
+#bar{right:110px;max-width:calc(100vw - 230px)}
+/* phones (iPhone upright and on its side): the galaxy comes first — short title, one line of numbers,
+   a compact bar whose sliders open with ⚙; the arrow, languages, full screen and the eye stay at hand */
+@media (max-width:720px),(max-height:500px){
+  #brand{max-width:calc(100vw - 150px)}
+  #brand .k{font-size:9.5px;letter-spacing:.3em}
+  #brand h1{font-size:17px;margin:2px 0 0;letter-spacing:.04em}
+  #brand p,#hint{display:none}
+  #stats{left:max(14px,env(safe-area-inset-left));right:auto;top:calc(max(14px,env(safe-area-inset-top)) + 44px);text-align:left;display:flex;gap:14px;font-size:10px}
+  #stats div{margin:0}
+  #stats b{font-size:14px;display:inline;margin-left:5px}
+  #bar{gap:6px;padding:7px 8px;left:max(8px,env(safe-area-inset-left));right:max(58px,calc(env(safe-area-inset-right) + 50px));margin:0;max-width:none;width:auto;bottom:max(10px,env(safe-area-inset-bottom));justify-content:flex-start}
+  #bar button{height:32px;min-width:32px;padding:0 8px;font-size:12px}
+  .sep{display:none}
+  #bSet{display:inline-block}
+  #sets{display:none}
+  body.sets #sets{display:flex;flex-wrap:wrap;gap:10px 14px;width:100%;order:9;padding:4px 2px 2px}
+  label.sl{min-width:0;flex:1 1 120px}
+  #corner{flex-direction:column-reverse;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));gap:6px}
+  #corner button{height:38px;min-width:38px}
+  #top{right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));gap:6px}
+  #langs{position:relative}
+  #langs:not(.open) button:not(.on){display:none}
+  #langs.open{flex-direction:column}
+  #langs.open button{height:32px;background:rgba(10,20,36,.96)}
 }
 </style>
 <script type="importmap">
@@ -51,22 +84,28 @@ input[type=range]::-moz-range-thumb{width:15px;height:15px;border:0;border-radiu
 </script>
 </head>
 <body>
-<div id="brand" class="ui"><div class="k">BaseReal-OS</div><h1>GALAXY BOOSTER</h1><p>One booster at the heart of a young galaxy slowly releases stars. It turns slowly and its nozzle precesses — and a spiral galaxy grows.</p><div id="hint">drag — rotate · scroll / pinch — zoom · right-drag — pan · Core — fly to the booster · H — hide interface</div></div>
-<div id="stats" class="ui"><div>galaxy age<b id="sAge">0 Myr</b></div><div>stars released<b id="sStars">0</b></div></div>
+<div id="brand" class="ui"><div class="k">BaseReal-OS</div><h1 data-i="h1">GALAXY BOOSTER</h1><p data-i="p">One booster at the heart of a young galaxy slowly releases stars. It turns slowly and its nozzle precesses — and a spiral galaxy grows.</p><div id="hint" data-i="hint">drag — rotate · scroll / pinch — zoom · right-drag — pan · Core — fly to the booster · H — hide interface</div></div>
+<div id="stats" class="ui"><div><span data-i="age">galaxy age</span><b id="sAge">0 Myr</b></div><div><span data-i="rel">stars released</span><b id="sStars">0</b></div></div>
+<div id="top" class="ui">
+  <button id="btnHome" class="rb" data-t="home" title="Back to the site" aria-label="Back to the site"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2.5M7 3.2 2.2 8 7 12.8"/></svg></button>
+  <div id="langs" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="de" lang="de" title="Deutsch">DE</button><button data-lang="es" lang="es" title="Español">ES</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="uk" lang="uk" title="Українська">UA</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
+</div>
 
 <div id="bar" class="ui">
-  <div class="grp"><button id="bPlay" title="Pause (space)">❚❚</button><button id="bRestart" title="Start a new galaxy">⟲</button><button id="bForm" title="Skip ahead: grow the galaxy">⏩</button></div>
+  <div class="grp"><button id="bPlay" data-t="tPlay" title="Pause (space)">❚❚</button><button id="bRestart" data-t="tRestart" title="Start a new galaxy">⟲</button><button id="bForm" data-t="tForm" title="Skip ahead: grow the galaxy">⏩</button><button id="bSet" data-t="tSet" title="Settings" aria-expanded="false">⚙</button></div>
   <div class="sep"></div>
-  <label class="sl"><span>time <em id="vSpeed">×2</em></span><input id="iSpeed" type="range" min="0" max="100" value="38"></label>
-  <label class="sl"><span>booster spin <em id="vSpin">55 s</em></span><input id="iSpin" type="range" min="28" max="110" value="55"></label>
-  <label class="sl"><span>precession <em id="vPrec">6°</em></span><input id="iPrec" type="range" min="0" max="16" value="6"></label>
+  <div id="sets">
+  <label class="sl"><span><span data-i="time">time</span> <em id="vSpeed">×2</em></span><input id="iSpeed" type="range" min="0" max="100" value="38"></label>
+  <label class="sl"><span><span data-i="spin">booster spin</span> <em id="vSpin">55 s</em></span><input id="iSpin" type="range" min="28" max="110" value="55"></label>
+  <label class="sl"><span><span data-i="prec">precession</span> <em id="vPrec">6°</em></span><input id="iPrec" type="range" min="0" max="16" value="6"></label>
   <div class="sep"></div>
-  <div class="grp"><button id="bN1" title="Nozzle with one exit: one arm">1</button><button id="bN2" class="on" title="Nozzle with two opposite exits: two arms">2</button></div>
+  <div class="grp"><button id="bN1" data-t="tN1" title="Nozzle with one exit: one arm">1</button><button id="bN2" class="on" data-t="tN2" title="Nozzle with two opposite exits: two arms">2</button></div>
+  </div>
   <div class="sep"></div>
-  <div class="grp"><button id="bOrbit" class="on" title="Slow camera orbit">◎</button><button id="bTop" title="Face-on view">Top</button><button id="bEdge" title="Edge-on view">Edge</button><button id="bCore" title="Fly to the booster">Core</button><button id="bFull" title="Full screen">⛶</button></div>
+  <div class="grp"><button id="bOrbit" class="on" data-t="tOrbit" title="Slow camera orbit">◎</button><button id="bTop" data-i="vTop" data-t="tTop" title="Face-on view">Top</button><button id="bEdge" data-i="vEdge" data-t="tEdge" title="Edge-on view">Edge</button><button id="bCore" data-i="vCore" data-t="tCore" title="Fly to the booster">Core</button></div>
 </div>
-<button id="eye" title="Hide interface (H)">◐</button>
-<div id="err">WebGL is not available in this browser, so the galaxy cannot be drawn.</div>
+<div id="corner"><button id="bFull" data-t="tFull" title="Full screen" aria-label="Full screen"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button><button id="eye" data-t="tEye" title="Hide interface (H)">◐</button></div>
+<div id="err" data-i="err">WebGL is not available in this browser, so the galaxy cannot be drawn.</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -352,7 +391,7 @@ let t = 0, phase = 0, psi = 0, speed = 2, paused = false;
 const speedOf = v => v <= 30 ? 0.25 + (v / 30) * 0.75 : v <= 60 ? 1 + ((v - 30) / 30) * 3 : 4 + ((v - 60) / 40) * 26;
 function setSpeed() { speed = speedOf(+$('iSpeed').value); $('vSpeed').textContent = '×' + (speed < 1 ? speed.toFixed(2) : speed < 10 ? speed.toFixed(1).replace('.0', '') : Math.round(speed)); }
 $('iSpeed').oninput = setSpeed; setSpeed();
-$('iSpin').oninput = e => { OMN = TAU / +e.target.value; U.uOmN.value = OMN; $('vSpin').textContent = e.target.value + ' s'; };
+$('iSpin').oninput = e => { OMN = TAU / +e.target.value; U.uOmN.value = OMN; $('vSpin').textContent = e.target.value + ' ' + D().s; };
 $('iPrec').oninput = e => { U.uEps.value = +e.target.value * Math.PI / 180; $('vPrec').textContent = e.target.value + '°'; };
 const tog = (id, on) => $(id).classList.toggle('on', on);
 function pause(p = !paused) { paused = p; $('bPlay').textContent = paused ? '▶' : '❚❚'; }
@@ -366,14 +405,62 @@ $('bOrbit').onclick = () => { controls.autoRotate = !controls.autoRotate; tog('b
 let userCam = false;                              // after the first touch the camera is the user's
 controls.addEventListener('start', () => { fly = null; userCam = true; $('hint').classList.add('gone'); });
 setTimeout(() => $('hint').classList.add('gone'), 12000);
-$('bFull').onclick = () => { const d = document; if (!d.fullscreenElement) (d.documentElement.requestFullscreen || d.documentElement.webkitRequestFullscreen)?.call(d.documentElement); else d.exitFullscreen?.(); };
+// full screen: at the bottom right, next to the eye; hidden where the browser cannot do it (Safari on the iPhone)
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+if (!fsOK) $('bFull').style.display = 'none';
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function toggleFS() {
+  const d = document, el = d.documentElement;
+  try { if (!fsEl()) { const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (p && p.catch) p.catch(() => { }); } else (d.exitFullscreen || d.webkitExitFullscreen).call(d); } catch (e) { }
+}
+$('bFull').onclick = toggleFS;
+for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => tog('bFull', !!fsEl()));
 const hideUI = () => document.body.classList.toggle('hide');
 $('eye').onclick = hideUI;
+// on a phone the sliders and the nozzle wait behind ⚙, so the galaxy is not covered
+$('bSet').onclick = () => { const on = document.body.classList.toggle('sets'); tog('bSet', on); $('bSet').setAttribute('aria-expanded', on); };
 addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (e.code === 'Space') { e.preventDefault(); pause(); }
-  else if (e.key === 'h' || e.key === 'H') hideUI();
+  else if (e.key === 'h' || e.key === 'H' || e.key === 'р' || e.key === 'Р') hideUI();
+  else if ((e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А') && fsOK) toggleFS();
 });
+
+// the amber arrow of Genesis: back to the page of the site the visitor came from (it comes back as it was left)
+$('btnHome').onclick = () => {
+  let ref = null; try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { }
+  if (ref && /^https?:$/.test(ref.protocol) && ref.href.split('#')[0] !== location.href.split('#')[0]) { if (history.length > 1) history.back(); else location.href = ref.href; return; }
+  location.href = 'https://basereal-os.dev/';
+};
+
+// ------------------------------------------------------------------ languages: EN · DE · ES · RO · UA · RU
+const I18N = {
+  en: { title: 'Galaxy Booster · BaseReal-OS', h1: 'GALAXY BOOSTER', p: 'One booster at the heart of a young galaxy slowly releases stars. It turns slowly and its nozzle precesses — and a spiral galaxy grows.', hint: 'drag — rotate · scroll / pinch — zoom · right-drag — pan · Core — fly to the booster · H — hide interface', age: 'galaxy age', rel: 'stars released', myr: 'Myr', gyr: 'Gyr', mil: 'million', bil: 'billion', time: 'time', spin: 'booster spin', prec: 'precession', s: 's', vTop: 'Top', vEdge: 'Edge', vCore: 'Core', tPlay: 'Pause (space)', tRestart: 'Start a new galaxy', tForm: 'Skip ahead: grow the galaxy', tSet: 'Settings', tN1: 'Nozzle with one exit: one arm', tN2: 'Nozzle with two opposite exits: two arms', tOrbit: 'Slow camera orbit', tTop: 'Face-on view', tEdge: 'Edge-on view', tCore: 'Fly to the booster', tFull: 'Full screen (F)', tEye: 'Hide interface (H)', home: 'Back to the site', err: 'WebGL is not available in this browser, so the galaxy cannot be drawn.' },
+  de: { title: 'Galaxien-Booster · BaseReal-OS', h1: 'GALAXIEN-BOOSTER', p: 'Ein Booster im Herzen einer jungen Galaxie setzt langsam Sterne frei. Er dreht sich langsam, seine Düse präzediert — und eine Spiralgalaxie wächst.', hint: 'ziehen — drehen · Rad / zwei Finger — zoomen · Rechtsziehen — verschieben · Kern — zum Booster · H — Oberfläche ausblenden', age: 'Alter der Galaxie', rel: 'freigesetzte Sterne', myr: 'Mio. J.', gyr: 'Mrd. J.', mil: 'Millionen', bil: 'Milliarden', time: 'Zeit', spin: 'Booster-Drehung', prec: 'Präzession', s: 's', vTop: 'Oben', vEdge: 'Kante', vCore: 'Kern', tPlay: 'Pause (Leertaste)', tRestart: 'Neue Galaxie', tForm: 'Vorspulen: Galaxie wachsen lassen', tSet: 'Einstellungen', tN1: 'Düse mit einem Ausgang: ein Arm', tN2: 'Düse mit zwei Ausgängen: zwei Arme', tOrbit: 'Langsamer Kameraflug', tTop: 'Draufsicht', tEdge: 'Kantenansicht', tCore: 'Zum Booster fliegen', tFull: 'Vollbild (F)', tEye: 'Oberfläche ausblenden (H)', home: 'Zurück zur Website', err: 'In diesem Browser gibt es kein WebGL, die Galaxie kann nicht gezeichnet werden.' },
+  es: { title: 'Impulsor galáctico · BaseReal-OS', h1: 'IMPULSOR GALÁCTICO', p: 'Un impulsor en el corazón de una galaxia joven libera estrellas poco a poco. Gira despacio, su tobera precesa — y crece una galaxia espiral.', hint: 'arrastra — girar · rueda / pellizco — zoom · clic derecho — desplazar · Núcleo — volar al impulsor · H — ocultar interfaz', age: 'edad de la galaxia', rel: 'estrellas liberadas', myr: 'Ma', gyr: 'Ga', mil: 'millones', bil: 'mil millones', time: 'tiempo', spin: 'giro del impulsor', prec: 'precesión', s: 's', vTop: 'Arriba', vEdge: 'Canto', vCore: 'Núcleo', tPlay: 'Pausa (espacio)', tRestart: 'Nueva galaxia', tForm: 'Avanzar: hacer crecer la galaxia', tSet: 'Ajustes', tN1: 'Tobera de una salida: un brazo', tN2: 'Tobera de dos salidas: dos brazos', tOrbit: 'Órbita lenta de la cámara', tTop: 'Vista cenital', tEdge: 'Vista de canto', tCore: 'Volar al impulsor', tFull: 'Pantalla completa (F)', tEye: 'Ocultar interfaz (H)', home: 'Volver al sitio', err: 'Este navegador no tiene WebGL; no se puede dibujar la galaxia.' },
+  ro: { title: 'Booster galactic · BaseReal-OS', h1: 'BOOSTER GALACTIC', p: 'Un booster din inima unei galaxii tinere eliberează încet stele. Se rotește lent, duza lui precesează — și crește o galaxie spirală.', hint: 'trage — rotește · rotiță / ciupire — zoom · clic dreapta — deplasare · Nucleu — zbor la booster · H — ascunde interfața', age: 'vârsta galaxiei', rel: 'stele eliberate', myr: 'mil. ani', gyr: 'mld. ani', mil: 'milioane', bil: 'miliarde', time: 'timp', spin: 'rotația boosterului', prec: 'precesie', s: 's', vTop: 'Sus', vEdge: 'Profil', vCore: 'Nucleu', tPlay: 'Pauză (spațiu)', tRestart: 'Galaxie nouă', tForm: 'Înainte: crește galaxia', tSet: 'Setări', tN1: 'Duză cu o ieșire: un braț', tN2: 'Duză cu două ieșiri: două brațe', tOrbit: 'Orbită lentă a camerei', tTop: 'Vedere de sus', tEdge: 'Vedere din profil', tCore: 'Zbor la booster', tFull: 'Ecran complet (F)', tEye: 'Ascunde interfața (H)', home: 'Înapoi la site', err: 'Acest browser nu are WebGL, galaxia nu poate fi desenată.' },
+  uk: { title: 'Галактичний бустер · BaseReal-OS', h1: 'ГАЛАКТИЧНИЙ БУСТЕР', p: 'Бустер у серці молодої галактики повільно випускає зорі. Він неквапливо обертається, його сопло прецесує — і виростає спіральна галактика.', hint: 'тягни — обертати · коліщатко / щипок — масштаб · права кнопка — зсув · Ядро — до бустера · H — сховати інтерфейс', age: 'вік галактики', rel: 'випущено зір', myr: 'млн років', gyr: 'млрд років', mil: 'млн', bil: 'млрд', time: 'час', spin: 'обертання бустера', prec: 'прецесія', s: 'с', vTop: 'Згори', vEdge: 'З ребра', vCore: 'Ядро', tPlay: 'Пауза (пробіл)', tRestart: 'Нова галактика', tForm: 'Вперед: дорастити галактику', tSet: 'Налаштування', tN1: 'Сопло з одним виходом: один рукав', tN2: 'Сопло з двома виходами: два рукави', tOrbit: 'Повільний обліт камерою', tTop: 'Вигляд згори', tEdge: 'Вигляд з ребра', tCore: 'Підлетіти до бустера', tFull: 'На весь екран (F)', tEye: 'Сховати інтерфейс (H)', home: 'Назад на сайт', err: 'У цьому браузері немає WebGL — галактику не намалювати.' },
+  ru: { title: 'Галактический бустер · BaseReal-OS', h1: 'ГАЛАКТИЧЕСКИЙ БУСТЕР', p: 'Бустер в сердце молодой галактики медленно выпускает звёзды. Он неторопливо вращается, его сопло прецессирует — и вырастает спиральная галактика.', hint: 'тяни — вращать · колесо / щипок — масштаб · правая кнопка — сдвиг · Ядро — к бустеру · H — скрыть интерфейс', age: 'возраст галактики', rel: 'выпущено звёзд', myr: 'млн лет', gyr: 'млрд лет', mil: 'млн', bil: 'млрд', time: 'время', spin: 'вращение бустера', prec: 'прецессия', s: 'с', vTop: 'Сверху', vEdge: 'С ребра', vCore: 'Ядро', tPlay: 'Пауза (пробел)', tRestart: 'Новая галактика', tForm: 'Вперёд: дорастить галактику', tSet: 'Настройки', tN1: 'Сопло с одним выходом: один рукав', tN2: 'Сопло с двумя выходами: два рукава', tOrbit: 'Медленный облёт камерой', tTop: 'Вид сверху', tEdge: 'Вид с ребра', tCore: 'Подлететь к бустеру', tFull: 'Во весь экран (F)', tEye: 'Скрыть интерфейс (H)', home: 'Назад на сайт', err: 'В этом браузере нет WebGL — галактику не нарисовать.' }
+};
+let LANG = 'en', statT = 1;
+function D() { return I18N[LANG] || I18N.en; }
+function applyLang(l) {
+  LANG = I18N[l] ? l : 'en'; const d = D();
+  document.documentElement.lang = LANG; document.title = d.title;
+  document.querySelectorAll('[data-i]').forEach(el => { const v = d[el.dataset.i]; if (v != null) el.textContent = v; });
+  document.querySelectorAll('[data-t]').forEach(el => { const v = d[el.dataset.t]; if (v != null) { el.title = v; el.setAttribute('aria-label', v); } });
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+  $('vSpin').textContent = $('iSpin').value + ' ' + d.s;
+  try { localStorage.setItem('gbLang', LANG); } catch (e) { }
+  statT = 1; // the numbers are written again in the new language
+}
+$('langs').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const box = $('langs'), phone = matchMedia('(max-width:720px),(max-height:500px)').matches;
+  if (phone && !box.classList.contains('open')) { box.classList.add('open'); return; }
+  box.classList.remove('open'); applyLang(b.dataset.lang);
+};
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#langs')) $('langs').classList.remove('open'); });
 
 // smooth camera flights
 let fly = null;
@@ -385,8 +472,7 @@ $('bCore').onclick = () => flyTo(new THREE.Vector3(0, 1.7, 4.6));
 // ------------------------------------------------------------------ frame
 const clock = new THREE.Clock();
 const up = new THREE.Vector3(0, 1, 0), dir = new THREE.Vector3();
-function fmtStars(x) { return x >= 1e9 ? (x / 1e9).toFixed(1) + ' billion' : x >= 1e6 ? Math.round(x / 1e6) + ' million' : '0'; }
-let statT = 0;
+function fmtStars(x) { const d = D(); return x >= 1e9 ? (x / 1e9).toLocaleString(LANG, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' ' + d.bil : x >= 1e6 ? Math.round(x / 1e6) + ' ' + d.mil : '0'; }
 function frame() {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (!paused) {
@@ -429,7 +515,7 @@ function frame() {
   if (statT > 0.25) {
     statT = 0;
     const age = t * MYR_PER_S;
-    $('sAge').textContent = age < 1000 ? Math.round(age) + ' Myr' : (age / 1000).toFixed(2) + ' Gyr';
+    $('sAge').textContent = age < 1000 ? Math.round(age) + ' ' + D().myr : (age / 1000).toLocaleString(LANG, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + D().gyr;
     $('sStars').textContent = fmtStars((N_ARM + N_DISK) * (t / LIFE) * STARS_PER_PARTICLE);
   }
   requestAnimationFrame(frame);
@@ -441,12 +527,13 @@ function resize() {
 }
 addEventListener('resize', resize);
 
-// link options, for sharing a view and for figures: #t=130&view=top&ui=0&orbit=0
+// link options, for sharing a view and for figures: #t=130&view=top&ui=0&orbit=0&lang=ru
 const opt = Object.fromEntries(new URLSearchParams(location.hash.slice(1)));
+{ let l = opt.lang; if (!l) { try { l = localStorage.getItem('gbLang'); } catch (e) { } } if (!l) { const nl = (navigator.language || 'en').slice(0, 2).toLowerCase(); l = I18N[nl] ? nl : 'en'; } applyLang(l); }
 if (opt.t) { t = +opt.t || 0; phase = (OMN * t) % TAU; psi = (OMP * t) % TAU; }
 const views = { top: [0.01, 270, 0.01], edge: [0, 6, 260], core: [0, 1.7, 4.6], wide: [0, 105, 200] };
 if (views[opt.view]) { userCam = true; camera.position.set(...views[opt.view]); }
-if (opt.ui === '0') { document.querySelectorAll('.ui,#eye').forEach(e => e.style.display = 'none'); }
+if (opt.ui === '0') { document.querySelectorAll('.ui,#corner').forEach(e => e.style.display = 'none'); }
 if (opt.orbit === '0') { controls.autoRotate = false; tog('bOrbit', false); }
 if (opt.noz === '1') $('bN1').onclick();
 requestAnimationFrame(frame);

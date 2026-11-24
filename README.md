@@ -24,8 +24,8 @@ All demos are single HTML files: open them online or download and double-click.
 |---|---|
 | **[Genesis](https://vitalydecoder.github.io/BaseReal-OS/demo/genesis.html)** | The main sandbox. Build stars, binary stars, planets, moons and moons of moons from R and T; real periods, seasons, axial tilt, Hill spheres. Two modes: *Genesis* (guided) and *Limitless* (no limits, no undo: bodies leave orbit, bounce, collide). Six languages. |
 | **[Kepler 3/2 tool](https://vitalydecoder.github.io/BaseReal-OS/demo/kepler-3-2-tool.html)** | Kepler's third law as geometry: arcs of radius n·R and length 2π/n^{3/2} show how far a body travels in one period T at each distance. |
-| **[Bernoulli in LT cells](https://vitalydecoder.github.io/BaseReal-OS/demo/bernoulli-lt.html)** | An ideal fluid in a pipe written with R and T only: continuity, the LT clock T ∝ R³ and the constant head ½v² + p/ρ. |
-| **[Galaxy Booster](https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy-booster.html)** | 3D. One booster at the heart of a young galaxy slowly releases stars; it turns slowly and its nozzle precesses, and a spiral galaxy with star clusters, nebulae and dust lanes grows from nothing. Rotate, zoom, fly into the core. |
+| **[Bernoulli in LT cells](https://vitalydecoder.github.io/BaseReal-OS/demo/bernoulli-lt.html)** | An ideal fluid in a pipe written with R and T only: continuity, the LT clock T ∝ R³ and the constant head ½v² + p/ρ. Where the pipe narrows, the word *pressure* shrinks with the pressure. Six languages. |
+| **[Galaxy Booster](https://vitalydecoder.github.io/BaseReal-OS/demo/galaxy-booster.html)** | 3D. One booster at the heart of a young galaxy slowly releases stars; it turns slowly and its nozzle precesses, and a spiral galaxy with star clusters, nebulae and dust lanes grows from nothing. Rotate, zoom, fly into the core. Six languages, phone-friendly. |
 
 ## Papers
 

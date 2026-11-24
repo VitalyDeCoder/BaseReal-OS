@@ -2,16 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>3/2 · Planet Builder's Tool</title>
 <style>
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
   #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
   canvas { display: block; }
+  /* the amber arrow of Genesis: back to the site */
+  #btnHome { position: fixed; z-index: 5; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right)); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #ffe0a8; background: rgba(60,34,6,.55); border: 1px solid rgba(255,184,77,.7); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background .2s, box-shadow .2s, transform .12s; -webkit-tap-highlight-color: transparent; }
+  #btnHome:hover { background: rgba(120,70,10,.6); border-color: #ffb84d; box-shadow: 0 0 22px rgba(255,184,77,.45); }
+  #btnHome:active { transform: scale(.94); }
+  #btnHome:focus-visible { outline: 2px solid #ffb84d; outline-offset: 2px; }
 </style>
 </head>
 <body>
 <div id="stage"><canvas id="c"></canvas></div>
+<button id="btnHome" aria-label="Back to the site" title="Back to the site"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2.5M7 3.2 2.2 8 7 12.8"/></svg></button>
+<script>
+// back to the page of the site the visitor came from (the site page comes back as it was left)
+document.getElementById('btnHome').addEventListener('click', function () {
+  var ref = null; try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { }
+  if (ref && /^https?:$/.test(ref.protocol) && ref.href.split('#')[0] !== location.href.split('#')[0]) { if (history.length > 1) history.back(); else location.href = ref.href; return; }
+  location.href = 'https://basereal-os.dev/';
+});
+</script>
 <script>
 function renderMilkyWay(w, h) {
   'use strict';

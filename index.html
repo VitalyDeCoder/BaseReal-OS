@@ -119,6 +119,14 @@ h3{font-weight:400;font-size:clamp(20px,2.4vw,24px);letter-spacing:.02em}
 .paper span{grid-column:1;font-size:14.5px;color:var(--mut)}
 .paper code{grid-row:1/3;grid-column:2;font:400 12px var(--mono);color:var(--cyan2);white-space:nowrap}
 .paper code::after{content:'  ↗';color:var(--dim)}
+/* demos: a row with a small Play button */
+.demo{display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:center;padding:18px 4px;border-bottom:1px solid var(--line);transition:background .25s,padding .25s}
+.demo:hover{background:rgba(98,216,255,.04);padding-left:14px}
+.demo b{display:block;font-weight:400;font-size:18px;margin-bottom:3px}
+.demo .ds{font-size:14.5px;color:var(--mut)}
+.btn.sm{padding:9px 18px;font-size:11.5px;gap:8px;letter-spacing:.14em}
+.btn.sm svg{width:9px;height:10px}
+.btn.sm:hover{gap:11px}
 
 footer{margin-top:clamp(70px,11vh,120px);border-top:1px solid var(--line);padding:30px 0 max(34px,env(safe-area-inset-bottom));font:400 11.5px var(--mono);letter-spacing:.14em;color:var(--dim)}
 footer .wrap{display:flex;flex-wrap:wrap;gap:10px 26px;justify-content:space-between}
@@ -141,6 +149,7 @@ footer b{font-weight:400;color:var(--mut)}
   .stage{grid-template-columns:1fr;padding:22px 20px}.stage::before{left:-31px;top:28px}
   .num{grid-row:auto;font-size:34px}.stage .btn{grid-column:1}
   .paper{grid-template-columns:1fr}.paper code{grid-row:auto;grid-column:1;margin-top:4px}
+  .demo{grid-template-columns:1fr}.demo .btn{justify-self:start}
   .btn{padding:13px 22px}
 }
 </style>
@@ -221,12 +230,12 @@ footer b{font-weight:400;color:var(--mut)}
     </section>
 
     <section id="demos">
-      <div class="sh rv"><span class="n">03</span><h2 data-i="d_h">Demos</h2><p data-i="d_p">Everything runs in the browser. No install.</p></div>
-      <div class="papers rv">
-        <a class="paper" href="demo/genesis.html"><b data-i="d1_t">Genesis</b><span data-i="d1_d">The sandbox: build stars, planets and moons from R and T, and watch real orbits, days and seasons.</span><code>demo/genesis.html</code></a>
-        <a class="paper" href="demo/galaxy-booster.html"><b data-i="d2_t">Galaxy Booster</b><span data-i="d2_d">3D. One booster slowly releases stars, turns and precesses — and a spiral galaxy grows. Fly into its core.</span><code>demo/galaxy-booster.html</code></a>
-        <a class="paper" href="demo/kepler-3-2-tool.html"><b data-i="d3_t">The 3/2 tool</b><span data-i="d3_d">Kepler's third law drawn as arcs: how far a body travels in one period at every distance.</span><code>demo/kepler-3-2-tool.html</code></a>
-        <a class="paper" href="demo/bernoulli-lt.html"><b data-i="d4_t">Bernoulli in length and time</b><span data-i="d4_d">A fluid in a pipe described with R and T only: squeeze the pipe, watch speed and pressure trade places.</span><code>demo/bernoulli-lt.html</code></a>
+      <div class="sh rv"><span class="n">03</span><h2 data-i="d_h">Formulas you can see</h2><p data-i="d_p">Move a slider — the letters of a formula and the world itself grow and shrink. Understanding without numbers, right in the browser.</p></div>
+      <div class="papers rv" id="demoList">
+        <div class="demo"><div><b data-i="d3_t">The 3/2 tool</b><span class="ds" data-i="d3_d">Kepler's third law drawn as arcs: how far a body travels in one period at every distance.</span></div><a class="btn play sm" href="demo/kepler-3-2-tool.html"><svg viewBox="0 0 11 12" fill="currentColor"><path d="M0 0l11 6-11 6z"/></svg><span data-i="play">Play</span></a></div>
+        <!-- site-only demos: tools/build_site.ps1 puts Winter · Summer and Radius · Time here when their files lie in the site folder -->
+        <div class="demo"><div><b data-i="d2_t">Galaxy Booster</b><span class="ds" data-i="d2_d">3D. One booster slowly releases stars, turns and precesses — and a spiral galaxy grows. Fly into its core.</span></div><a class="btn play sm" href="demo/galaxy-booster.html"><svg viewBox="0 0 11 12" fill="currentColor"><path d="M0 0l11 6-11 6z"/></svg><span data-i="play">Play</span></a></div>
+        <div class="demo"><div><b data-i="d4_t">Bernoulli in length and time</b><span class="ds" data-i="d4_d">A fluid in a pipe in R and T only: squeeze the pipe — the flow speeds up and the word “pressure” shrinks.</span></div><a class="btn play sm" href="demo/bernoulli-lt.html"><svg viewBox="0 0 11 12" fill="currentColor"><path d="M0 0l11 6-11 6z"/></svg><span data-i="play">Play</span></a></div>
       </div>
     </section>
 
@@ -281,11 +290,10 @@ en: {
   p2_t: 'General Architecture of BaseReal-OS', p2_d: 'The hybrid four-layer computational model.',
   p3_t: 'Adaptive Perception and Lazy Rendering', p3_d: 'Relative-change thresholds for attention-driven, resource-efficient rendering.',
   p4_t: 'Galaxy Booster v2', p4_d: 'Growing a spiral galaxy from one rotating, precessing source: a game mechanic adapted from observations.',
-  nav4: 'Demos', d_h: 'Demos', d_p: 'Everything runs in the browser. No install.',
-  d1_t: 'Genesis', d1_d: 'The sandbox: build stars, planets and moons from R and T, and watch real orbits, days and seasons.',
+  nav4: 'Demos', d_h: 'Formulas you can see', d_p: 'Move a slider — the letters of a formula and the world itself grow and shrink. Understanding without numbers, right in the browser.',
   d2_t: 'Galaxy Booster', d2_d: '3D. One booster slowly releases stars, turns and precesses — and a spiral galaxy grows. Fly into its core.',
   d3_t: 'The 3/2 tool', d3_d: 'Kepler\'s third law drawn as arcs: how far a body travels in one period at every distance.',
-  d4_t: 'Bernoulli in length and time', d4_d: 'A fluid in a pipe described with R and T only: squeeze the pipe, watch speed and pressure trade places.'
+  d4_t: 'Bernoulli in length and time', d4_d: 'A fluid in a pipe in R and T only: squeeze the pipe — the flow speeds up and the word “pressure” shrinks.'
 },
 ru: {
   nav1: 'План', nav2: 'Основа', nav3: 'Статьи',
@@ -317,11 +325,10 @@ ru: {
   p2_t: 'Общая архитектура BaseReal-OS', p2_d: 'Гибридная четырёхслойная вычислительная модель.',
   p3_t: 'Адаптивное восприятие и ленивый рендеринг', p3_d: 'Пороги относительного изменения для рендеринга, управляемого вниманием.',
   p4_t: 'Галактический бустер v2', p4_d: 'Спиральная галактика из одного вращающегося источника с прецессией: игровая механика по мотивам наблюдений.',
-  nav4: 'Демо', d_h: 'Демо', d_p: 'Всё работает в браузере. Ничего не нужно устанавливать.',
-  d1_t: 'Genesis', d1_d: 'Песочница: звёзды, планеты и луны из R и T — настоящие орбиты, сутки и времена года.',
+  nav4: 'Демо', d_h: 'Формулы, которые видно', d_p: 'Двигаешь ползунок — растут и сжимаются буквы формулы и сам мир. Понимание без цифр, прямо в браузере.',
   d2_t: 'Галактический бустер', d2_d: '3D. Один бустер медленно выпускает звёзды, вращается и прецессирует — и вырастает спиральная галактика. Можно влететь в ядро.',
   d3_t: 'Инструмент 3/2', d3_d: 'Третий закон Кеплера дугами: сколько тело проходит за один период на каждом расстоянии.',
-  d4_t: 'Бернулли в длине и времени', d4_d: 'Жидкость в трубе только через R и T: сожми трубу — скорость и давление меняются местами.'
+  d4_t: 'Бернулли в длине и времени', d4_d: 'Жидкость в трубе только через R и T: сожми трубу — поток ускоряется, а слово «давление» сжимается.'
 }};
 const TITLE = { en: 'BaseReal-OS — a universe built from two numbers', ru: 'BaseReal-OS — вселенная из двух чисел' };
 let LANG = 'en';

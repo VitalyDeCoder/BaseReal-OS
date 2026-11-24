@@ -10,6 +10,33 @@
 body{margin:0;background:radial-gradient(ellipse at 30% 0%,#12284a 0%,#0a1428 45%,#060b16 100%) fixed;color:var(--fg);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;min-height:100vh}
 main{max-width:980px;margin:0 auto;padding:18px max(14px,env(safe-area-inset-right)) 28px max(14px,env(safe-area-inset-left))}
 .k{font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--am)}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#tools{display:flex;gap:8px;align-items:flex-start;flex:none}
+.rb{flex:none;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--fg);background:rgba(10,20,36,.62);border:1px solid rgba(120,200,255,.34);transition:background .2s,box-shadow .2s,transform .12s,border-color .2s;-webkit-tap-highlight-color:transparent}
+.rb:hover{background:rgba(40,90,140,.38);border-color:var(--cy);box-shadow:0 0 18px rgba(98,216,255,.28)}
+.rb:active{transform:scale(.94)}
+.rb:focus-visible{outline:2px solid var(--cy);outline-offset:2px}
+.rb svg{display:block}
+#btnFS.on{border-color:var(--cy);color:#b4efff;box-shadow:0 0 14px rgba(98,216,255,.35)}
+#btnHome{color:#ffe0a8;background:rgba(60,34,6,.5);border-color:rgba(255,184,77,.7)}
+#btnHome:hover{background:rgba(120,70,10,.55);border-color:var(--am);box-shadow:0 0 22px rgba(255,184,77,.45)}
+#btnHome:focus-visible{outline-color:var(--am)}
+#langs{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(10,20,36,.62);border:1px solid rgba(120,200,255,.34)}
+#langs button{font:600 11.5px "Segoe UI",system-ui,sans-serif;letter-spacing:.08em;color:var(--mut);background:transparent;border:1px solid transparent;border-radius:999px;min-width:32px;height:32px;padding:0 7px;cursor:pointer;transition:color .2s,background .2s,border-color .2s}
+#langs button:hover{color:var(--fg);background:rgba(98,216,255,.1)}
+#langs button.on{color:#b4efff;background:rgba(98,216,255,.18);border-color:rgba(98,216,255,.6);box-shadow:0 0 12px rgba(98,216,255,.35)}
+:fullscreen body,:-webkit-full-screen body{overflow:auto}
+@media (max-width:640px){
+  .hd{align-items:flex-start}
+  .k{letter-spacing:.18em;font-size:10px;padding-top:4px}
+  #tools{gap:6px}
+  .rb{width:36px;height:36px}
+  #langs{position:relative;z-index:5}
+  #langs button{height:28px;min-width:34px}
+  #langs:not(.open) button:not(.on){display:none}
+  #langs.open{flex-direction:column}
+  #langs.open button{background:rgba(10,20,36,.96)}
+}
 h1{font-size:clamp(22px,4.2vw,34px);font-weight:600;margin:4px 0 4px;letter-spacing:.01em}
 p.sub{margin:0 0 12px;color:var(--mut);font-size:14px;max-width:760px}
 canvas{display:block;width:100%;border:1px solid var(--line);border-radius:14px;background:#050a14;touch-action:pan-y}
@@ -17,8 +44,8 @@ canvas{display:block;width:100%;border:1px solid var(--line);border-radius:14px;
 .ctl span{font-size:13px;color:var(--mut);white-space:nowrap}
 .ctl b{font:600 14px Consolas,monospace;color:var(--gold);min-width:44px;text-align:right}
 input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:36px;background:transparent;touch-action:none;cursor:pointer}
-input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--am),var(--cy))}
-input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--am),var(--cy))}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--cy),var(--am))}
+input[type=range]::-moz-range-track{height:5px;border-radius:3px;background:linear-gradient(90deg,var(--cy),var(--am))}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;margin-top:-10px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#9fe8ff 45%,#1b84c4);border:1px solid #b4efff;box-shadow:0 0 14px rgba(98,216,255,.8)}
 input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:#9fe8ff;border:1px solid #b4efff}
 .tw{overflow-x:auto;margin-top:8px}
@@ -37,18 +64,22 @@ p.note{font-size:12.5px;color:var(--mut);margin:14px 0 0}
 </head>
 <body>
 <main>
-<div class="k">BaseReal-OS · LT-System v2</div>
-<h1>Bernoulli's law in the LT cells</h1>
-<p class="sub">An ideal fluid in a pipe, written with two quantities only: radius R and time T. Squeeze the pipe and watch speed and pressure trade places while flow and head stay constant.</p>
+<div class="hd"><div class="k">BaseReal-OS · LT-System v2</div><div id="tools">
+<button id="btnHome" class="rb" data-t="home" aria-label="Back to the site" title="Back to the site"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2.5M7 3.2 2.2 8 7 12.8"/></svg></button>
+<div id="langs" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="de" lang="de" title="Deutsch">DE</button><button data-lang="es" lang="es" title="Español">ES</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="uk" lang="uk" title="Українська">UA</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
+<button id="btnFS" class="rb" data-t="fs" aria-label="Full screen" title="Full screen"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+</div></div>
+<h1 data-i="h1">Bernoulli's law in the LT cells</h1>
+<p class="sub" data-i="sub">An ideal fluid in a pipe, written with two quantities only: radius R and time T. Squeeze the pipe: in the narrow part the flow speeds up and the pressure drops, while flow and head stay constant.</p>
 <canvas id="c" aria-label="Pipe with a constriction, energy columns and LT clocks"></canvas>
-<div class="ctl"><span>Throat radius</span><input id="s" type="range" min="50" max="100" value="62" aria-label="Throat radius"><b id="sv">0.62</b><span>R₀</span></div>
+<div class="ctl"><span data-i="throatR">Throat radius</span><input id="s" type="range" min="50" max="100" value="62" aria-label="Throat radius"><b id="sv">0.62</b><span>R₀</span></div>
 <div class="tw"><table id="tb"></table></div>
 <div class="cards">
- <div class="card"><i>L³T⁻¹ · CONTINUITY</i><span class="f">Q = πR²·v = const</span>The same volume passes every section each second, so a narrower section must be faster: <b>v ∝ 1/R²</b>.</div>
- <div class="card"><i>T¹ · THE LT CLOCK</i><span class="f">T = 2πR / v ∝ R³</span>Each section has its own period: the time the flow needs to travel one circumference 2πR. Halve the radius and the clock turns <b>8 times faster</b>, the 3rd power of R.</div>
- <div class="card"><i>L²T⁻² · HEAD</i><span class="f">½v² + p/ρ = const</span>Kinetic term and pressure term live in one cell and add up to the same head everywhere. Where the flow is fast, the pressure is low.</div>
+ <div class="card" data-i="c1"><i>L³T⁻¹ · CONTINUITY</i><span class="f">Q = πR²·v = const</span>The same volume passes every section each second, so a narrower section must be faster: <b>v ∝ 1/R²</b>.</div>
+ <div class="card" data-i="c2"><i>T¹ · THE LT CLOCK</i><span class="f">T = 2πR / v ∝ R³</span>Each section has its own period: the time the flow needs to travel one circumference 2πR. Halve the radius and the clock turns <b>8 times faster</b>, the 3rd power of R.</div>
+ <div class="card" data-i="c3"><i>L²T⁻² · HEAD</i><span class="f">½v² + p/ρ = const</span>Kinetic term and pressure term live in one cell and add up to the same head everywhere. Where the flow is fast, the pressure is low.</div>
 </div>
-<p class="note">Ideal incompressible fluid, steady flow, no viscosity. Units: R₀ = 1, v₀ = 1 at the inlet, head E = 8.5 v₀². Density has dimension T⁻² in LT-System v2, so p/ρ has L²T⁻², the same cell as v² and the orbital M/r. This is the classical energy balance written in LT cells, not a new law.</p>
+<p class="note" data-i="note">Ideal incompressible fluid, steady flow, no viscosity. Units: R₀ = 1, v₀ = 1 at the inlet, head E = 8.5 v₀². Density has dimension T⁻² in LT-System v2, so p/ρ has L²T⁻², the same cell as v² and the orbital M/r. This is the classical energy balance written in LT cells, not a new law.</p>
 </main>
 <script>
 const cv = document.getElementById('c'), g = cv.getContext('2d'), sl = document.getElementById('s');
@@ -61,27 +92,53 @@ const K = x => .5 * v(x) * v(x), Pr = x => E0 - K(x);      // ½v² and p/ρ
 const SEC = [.07, .215, .36, .5, .64, .785, .93], phase = SEC.map(() => 0);
 const parts = Array.from({ length: 300 }, () => ({ x: Math.random(), q: Math.random() * 1.84 - .92, s: .6 + Math.random() * .8 }));
 const mix = (a, b, t) => a.map((x, i) => Math.round(x + (b[i] - x) * t));
-const hue = t => t < .5 ? mix([70, 190, 255], [255, 184, 77], t * 2) : mix([255, 184, 77], [255, 255, 255], (t - .5) * 2);
+const hue = t => t < .5 ? mix([255, 170, 70], [70, 190, 255], t * 2) : mix([70, 190, 255], [215, 245, 255], (t - .5) * 2); // high pressure orange, low pressure blue
 function size() { const w = cv.parentElement.clientWidth; D = Math.min(devicePixelRatio || 1, 2); const k = w < 560 ? .92 : .6; W = Math.round(w * D); H = Math.round(w * k * D); cv.width = W; cv.height = H; cv.style.height = (w * k) + 'px'; }
 function draw(dt) {
   const X = x => W * (.04 + .92 * x), f = Math.max(10 * D, W / 62), vmax = v(.5);
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over';
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#07101f'); bg.addColorStop(1, '#040810'); g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  // ---- energy columns: ½v² (amber) stacked on p/ρ (cyan), always reaching the same head line ----
-  const yb = H * .37, hE = H * .27, bw = Math.min(W * .05, 46 * D);
+  // ---- energy columns: ½v² (blue) stacked on p/ρ (orange: high pressure), always reaching the same head line ----
+  const yb = H * .37, hE = H * .27, bw = Math.min(W * .05, 46 * D), S0 = H * .105; // S0: the pipe's half-height at the inlet
   g.font = `600 ${f}px Consolas, monospace`; g.textBaseline = 'alphabetic';
   for (const x of SEC) {
     const hp = Pr(x) / E0 * hE, hk = K(x) / E0 * hE, cx = X(x);
-    let gr = g.createLinearGradient(0, yb - hp, 0, yb); gr.addColorStop(0, 'rgba(98,216,255,.95)'); gr.addColorStop(1, 'rgba(20,90,150,.55)');
+    let gr = g.createLinearGradient(0, yb - hp, 0, yb); gr.addColorStop(0, 'rgba(255,184,77,.95)'); gr.addColorStop(1, 'rgba(150,78,20,.55)');
     g.fillStyle = gr; g.fillRect(cx - bw / 2, yb - hp, bw, hp);
-    gr = g.createLinearGradient(0, yb - hp - hk, 0, yb - hp); gr.addColorStop(0, '#fff3c9'); gr.addColorStop(1, '#ff9d3c');
-    g.shadowColor = 'rgba(255,170,70,.9)'; g.shadowBlur = 14 * D * Math.min(1, hk / (hE * .2)); g.fillStyle = gr; g.fillRect(cx - bw / 2, yb - hp - hk, bw, hk); g.shadowBlur = 0;
+    gr = g.createLinearGradient(0, yb - hp - hk, 0, yb - hp); gr.addColorStop(0, '#e2f7ff'); gr.addColorStop(1, '#3aa8ff');
+    g.shadowColor = 'rgba(70,180,255,.9)'; g.shadowBlur = 14 * D * Math.min(1, hk / (hE * .2)); g.fillStyle = gr; g.fillRect(cx - bw / 2, yb - hp - hk, bw, hk); g.shadowBlur = 0;
     g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = D; g.strokeRect(cx - bw / 2, yb - hE, bw, hE);
-    g.strokeStyle = 'rgba(98,216,255,.25)'; g.beginPath(); g.moveTo(cx, yb); g.lineTo(cx, H * .56 - R(x) * H * .105); g.stroke();   // tap into the pipe
+    g.strokeStyle = 'rgba(255,184,77,.28)'; g.beginPath(); g.moveTo(cx, yb); g.lineTo(cx, H * .56 - R(x) * H * .105); g.stroke();   // tap into the pipe
   }
   g.setLineDash([6 * D, 6 * D]); g.strokeStyle = '#ffdf9a'; g.lineWidth = 1.5 * D; g.beginPath(); g.moveTo(X(0), yb - hE); g.lineTo(X(1), yb - hE); g.stroke(); g.setLineDash([]);
-  g.fillStyle = '#ffdf9a'; g.textAlign = 'left'; g.fillText('head  E = ½v² + p/ρ = const   (L²T⁻²)', X(0), yb - hE - f * .6);
-  g.textAlign = 'right'; g.fillStyle = '#ffb84d'; g.fillText('■ ½v²', X(1), yb - hE - f * .6); g.fillStyle = '#62d8ff'; g.fillText('■ p/ρ   ', X(1) - f * 4.2, yb - hE - f * .6);
+  // the key says in words what each part of a column is: orange — pressure, blue — speed
+  const d = L(), keyS = '■ ' + d.wSpeed + ' ½v²', keyP = '■ ' + d.wPress + ' p/ρ', wS = g.measureText(keyS).width, xP = X(1) - wS - f * 1.4, legL = xP - g.measureText(keyP).width;
+  const hT = d.cvHead, hUp = X(0) + g.measureText(hT).width > legL - f ? f * 1.3 : 0; // a long label steps up a line rather than run into the key
+  g.fillStyle = '#ffdf9a'; g.textAlign = 'left'; g.fillText(hT, X(0), yb - hE - f * .6 - hUp);
+  g.textAlign = 'right'; g.fillStyle = '#62d8ff'; g.fillText(keyS, X(1), yb - hE - f * .6); g.fillStyle = '#ffb84d'; g.fillText(keyP, xP, yb - hE - f * .6);
+  // the word "pressure" under the columns, as large as the pressure in that section: big at the inlet, small in the throat
+  {
+    const P0 = Pr(0), step = W * .92 * (SEC[1] - SEC[0]), word = d.wPress;
+    g.font = `700 ${10 * D}px "Segoe UI", system-ui, sans-serif`; const w10 = g.measureText(word).width / (10 * D);
+    let fs0 = Math.min(f * 1.6, step * .74 / w10), list = SEC;
+    if (fs0 < f * 1.05) { list = [SEC[0], .5]; fs0 = Math.min(f * 1.6, step * 2.2 / w10); } // a narrow screen: the inlet and the throat only
+    const gap = H * .56 - S0 - yb, wy = yb + gap * .52;
+    fs0 = Math.min(fs0, gap * .78); // the word fits between the columns and the pipe
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    for (const x of list) {
+      const k = Math.max(0, Pr(x)) / P0, s = fs0 * Math.max(.3, Math.pow(k, .9));
+      g.font = `700 ${s}px "Segoe UI", system-ui, sans-serif`;
+      g.shadowColor = 'rgba(255,170,60,.85)'; g.shadowBlur = 10 * D * k;
+      g.fillStyle = `rgba(255,${(160 + 40 * k) | 0},${(70 + 20 * k) | 0},${.55 + .45 * Math.min(1, k * 1.4)})`;
+      g.fillText(word, X(x), wy);
+      if (k < .85) { // the pressure has dropped here: an arrow down beside the word
+        const aw = g.measureText(word).width / 2 + s * .6, ah = Math.max(9 * D, fs0 * .55) * (1 - k * .5);
+        g.shadowBlur = 0; g.strokeStyle = 'rgba(255,184,77,.95)'; g.lineWidth = 2 * D; g.lineCap = 'round';
+        g.beginPath(); g.moveTo(X(x) + aw, wy - ah / 2); g.lineTo(X(x) + aw, wy + ah / 2); g.moveTo(X(x) + aw - ah * .3, wy + ah * .2); g.lineTo(X(x) + aw, wy + ah / 2); g.lineTo(X(x) + aw + ah * .3, wy + ah * .2); g.stroke();
+      }
+    }
+    g.shadowBlur = 0; g.textBaseline = 'alphabetic'; g.font = `600 ${f}px Consolas, monospace`;
+  }
   // ---- the pipe ----
   const cy = H * .56, S = H * .105;
   const body = new Path2D(); for (let i = 0; i <= 120; i++) { const x = i / 120; i ? body.lineTo(X(x), cy - R(x) * S) : body.moveTo(X(x), cy - R(x) * S); } for (let i = 120; i >= 0; i--) { const x = i / 120; body.lineTo(X(x), cy + R(x) * S); } body.closePath();
@@ -107,16 +164,98 @@ function draw(dt) {
     g.fillStyle = '#fff'; g.shadowColor = '#ffb84d'; g.shadowBlur = 12 * D; g.beginPath(); g.arc(cx + rr * Math.cos(phase[i]), ky + rr * Math.sin(phase[i]), 3.5 * D, 0, TAU); g.fill(); g.shadowBlur = 0;
     g.fillStyle = '#93a4bb'; g.font = `${f * .86}px Consolas, monospace`; g.fillText('T ' + (T(x) / TAU).toFixed(2), cx, ky + kS + f * 1.25);
   });
-  g.textAlign = 'left'; g.fillStyle = '#93a4bb'; g.font = `600 ${f}px Consolas, monospace`; g.fillText('LT clocks: ring R, period T = 2πR/v  (T / T₀ shown)', X(0), ky - kS - f * .7);
-  g.textAlign = 'right'; g.fillStyle = '#62d8ff'; g.fillText('flow Q = πR²v = const  (L³T⁻¹)', X(1), cy + S + f * 1.5);
+  g.textAlign = 'left'; g.fillStyle = '#93a4bb'; g.font = `600 ${f}px Consolas, monospace`; g.fillText(L().cvClocks, X(0), ky - kS - f * .7);
+  g.textAlign = 'right'; g.fillStyle = '#62d8ff'; g.fillText(L().cvFlow, X(1), cy + S + f * 1.5);
 }
 function table() {
   const row = (n, x) => `<tr><td>${n}</td><td>${R(x).toFixed(2)}</td><td>${(T(x) / TAU).toFixed(3)}</td><td>${v(x).toFixed(2)}</td><td class="inv">${(R(x) * R(x) * v(x)).toFixed(3)}</td><td>${K(x).toFixed(2)}</td><td>${Pr(x).toFixed(2)}</td><td class="inv">${(K(x) + Pr(x)).toFixed(2)}</td></tr>`;
-  document.getElementById('tb').innerHTML = '<tr><th>Section</th><th>R<small>L</small></th><th>T / T₀<small>T</small></th><th>v<small>LT⁻¹</small></th><th>Q / π<small>L³T⁻¹</small></th><th>½v²<small>L²T⁻²</small></th><th>p/ρ<small>L²T⁻²</small></th><th>head E<small>L²T⁻²</small></th></tr>' + row('inlet', 0) + row('throat', .5);
+  const d = L(); document.getElementById('tb').innerHTML = '<tr><th>' + d.thSec + '</th><th>R<small>L</small></th><th>T / T₀<small>T</small></th><th>v<small>LT⁻¹</small></th><th>Q / π<small>L³T⁻¹</small></th><th>½v²<small>L²T⁻²</small></th><th>p/ρ<small>L²T⁻²</small></th><th>' + d.thHead + '<small>L²T⁻²</small></th></tr>' + row(d.inlet, 0) + row(d.throat, .5);
 }
+/* the amber arrow of Genesis: back to the page of the site the visitor came from */
+function goHome() {
+  let ref = null; try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { }
+  if (ref && /^https?:$/.test(ref.protocol) && ref.href.split('#')[0] !== location.href.split('#')[0]) {
+    if (history.length > 1) { history.back(); return; } // the site page comes back as it was left
+    location.href = ref.href; return;
+  }
+  location.href = 'https://basereal-os.dev/';
+}
+document.getElementById('btnHome').addEventListener('click', goHome);
 function loop(now) { const dt = Math.min(.05, (now - last) / 1000 || 0); last = now; draw(dt); requestAnimationFrame(loop); }
 sl.oninput = () => { r1 = sl.value / 100; document.getElementById('sv').textContent = r1.toFixed(2); table(); };
-addEventListener('resize', size); size(); table(); requestAnimationFrame(loop);
+/* full screen: hidden where the browser cannot do it (Safari on the iPhone) */
+const fsOK = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled), fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const btnFS = document.getElementById('btnFS');
+if (!fsOK) btnFS.style.display = 'none';
+function toggleFS() {
+  const d = document, el = d.documentElement;
+  try { if (!fsEl()) { const p = (el.requestFullscreen || el.webkitRequestFullscreen).call(el); if (p && p.catch) p.catch(() => { }); } else (d.exitFullscreen || d.webkitExitFullscreen).call(d); } catch (e) { }
+}
+btnFS.addEventListener('click', toggleFS);
+for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => { btnFS.classList.toggle('on', !!fsEl()); size(); });
+addEventListener('keydown', e => { if (e.target.tagName !== 'INPUT' && fsOK && /^[fFаА]$/.test(e.key)) toggleFS(); });
+
+/* languages: EN · DE · ES · RO · UA · RU */
+const I18N = {
+  en: { wPress: 'pressure', wSpeed: 'speed', title: "Bernoulli's law in the LT system", h1: "Bernoulli's law in the LT cells", sub: 'An ideal fluid in a pipe, written with two quantities only: radius R and time T. Squeeze the pipe: in the narrow part the flow speeds up and the pressure drops, while flow and head stay constant.', throatR: 'Throat radius', aria: 'Pipe with a constriction, energy columns and LT clocks',
+    c1: '<i>L³T⁻¹ · CONTINUITY</i><span class="f">Q = πR²·v = const</span>The same volume passes every section each second, so a narrower section must be faster: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · THE LT CLOCK</i><span class="f">T = 2πR / v ∝ R³</span>Each section has its own period: the time the flow needs to travel one circumference 2πR. Halve the radius and the clock turns <b>8 times faster</b>, the 3rd power of R.',
+    c3: '<i>L²T⁻² · HEAD</i><span class="f">½v² + p/ρ = const</span>Kinetic term and pressure term live in one cell and add up to the same head everywhere. Where the flow is fast, the pressure is low.',
+    note: 'Ideal incompressible fluid, steady flow, no viscosity. Units: R₀ = 1, v₀ = 1 at the inlet, head E = 8.5 v₀². Density has dimension T⁻² in LT-System v2, so p/ρ has L²T⁻², the same cell as v² and the orbital M/r. This is the classical energy balance written in LT cells, not a new law.',
+    cvHead: 'head  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'LT clocks: ring R, period T = 2πR/v  (T / T₀ shown)', cvFlow: 'flow Q = πR²v = const  (L³T⁻¹)', thSec: 'Section', thHead: 'head E', inlet: 'inlet', throat: 'throat', home: 'Back to the site', fs: 'Full screen (F)' },
+  de: { wPress: 'Druck', wSpeed: 'Geschwindigkeit', title: 'Bernoulli-Gesetz im LT-System', h1: 'Das Bernoulli-Gesetz in LT-Zellen', sub: 'Eine ideale Flüssigkeit im Rohr, beschrieben mit nur zwei Größen: Radius R und Zeit T. Verenge das Rohr: An der engen Stelle wird die Strömung schneller und der Druck fällt, während Durchfluss und Energiehöhe gleich bleiben.', throatR: 'Radius der Engstelle', aria: 'Rohr mit Engstelle, Energiesäulen und LT-Uhren',
+    c1: '<i>L³T⁻¹ · KONTINUITÄT</i><span class="f">Q = πR²·v = const</span>Durch jeden Querschnitt fließt pro Sekunde dasselbe Volumen, also muss die Strömung an einer engen Stelle schneller sein: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · DIE LT-UHR</i><span class="f">T = 2πR / v ∝ R³</span>Jeder Querschnitt hat seine eigene Periode: die Zeit, in der die Strömung einen Umfang 2πR zurücklegt. Halbiere den Radius, und die Uhr läuft <b>8-mal schneller</b> — die dritte Potenz von R.',
+    c3: '<i>L²T⁻² · ENERGIEHÖHE</i><span class="f">½v² + p/ρ = const</span>Bewegungsanteil und Druckanteil liegen in einer Zelle und ergeben überall dieselbe Energiehöhe. Wo die Strömung schnell ist, ist der Druck niedrig.',
+    note: 'Ideale inkompressible Flüssigkeit, stationäre Strömung, keine Viskosität. Einheiten: R₀ = 1, v₀ = 1 am Einlass, Energiehöhe E = 8,5 v₀². Im LT-System v2 hat die Dichte die Dimension T⁻², also hat p/ρ L²T⁻² — dieselbe Zelle wie v² und das orbitale M/r. Das ist die klassische Energiebilanz in LT-Zellen, kein neues Gesetz.',
+    cvHead: 'Energiehöhe  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'LT-Uhren: Ring R, Periode T = 2πR/v  (gezeigt: T / T₀)', cvFlow: 'Durchfluss Q = πR²v = const  (L³T⁻¹)', thSec: 'Querschnitt', thHead: 'Energiehöhe E', inlet: 'Einlass', throat: 'Engstelle', home: 'Zurück zur Website', fs: 'Vollbild (F)' },
+  es: { wPress: 'presión', wSpeed: 'velocidad', title: 'La ley de Bernoulli en el sistema LT', h1: 'La ley de Bernoulli en celdas LT', sub: 'Un fluido ideal en una tubería, escrito con solo dos magnitudes: el radio R y el tiempo T. Estrecha la tubería: en la parte estrecha el flujo se acelera y la presión baja, mientras el caudal y la carga se mantienen.', throatR: 'Radio de la garganta', aria: 'Tubería con un estrechamiento, columnas de energía y relojes LT',
+    c1: '<i>L³T⁻¹ · CONTINUIDAD</i><span class="f">Q = πR²·v = const</span>Por cada sección pasa el mismo volumen cada segundo, así que en una sección estrecha el flujo es más rápido: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · EL RELOJ LT</i><span class="f">T = 2πR / v ∝ R³</span>Cada sección tiene su propio periodo: el tiempo que el flujo tarda en recorrer una circunferencia 2πR. Reduce el radio a la mitad y el reloj gira <b>8 veces más rápido</b>: la tercera potencia de R.',
+    c3: '<i>L²T⁻² · CARGA</i><span class="f">½v² + p/ρ = const</span>El término cinético y el de presión viven en una misma celda y suman la misma carga en todas partes. Donde el flujo es rápido, la presión es baja.',
+    note: 'Fluido ideal incompresible, flujo estacionario, sin viscosidad. Unidades: R₀ = 1, v₀ = 1 en la entrada, carga E = 8,5 v₀². En el sistema LT v2 la densidad tiene dimensión T⁻², así que p/ρ tiene L²T⁻², la misma celda que v² y que el M/r orbital. Es el balance clásico de energía escrito en celdas LT, no una ley nueva.',
+    cvHead: 'carga  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'Relojes LT: anillo R, periodo T = 2πR/v  (se muestra T / T₀)', cvFlow: 'caudal Q = πR²v = const  (L³T⁻¹)', thSec: 'Sección', thHead: 'carga E', inlet: 'entrada', throat: 'garganta', home: 'Volver al sitio', fs: 'Pantalla completa (F)' },
+  ro: { wPress: 'presiune', wSpeed: 'viteză', title: 'Legea lui Bernoulli în sistemul LT', h1: 'Legea lui Bernoulli în celulele LT', sub: 'Un fluid ideal într-o țeavă, scris cu doar două mărimi: raza R și timpul T. Strânge țeava: în partea îngustă curgerea se accelerează și presiunea scade, în timp ce debitul și sarcina rămân aceleași.', throatR: 'Raza gâtuirii', aria: 'Țeavă cu o gâtuire, coloane de energie și ceasuri LT',
+    c1: '<i>L³T⁻¹ · CONTINUITATE</i><span class="f">Q = πR²·v = const</span>Prin fiecare secțiune trece același volum în fiecare secundă, așa că într-o secțiune îngustă curgerea e mai rapidă: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · CEASUL LT</i><span class="f">T = 2πR / v ∝ R³</span>Fiecare secțiune are propria perioadă: timpul în care curgerea parcurge o circumferință 2πR. Înjumătățește raza și ceasul se rotește <b>de 8 ori mai repede</b> — puterea a treia a lui R.',
+    c3: '<i>L²T⁻² · SARCINĂ</i><span class="f">½v² + p/ρ = const</span>Termenul cinetic și cel de presiune stau în aceeași celulă și dau peste tot aceeași sarcină. Unde curgerea e rapidă, presiunea e mică.',
+    note: 'Fluid ideal incompresibil, curgere staționară, fără vâscozitate. Unități: R₀ = 1, v₀ = 1 la intrare, sarcina E = 8,5 v₀². În sistemul LT v2 densitatea are dimensiunea T⁻², deci p/ρ are L²T⁻², aceeași celulă ca v² și M/r orbital. Este bilanțul clasic al energiei scris în celule LT, nu o lege nouă.',
+    cvHead: 'sarcină  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'Ceasuri LT: inel R, perioadă T = 2πR/v  (se arată T / T₀)', cvFlow: 'debit Q = πR²v = const  (L³T⁻¹)', thSec: 'Secțiune', thHead: 'sarcină E', inlet: 'intrare', throat: 'gâtuire', home: 'Înapoi la site', fs: 'Ecran complet (F)' },
+  uk: { wPress: 'тиск', wSpeed: 'швидкість', title: 'Закон Бернуллі в LT-системі', h1: 'Закон Бернуллі в комірках LT', sub: 'Ідеальна рідина в трубі, записана лише двома величинами: радіусом R і часом T. Стисни трубу: у вузькому місці потік прискорюється, а тиск падає, при цьому витрата й напір лишаються незмінними.', throatR: 'Радіус горла', aria: 'Труба зі звуженням, стовпчики енергії та годинники LT',
+    c1: '<i>L³T⁻¹ · НЕРОЗРИВНІСТЬ</i><span class="f">Q = πR²·v = const</span>Крізь кожен переріз за секунду проходить той самий об’єм, тож у вузькому місці потік швидший: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · ГОДИННИК LT</i><span class="f">T = 2πR / v ∝ R³</span>Кожен переріз має свій період — час, за який потік проходить одне коло 2πR. Зменш радіус удвічі — і годинник піде <b>у 8 разів швидше</b>: третій степінь R.',
+    c3: '<i>L²T⁻² · НАПІР</i><span class="f">½v² + p/ρ = const</span>Кінетична частина і тиск живуть в одній комірці й усюди складаються в той самий напір. Де потік швидкий, там тиск низький.',
+    note: 'Ідеальна нестислива рідина, усталена течія, без в’язкості. Одиниці: R₀ = 1, v₀ = 1 на вході, напір E = 8,5 v₀². У LT-системі v2 густина має розмірність T⁻², тому p/ρ — це L²T⁻², та сама комірка, що v² і орбітальне M/r. Це класичний баланс енергії, записаний у комірках LT, а не новий закон.',
+    cvHead: 'напір  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'Годинники LT: кільце R, період T = 2πR/v  (показано T / T₀)', cvFlow: 'витрата Q = πR²v = const  (L³T⁻¹)', thSec: 'Переріз', thHead: 'напір E', inlet: 'вхід', throat: 'горло', home: 'Назад на сайт', fs: 'На весь екран (F)' },
+  ru: { wPress: 'давление', wSpeed: 'скорость', title: 'Закон Бернулли в LT-системе', h1: 'Закон Бернулли в ячейках LT', sub: 'Идеальная жидкость в трубе, записанная всего двумя величинами: радиусом R и временем T. Сожми трубу: в узком месте поток ускоряется, а давление падает, при этом расход и напор остаются прежними.', throatR: 'Радиус горла', aria: 'Труба с сужением, столбики энергии и часы LT',
+    c1: '<i>L³T⁻¹ · НЕРАЗРЫВНОСТЬ</i><span class="f">Q = πR²·v = const</span>Через каждое сечение за секунду проходит один и тот же объём, поэтому в узком месте поток быстрее: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · ЧАСЫ LT</i><span class="f">T = 2πR / v ∝ R³</span>У каждого сечения свой период — время, за которое поток проходит одну окружность 2πR. Уменьши радиус вдвое — и часы пойдут <b>в 8 раз быстрее</b>: третья степень R.',
+    c3: '<i>L²T⁻² · НАПОР</i><span class="f">½v² + p/ρ = const</span>Кинетическая часть и давление живут в одной ячейке и везде складываются в один и тот же напор. Где поток быстрый, там давление низкое.',
+    note: 'Идеальная несжимаемая жидкость, установившееся течение, без вязкости. Единицы: R₀ = 1, v₀ = 1 на входе, напор E = 8,5 v₀². В LT-системе v2 плотность имеет размерность T⁻², поэтому p/ρ — это L²T⁻², та же ячейка, что v² и орбитальное M/r. Это классический баланс энергии, записанный в ячейках LT, а не новый закон.',
+    cvHead: 'напор  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'Часы LT: кольцо R, период T = 2πR/v  (показано T / T₀)', cvFlow: 'расход Q = πR²v = const  (L³T⁻¹)', thSec: 'Сечение', thHead: 'напор E', inlet: 'вход', throat: 'горло', home: 'Назад на сайт', fs: 'Во весь экран (F)' }
+};
+let LANG = 'en';
+function L() { return I18N[LANG] || I18N.en; }
+function applyLang(l) {
+  LANG = I18N[l] ? l : 'en'; const d = L();
+  document.documentElement.lang = LANG; document.title = d.title;
+  document.querySelectorAll('[data-i]').forEach(el => { const v = d[el.dataset.i]; if (v != null) el.innerHTML = v; });
+  document.querySelectorAll('[data-t]').forEach(el => { const v = d[el.dataset.t]; if (v != null) { el.title = v; el.setAttribute('aria-label', v); } });
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+  cv.setAttribute('aria-label', d.aria); sl.setAttribute('aria-label', d.throatR);
+  try { localStorage.setItem('brLang', LANG); } catch (e) { }
+  table();
+}
+document.getElementById('langs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const box = document.getElementById('langs');
+  if (innerWidth <= 640 && !box.classList.contains('open')) { box.classList.add('open'); return; }
+  box.classList.remove('open'); applyLang(b.dataset.lang);
+});
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#langs')) document.getElementById('langs').classList.remove('open'); });
+{ let l = new URLSearchParams(location.hash.slice(1)).get('lang'); if (!l) { try { l = localStorage.getItem('brLang'); } catch (e) { } } if (!l) { const nl = (navigator.language || 'en').slice(0, 2).toLowerCase(); l = I18N[nl] ? nl : 'en'; } LANG = I18N[l] ? l : 'en'; }
+
+addEventListener('resize', size); size(); applyLang(LANG); requestAnimationFrame(loop);
 </script>
 </body>
 </html>

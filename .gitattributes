@@ -1,0 +1,3 @@
+# Text files are stored and checked out with LF line endings, on Windows too:
+# the demos and the site are written on Windows and served by GitHub Pages.
+* text=auto eol=lf
