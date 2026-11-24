@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BaseReal-OS · Day and Orbit</title>
+<meta name="description" content="The length of the day sets the synchronous orbit: r = (t/T)^(2/3). Spin the planet faster until the equator becomes weightless.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@200;300;400;500;600;700&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --glass:rgba(7,13,24,.66);
+  --line:rgba(120,200,255,.16);
+  --line2:rgba(120,200,255,.34);
+  --cyan:#62d8ff;
+  --cyan2:#b4efff;
+  --amber:#ffb84d;
+  --amber2:#ffe0a8;
+  --text:#e8f0fa;
+  --mut:#8b9cb4;
+  --dim:#5d6b80;
+  --ui:'Exo 2',system-ui,'Segoe UI',Roboto,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+  --r:12px;
+  --fc:70,170,255; /* the colour of the field: deep blue (weak) → bright light blue (strong); set by the script */
+  --lc:90,175,255; /* the same colour for letters, lifted a little in a weak field so it stays readable on black */
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden;background:#000;color:var(--text);font-family:var(--ui);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none;touch-action:manipulation}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+#gl{z-index:0}
+#cv{z-index:1}
+#ui{position:fixed;inset:0;z-index:2;pointer-events:none}
+.pe{pointer-events:auto}
+.fade{transition:opacity 1s ease}
+.off{opacity:0!important;pointer-events:none!important}
+
+/* ---------- glass + buttons (Genesis) ---------- */
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(12px) saturate(140%);-webkit-backdrop-filter:blur(12px) saturate(140%);box-shadow:0 8px 32px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04)}
+.btn{font-family:var(--ui);font-size:13px;font-weight:600;letter-spacing:.06em;color:var(--text);background:rgba(10,20,36,.62);border:1px solid var(--line2);border-radius:999px;padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;transition:background .2s,border-color .2s,box-shadow .2s,transform .12s,color .2s;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.btn:hover{background:rgba(40,90,140,.38);border-color:var(--cyan);box-shadow:0 0 18px rgba(98,216,255,.28)}
+.btn:active{transform:scale(.96)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.btn .ic{font-size:15px;line-height:1;opacity:.95}
+.btn.icon{padding:0;width:38px;height:38px;justify-content:center;font-size:15px}
+.btn.amber{border-color:rgba(255,184,77,.7);color:var(--amber2);background:rgba(60,34,6,.5)}
+.btn.amber:hover{background:rgba(120,70,10,.55);border-color:var(--amber);box-shadow:0 0 26px rgba(255,184,77,.45)}
+.btn.cyan{border-color:rgba(98,216,255,.75);color:var(--cyan2);background:rgba(6,40,60,.5)}
+.btn.big{font-size:15px;padding:13px 28px;letter-spacing:.12em;text-transform:uppercase}
+@keyframes pulseC{0%,100%{box-shadow:0 0 14px rgba(98,216,255,.25),inset 0 0 10px rgba(98,216,255,.08)}50%{box-shadow:0 0 38px rgba(98,216,255,.75),0 0 70px rgba(60,160,255,.3),inset 0 0 18px rgba(98,216,255,.2)}}
+.btn.cyan.ready{animation:pulseC 1.5s ease-in-out infinite}
+
+/* ---------- top ---------- */
+#topR{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));display:flex;gap:8px;align-items:center;z-index:5}
+#crumb{position:absolute;top:18px;left:50%;transform:translateX(-50%);text-align:center;max-width:42vw}
+#crumb .l1{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--mut);white-space:nowrap}
+#crumb .l2{font-size:16px;font-weight:600;letter-spacing:.08em;color:var(--text);margin-top:2px;white-space:nowrap;text-shadow:0 0 18px rgba(98,216,255,.35)}
+#langs{display:flex;gap:2px;padding:3px;border-radius:999px;background:rgba(10,20,36,.62);border:1px solid var(--line2);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#langs button{font:600 11.5px var(--ui);letter-spacing:.08em;color:var(--mut);background:transparent;border:1px solid transparent;border-radius:999px;min-width:32px;height:30px;padding:0 7px;cursor:pointer;transition:color .2s,background .2s,border-color .2s,box-shadow .2s}
+#langs button:hover{color:var(--text);background:rgba(98,216,255,.1)}
+#langs button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+#langs button.on{color:var(--cyan2);background:rgba(98,216,255,.18);border-color:rgba(98,216,255,.6);box-shadow:0 0 12px rgba(98,216,255,.35)}
+#btnFS svg{display:block}
+#btnFS.on{border-color:var(--cyan);color:var(--cyan2);box-shadow:0 0 14px rgba(98,216,255,.35)}
+
+/* ---------- the friendly formula: r̃ = (t/T)^{2/3} — sizes, not numbers ---------- */
+#formula{position:absolute;left:clamp(18px,3.4vw,64px);top:max(84px,16vh);font-family:var(--mono);--oc:255,184,77;--wc:255,226,170;--tc:98,216,255}
+#formula::before{content:'';position:absolute;inset:-34% -30% -30% -50%;background:radial-gradient(closest-side,rgba(0,0,0,.5),rgba(0,0,0,0));z-index:-1;pointer-events:none}
+#formula .ft{font:600 clamp(11px,1.02vw,14px)/1.2 var(--ui);letter-spacing:.34em;text-transform:uppercase;color:var(--amber);text-shadow:0 0 12px rgba(255,184,77,.5);margin-bottom:.5em;padding-left:.1em;white-space:nowrap}
+#formula .fx{display:flex;align-items:center;font-size:clamp(26px,min(3.7vw,6.8vh),68px);line-height:1}
+.slot{position:relative;display:inline-block;flex:none}
+.sH{width:1.25em;height:2.2em}
+.sTt{width:1.6em;height:2.35em}
+.sTT{width:1.4em;height:1.1em}
+.L{position:absolute;font-style:italic;font-weight:500;white-space:nowrap;line-height:1;--s:1;--g:1;--c:var(--oc);color:rgb(var(--c));
+  text-shadow:0 0 calc(var(--g)*.1em) rgba(var(--c),.95),0 0 calc(var(--g)*.32em) rgba(var(--c),.5),0 0 calc(var(--g)*.8em) rgba(var(--c),.22);will-change:transform}
+.sH .L{right:0;top:50%;transform:translateY(-50%) scale(var(--s));transform-origin:100% 50%}
+.sTt .L{left:50%;bottom:.02em;transform:translateX(-50%) scale(var(--s));transform-origin:50% 100%}
+.sTT .L{left:50%;top:.04em;transform:translateX(-50%) scale(var(--s));transform-origin:50% 0}
+#fT{--c:var(--tc)}
+.tl{position:relative;display:inline-block}
+.tl::before{content:'~';position:absolute;left:50%;top:-.5em;transform:translateX(-42%);font-size:.85em;font-style:normal;font-weight:400}
+.eq{font-weight:300;font-size:.8em;color:rgba(220,232,248,.82);margin:0 .28em 0 .16em}
+.par{font-weight:200;font-size:2.4em;line-height:.9;color:rgba(220,232,248,.42);margin:0 -.04em;position:relative;top:-.02em}
+.frac{display:inline-flex;flex-direction:column;align-items:center}
+.bar{align-self:stretch;height:max(2px,.045em);margin:.04em 0;border-radius:2px;background:linear-gradient(90deg,rgba(var(--wc),.3),rgba(255,240,215,.95) 50%,rgba(var(--tc),.45));box-shadow:0 0 .18em rgba(var(--oc),.5)}
+.pw{align-self:flex-start;font-size:.52em;font-weight:400;color:rgba(232,240,250,.92);margin-top:.15em;white-space:nowrap;letter-spacing:.02em}
+#formula .lg{margin-top:1em;font:400 clamp(13px,1.05vw,16px)/1.5 var(--ui);color:#b4c2d4;letter-spacing:.02em;max-width:27em}
+#formula .lg span{display:block;margin-top:.15em}
+#formula .lg i,#formula .lgs i{font-family:var(--mono);font-style:italic;font-weight:600;color:var(--amber2)}
+#formula .lg i.c,#formula .lgs i.c{color:var(--cyan2)}
+
+/* ---------- one vertical slider: the length of the day t ---------- */
+#slider{position:absolute;right:max(16px,env(safe-area-inset-right));top:50%;transform:translateY(-44%);display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 14px 14px}
+.vs{display:flex;flex-direction:column;align-items:center;gap:6px;outline:none;width:82px;touch-action:none;cursor:grab}
+.vs.drag{cursor:grabbing}
+.vs .vl{font:italic 600 34px/1 var(--mono);color:var(--amber2);text-shadow:0 0 12px rgba(255,190,100,.75),0 0 28px rgba(255,170,80,.3)}
+.vs .vw{font:600 10.5px var(--ui);letter-spacing:.2em;text-transform:uppercase;color:var(--mut)}
+.vs .tr{position:relative;width:64px;height:clamp(200px,48vh,460px);margin:12px 0 14px}
+.vs .rail{position:absolute;left:0;right:0;top:15px;bottom:15px}
+.vs .wedge{position:absolute;left:50%;top:-15px;bottom:-15px;width:20px;transform:translateX(-50%);clip-path:polygon(0 0,100% 0,61% 100%,39% 100%);opacity:.85;background:linear-gradient(0deg,rgb(255,244,214),rgb(255,190,96) 30%,rgb(190,120,60) 70%,rgb(120,80,50))}
+.vs .pm{position:absolute;left:50%;transform:translate(-50%,-50%);font:500 10.5px/1 var(--ui);letter-spacing:.06em;color:#9fb0c6;pointer-events:none;white-space:nowrap}
+.vs .pm.p{top:-25px} .vs .pm.m{bottom:-38px}
+.vs .mk{position:absolute;left:50%;width:30px;height:2px;margin:-1px 0 0 -15px;background:rgba(255,255,255,.6);border-radius:1px;box-shadow:0 0 6px rgba(255,255,255,.4);pointer-events:none}
+.vs .mk span{position:absolute;right:calc(100% + 3px);top:50%;transform:translateY(-52%);font:500 12px var(--mono);color:rgba(210,225,245,.78)}
+.vs .mk.t0 span{font-style:italic;font-weight:600;color:var(--cyan2)}
+.vs .th{position:absolute;left:50%;top:50%;width:32px;height:32px;margin:-16px 0 0 -16px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,rgb(255,200,120) 52%,rgba(255,170,80,.6));border:1px solid rgba(255,255,255,.85);box-shadow:0 0 16px rgba(255,190,100,.9),0 0 36px rgba(255,170,80,.4);pointer-events:none}
+.vs:focus-visible .th{outline:2px solid #fff;outline-offset:3px}
+#btnReset{font-size:12px;padding:7px 13px}
+#btnReset .ic{font-size:14px}
+
+/* ---------- the notice: weightless at the equator ---------- */
+#toast{position:absolute;left:50%;top:max(66px,9vh);display:flex;gap:12px;align-items:center;padding:12px 20px 12px 14px;opacity:0;transform:translate(-50%,-10px);transition:opacity .5s,transform .5s;pointer-events:none;z-index:6;border-color:rgba(255,226,170,.5);background:rgba(10,14,24,.84);width:max-content;max-width:calc(100vw - 24px)}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+#toast .ti{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,226,170,.85);display:flex;align-items:center;justify-content:center;font:600 13px var(--mono);color:#ffe2b0;box-shadow:0 0 16px rgba(255,200,120,.5)}
+#toast .t1{font:600 17px/1.2 var(--ui);color:#fff3dc;letter-spacing:.03em}
+#toast .t2{font:400 12.5px/1.35 var(--ui);color:#b9c6d8;margin-top:3px}
+#hint{position:absolute;left:50%;bottom:max(20px,env(safe-area-inset-bottom));transform:translateX(-50%);font-size:14px;letter-spacing:.05em;color:#dbe7f5;padding:9px 18px;border-radius:999px;background:rgba(7,13,24,.62);border:1px solid var(--line);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);white-space:nowrap;transition:opacity .8s}
+#hint b{color:var(--amber2);font-family:var(--mono);font-style:italic}
+
+/* ---------- title ---------- */
+#title{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:radial-gradient(ellipse at center,rgba(0,0,0,.5) 0%,rgba(0,0,0,.62) 60%,rgba(0,0,0,.8) 100%);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:opacity 1.2s;z-index:4}
+#title .k1{font-size:12px;letter-spacing:.5em;color:var(--mut);text-transform:uppercase;padding-left:.5em}
+#title h1{font-size:clamp(30px,6.2vw,78px);font-weight:200;letter-spacing:.24em;padding-left:.24em;margin:14px 0 10px;text-transform:uppercase;background:linear-gradient(180deg,#fff 12%,#ffe6b8 52%,#ffb84d 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 26px rgba(255,180,80,.38))}
+#title .k2{font-size:clamp(14px,1.9vw,18px);color:#cfdcec;max-width:660px;line-height:1.6;margin-bottom:30px}
+#title .k2 b{color:var(--amber2);font-weight:600}
+#title .k3{margin-top:22px;font-size:12px;color:var(--dim);letter-spacing:.06em}
+
+/* ---------- phones and narrow windows ---------- */
+body.portrait #crumb{display:none}
+body.portrait #formula{left:12px;right:12px;top:max(62px,8vh);text-align:center}
+body.portrait #formula .ft{font-size:11px;letter-spacing:.26em}
+body.portrait #formula .fx{font-size:clamp(24px,8.2vw,52px);justify-content:center}
+body.portrait #formula .lg{display:none}
+#formula .lgs{display:none}
+body.portrait #formula .lgs{display:block;margin-top:.7em;font:400 11.5px/1.4 var(--ui);color:var(--mut)}
+body.portrait #slider{top:auto;transform:none;bottom:max(10px,env(safe-area-inset-bottom));right:max(8px,env(safe-area-inset-right));padding:10px 8px;gap:8px}
+body.portrait .vs{width:66px;gap:4px}
+body.portrait .vs .vl{font-size:28px}
+body.portrait .vs .tr{height:clamp(130px,27vh,260px)}
+body.portrait #btnReset span:not(.ic){display:none}
+body.portrait #btnReset{padding:7px 10px}
+body.portrait #hint{bottom:auto;font-size:13px}
+body.portrait #toast{padding:10px 14px 10px 12px}
+body.portrait #toast .t1{font-size:15px}
+@media (max-height:520px){
+  #formula{top:58px}
+  #formula .lg{display:none}
+  #slider{padding:8px 10px;gap:6px;top:60px;transform:none}
+  .vs .vl{font-size:24px}
+  .vs .tr{height:clamp(100px,calc(100vh - 236px),300px)}
+  #crumb{display:none}
+}
+@media (max-width:600px){
+  #langs{position:relative;z-index:60}
+  #langs button{min-width:36px;padding:0 6px}
+  #langs:not(.open) button:not(.on){display:none}
+  #langs.open{flex-direction:column;align-items:stretch;gap:3px}
+  #langs.open button{height:34px;background:rgba(10,20,36,.96);border-color:var(--line2)}
+  #topR{gap:6px}
+  #topR .btn.icon{width:34px;height:34px}
+}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <div id="crumb" class="fade off"><div class="l1" data-i="crumb1"></div><div class="l2" data-i="crumb2"></div></div>
+  <div id="topR">
+    <button id="btnHome" class="btn icon amber pe" aria-label="Back to the site" title="Back to the site"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2.5M7 3.2 2.2 8 7 12.8"/></svg></button>
+    <div id="langs" class="pe" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="de" lang="de" title="Deutsch">DE</button><button data-lang="es" lang="es" title="Español">ES</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="uk" lang="uk" title="Українська">UA</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
+    <button id="btnSound" class="btn icon pe" aria-label="Sound">🔊</button>
+    <button id="btnFS" class="btn icon pe" aria-label="Full screen"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+  </div>
+
+  <div id="formula" class="fade off" aria-label="r = (t / T)^(2/3)">
+    <div class="ft" data-i="ftitle"></div>
+    <div class="fx">
+      <span class="slot sH"><span class="L" id="fH"><span class="tl">r</span></span></span>
+      <span class="eq">=</span>
+      <span class="par">(</span>
+      <span class="frac">
+        <span class="slot sTt"><span class="L" id="ft">t</span></span>
+        <span class="bar"></span>
+        <span class="slot sTT"><span class="L" id="fT">T</span></span>
+      </span>
+      <span class="par">)</span>
+      <span class="pw">2/3</span>
+    </div>
+    <div class="lg" data-i="legend"></div>
+    <div class="lgs" data-i="legendS"></div>
+  </div>
+
+  <div id="slider" class="glass pe fade off">
+    <div class="vs" id="sD" role="slider" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="89">
+      <div class="vl">t</div>
+      <div class="tr"><div class="rail"><div class="wedge"></div><span class="pm p" data-i="longer"></span><span class="pm m" data-i="shorter"></span><div class="mk" id="mkE"><span>⊕</span></div><div class="mk t0" style="top:100%"><span>T</span></div><div class="th"></div></div></div>
+      <div class="vw" data-i="sD"></div>
+    </div>
+    <button id="btnReset" class="btn pe"><span class="ic">⟲</span><span data-i="reset"></span></button>
+  </div>
+
+  <div id="toast" class="glass" role="status" aria-live="polite"><div class="ti">0g</div><div><div class="t1" data-i="toast1"></div><div class="t2" data-i="toast2"></div></div></div>
+  <div id="hint" class="off" data-i="hint"></div>
+
+  <div id="title" class="pe">
+    <div class="k1" data-i="k1"></div>
+    <h1 data-i="h1"></h1>
+    <div class="k2" data-i="sub"></div>
+    <button id="btnStart" class="btn cyan big ready pe"><span class="ic">▶</span><span data-i="start"></span></button>
+    <div class="k3" data-i="note"></div>
+  </div>
+</div>
+<script>
+'use strict';
+/* =====================================================================
+ * BaseReal-OS · Сутки и орбита — синхронная орбита r̃ = (t/T)^{2/3} (LT-система, G = 1)
+ * t — длина суток, T — период обращения у самой поверхности. При t = T синхронная орбита ложится
+ * на поверхность: экватор движется с первой космической, на экваторе невесомость.
+ * Небо, Земля, ключ 3/2, звук и эффекты — из «Радиус · Время» (код Genesis v4).
+ * ===================================================================== */
+
+/* ---------------- math utils ---------------- */
+const PI = Math.PI, TAU = 2 * PI, DEG = PI / 180;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeIO = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const rand = (a = 0, b = 1) => a + (b - a) * Math.random();
+const randi = (a, b) => Math.floor(rand(a, b + 1));
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const vadd = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
+const vsub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+const vmul = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
+const vdot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const vcross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const vlen = a => Math.hypot(a[0], a[1], a[2]);
+const vnorm = a => { const l = vlen(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+
+/* ---------------- value noise (seamless on the sphere via 3D) ---------------- */
+function ihash(x, y, z, s) {
+  let h = Math.imul(x | 0, 374761393) ^ Math.imul(y | 0, 668265263) ^ Math.imul(z | 0, 1274126177) ^ Math.imul(s | 0, 1442695041);
+  h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+function vnoise(x, y, z, s) {
+  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
+  const xf = x - xi, yf = y - yi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+  const a = ihash(xi, yi, zi, s), b = ihash(xi + 1, yi, zi, s), c = ihash(xi, yi + 1, zi, s), d = ihash(xi + 1, yi + 1, zi, s);
+  const e = ihash(xi, yi, zi + 1, s), f = ihash(xi + 1, yi, zi + 1, s), g = ihash(xi, yi + 1, zi + 1, s), h = ihash(xi + 1, yi + 1, zi + 1, s);
+  const x1 = a + (b - a) * u, x2 = c + (d - c) * u, x3 = e + (f - e) * u, x4 = g + (h - g) * u;
+  const y1 = x1 + (x2 - x1) * v, y2 = x3 + (x4 - x3) * v;
+  return y1 + (y2 - y1) * w;
+}
+function fbm(x, y, z, s, oct = 5, lac = 2.03, gain = .5) {
+  let sum = 0, amp = .5, norm = 0;
+  for (let i = 0; i < oct; i++) { sum += amp * vnoise(x, y, z, s + i * 31); norm += amp; x *= lac; y *= lac; z *= lac; amp *= gain; }
+  return sum / norm;
+}
+function ridged(x, y, z, s, oct = 4) {
+  let sum = 0, amp = .5, norm = 0;
+  for (let i = 0; i < oct; i++) { const n = 1 - Math.abs(vnoise(x, y, z, s + i * 17) * 2 - 1); sum += amp * n * n; norm += amp; x *= 2.1; y *= 2.1; z *= 2.1; amp *= .5; }
+  return sum / norm;
+}
+const rgbStr = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
+const mixc = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+
+/* =====================================================================
+ *  Sound — synthesized with WebAudio (Genesis v4; starts after the first click)
+ * ===================================================================== */
+const Snd = (() => {
+  let ac = null, master, comp, nbuf, on = true, hum, humG, humF, hum2, droneG, windG, windF, lastCrack = 0;
+  function init() {
+    if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
+    try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; return; }
+    comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 10; comp.ratio.value = 5; comp.attack.value = .003; comp.release.value = .25;
+    master = ac.createGain(); master.gain.value = on ? .85 : 0; master.connect(comp); comp.connect(ac.destination);
+    const len = ac.sampleRate * 2; nbuf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = nbuf.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    // the field's electric hum
+    hum = ac.createOscillator(); hum.type = 'sawtooth'; hum.frequency.value = 55;
+    hum2 = ac.createOscillator(); hum2.type = 'square'; hum2.frequency.value = 110.7;
+    humF = ac.createBiquadFilter(); humF.type = 'bandpass'; humF.frequency.value = 380; humF.Q.value = 3;
+    humG = ac.createGain(); humG.gain.value = 0;
+    const h2g = ac.createGain(); h2g.gain.value = .35;
+    hum.connect(humF); hum2.connect(h2g); h2g.connect(humF); humF.connect(humG); humG.connect(master); hum.start(); hum2.start();
+    // ambient drone
+    droneG = ac.createGain(); droneG.gain.value = 0;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; lp.Q.value = .7;
+    const lfo = ac.createOscillator(); lfo.frequency.value = .05; const lfoG = ac.createGain(); lfoG.gain.value = 160; lfo.connect(lfoG); lfoG.connect(lp.frequency); lfo.start();
+    [[43.65, 'sawtooth', .5], [65.4, 'sine', .9], [87.3, 'sawtooth', .25], [130.8, 'sine', .25]].forEach(([f, ty, g]) => {
+      const o = ac.createOscillator(); o.type = ty; o.frequency.value = f; o.detune.value = rand(-8, 8);
+      const gg = ac.createGain(); gg.gain.value = g; o.connect(gg); gg.connect(lp); o.start();
+    });
+    lp.connect(droneG); droneG.connect(master);
+    // the wind of a turning planet: filtered noise, louder and higher when it turns faster
+    windF = ac.createBiquadFilter(); windF.type = 'bandpass'; windF.Q.value = 1.1; windF.frequency.value = 400;
+    windG = ac.createGain(); windG.gain.value = 0;
+    const ws = ac.createBufferSource(); ws.buffer = nbuf; ws.loop = true; ws.connect(windF); windF.connect(windG); windG.connect(master); ws.start();
+  }
+  const now = () => ac.currentTime;
+  function noiseSrc(rate = 1) { const s = ac.createBufferSource(); s.buffer = nbuf; s.loop = true; s.playbackRate.value = rate; return s; }
+  function env(g, t0, a, peak, dec) { g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(peak, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + a + dec); }
+  // an electric crackle; pitch follows the field: a stronger field crackles higher
+  function crackle(level = .5, pitch = 1) {
+    if (!ac || !on) return; const tn = now(); if (tn - lastCrack < .035) return; lastCrack = tn;
+    const n = 1 + Math.floor(level * 3);
+    for (let i = 0; i < n; i++) {
+      const t0 = tn + Math.random() * .06, src = noiseSrc(rand(.8, 1.6) * pitch);
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = rand(1800, 6200) * pitch; bp.Q.value = rand(.7, 2);
+      const g = ac.createGain(); env(g, t0, .0015, .2 * Math.min(1.4, level + .3), rand(.02, .09));
+      src.connect(bp); bp.connect(g); g.connect(master); src.start(t0, Math.random() * 1.5); src.stop(t0 + .2);
+    }
+  }
+  function zap(level = .6) {
+    if (!ac || !on) return; const t0 = now();
+    const o = ac.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(rand(900, 1600), t0); o.frequency.exponentialRampToValueAtTime(rand(60, 140), t0 + .16);
+    const g = ac.createGain(); env(g, t0, .002, .16 * level, .2);
+    const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 220;
+    o.connect(f); f.connect(g); g.connect(master); o.start(t0); o.stop(t0 + .3);
+    const s = noiseSrc(1.3), hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+    const g2 = ac.createGain(); env(g2, t0, .001, .3 * level, .14); s.connect(hp); hp.connect(g2); g2.connect(master); s.start(t0, Math.random()); s.stop(t0 + .25);
+  }
+  let hL = -1, hP = -1;
+  function setHum(level, pitch = 1) {
+    if (!ac || (Math.abs(level - hL) < .01 && Math.abs(pitch - hP) < .005)) return; hL = level; hP = pitch; // automate only on a real change
+    const t0 = now();
+    humG.gain.setTargetAtTime(on ? clamp(level, 0, 1.2) * .085 : 0, t0, .08);
+    hum.frequency.setTargetAtTime(48 * pitch, t0, .1); hum2.frequency.setTargetAtTime(96.7 * pitch, t0, .1);
+    humF.frequency.setTargetAtTime(260 + 900 * clamp(level, 0, 1.2) * pitch, t0, .1);
+  }
+  let wL = -1, wF = -1;
+  function setWind(level, freq) {
+    if (!ac || (Math.abs(level - wL) < .01 && Math.abs(freq - wF) < 12)) return; wL = level; wF = freq;
+    const t0 = now(); windG.gain.setTargetAtTime(on ? clamp(level, 0, 1) * .06 : 0, t0, .15); windF.frequency.setTargetAtTime(freq, t0, .15);
+  }
+  function setDrone(level) { if (!ac) return; droneG.gain.setTargetAtTime(on ? level * .05 : 0, now(), 1.2); }
+  function boom(level = 1) {
+    if (!ac || !on) return; const t0 = now();
+    const o = ac.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(110, t0); o.frequency.exponentialRampToValueAtTime(24, t0 + 2.2);
+    const g = ac.createGain(); env(g, t0, .01, .9 * level, 2.6); o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 3);
+    const s = noiseSrc(.7), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(3000, t0); lp.frequency.exponentialRampToValueAtTime(90, t0 + 2.5);
+    const g2 = ac.createGain(); env(g2, t0, .005, .7 * level, 3.2); s.connect(lp); lp.connect(g2); g2.connect(master); s.start(t0); s.stop(t0 + 3.5);
+  }
+  function whoosh(dur = 4, level = .8) {
+    if (!ac || !on) return; const t0 = now();
+    const s = noiseSrc(.6), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 6;
+    lp.frequency.setValueAtTime(120, t0); lp.frequency.exponentialRampToValueAtTime(1600, t0 + dur * .8); lp.frequency.exponentialRampToValueAtTime(60, t0 + dur);
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.5 * level, t0 + dur * .75); g.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+    s.connect(lp); lp.connect(g); g.connect(master); s.start(t0); s.stop(t0 + dur + .1);
+  }
+  function tick() {
+    if (!ac || !on) return; const t0 = now();
+    const o = ac.createOscillator(); o.type = 'triangle'; o.frequency.setValueAtTime(1500, t0); o.frequency.exponentialRampToValueAtTime(900, t0 + .05);
+    const g = ac.createGain(); env(g, t0, .002, .05, .06); o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + .1);
+  }
+  function chime() {
+    if (!ac || !on) return; const t0 = now();
+    [659.25, 987.77, 1318.5].forEach((f, i) => { const o = ac.createOscillator(); o.type = 'sine'; o.frequency.value = f; const g = ac.createGain(); env(g, t0 + i * .09, .01, .05, 1.6); o.connect(g); g.connect(master); o.start(t0); o.stop(t0 + 2.2); });
+  }
+  function toggle() { on = !on; hL = -1; wL = -1; if (ac) master.gain.setTargetAtTime(on ? .85 : 0, now(), .05); return on; }
+  function sleep(s) { if (!ac) return; if (s) ac.suspend(); else ac.resume(); } // a hidden tab is silent
+  return { init, crackle, zap, setHum, setWind, setDrone, boom, whoosh, tick, chime, toggle, sleep, get on() { return on; }, get ready() { return !!ac; } };
+})();
+
+/* =====================================================================
+ *  WebGL sky (Genesis v4)
+ * ===================================================================== */
+const FS_SKY = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform float uMode, uTime, uPix, uTan, uAsp, uBright; uniform vec3 uR, uU, uF; uniform vec2 uRes;
+float h13(vec3 p){ p=fract(p*0.1031); p+=dot(p,p.zyx+31.32); return fract((p.x+p.y)*p.z); }
+float vn(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
+  return mix(mix(mix(h13(i),h13(i+vec3(1,0,0)),f.x),mix(h13(i+vec3(0,1,0)),h13(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(h13(i+vec3(0,0,1)),h13(i+vec3(1,0,1)),f.x),mix(h13(i+vec3(0,1,1)),h13(i+vec3(1,1,1)),f.x),f.y),f.z); }
+float fbm(vec3 p){ float s=0.0, a=0.5; for(int i=0;i<5;i++){ s+=a*vn(p); p=p*2.03+vec3(1.7,9.2,3.1); a*=0.5; } return s/0.97; }
+vec3 stars(vec3 d, float sc, float dens){
+  vec3 p=d*sc; vec3 i=floor(p); vec3 f=fract(p);
+  float h=h13(i);
+  if(h>dens) return vec3(0.0);
+  vec3 sp=vec3(h13(i+11.3),h13(i+27.1),h13(i+41.7))*0.7+0.15;
+  float dd=length(f-sp);
+  float r=max(uPix*sc*1.1,0.012);
+  float b=smoothstep(r*1.7,0.0,dd);
+  float m=h13(i+5.7); m=0.22+2.6*m*m*m*m*m;
+  float tc=h13(i+71.1);
+  vec3 c=mix(vec3(1.0,0.76,0.56),vec3(0.68,0.8,1.0),tc);
+  return c*b*m;
+}
+vec3 sky(vec3 d){
+  vec3 col=vec3(0.0);
+  if(uMode<0.5){
+    col+=stars(d,150.0,0.16)*0.55+stars(d,330.0,0.10)*0.45;
+    float n=fbm(d*1.5+4.0); col+=vec3(0.012,0.016,0.03)*n;
+  } else {
+    vec3 nB=normalize(vec3(0.3,0.45,0.84));
+    float lat=dot(d,nB);
+    float band=exp(-lat*lat/(2.0*0.15*0.15));
+    vec3 gc=normalize(vec3(0.86,-0.06,-0.5));
+    gc=normalize(gc-nB*dot(gc,nB));
+    float toC=max(dot(d,gc),0.0);
+    float n=fbm(d*3.2), n2=fbm(d*8.0+3.1), n3=fbm(d*18.0+1.3);
+    float glow=band*(0.25+0.75*n*n*1.6)*(0.45+0.9*pow(toC,3.0));
+    float lane=exp(-pow((lat+0.012)/(0.03+0.02*n),2.0))*smoothstep(0.38,0.66,n2);
+    glow*=1.0-0.8*lane;
+    glow*=0.75+0.5*n3;
+    col+=glow*mix(vec3(0.5,0.58,0.85),vec3(1.0,0.8,0.6),pow(toC,1.6))*0.27;
+    col+=vec3(1.0,0.76,0.52)*pow(toC,14.0)*0.3*band;
+    col+=vec3(0.9,0.35,0.45)*pow(max(n2-0.55,0.0)*2.2,3.0)*band*0.18;
+    float dn=0.02+0.14*band;
+    col+=stars(d,170.0,dn)*0.95+stars(d,380.0,dn*0.6)*0.65+stars(d,760.0,0.01+0.16*band)*0.45;
+  }
+  return col;
+}
+void main(){
+  vec2 uv=(gl_FragCoord.xy/uRes)*2.0-1.0;
+  vec3 d=normalize(uF+uR*uv.x*uTan*uAsp+uU*uv.y*uTan);
+  vec3 c=sky(d)*uBright;
+  c=1.0-exp(-c*1.6);
+  gl_FragColor=vec4(c,1.0);
+}`;
+const VS_TRI = `attribute vec2 aP; void main(){ gl_Position=vec4(aP,0.0,1.0); }`;
+const GLR = (() => {
+  const cv = document.getElementById('gl');
+  let gl = null, ok = false, W = 1, H = 1, pSky, tri;
+  function sh(type, src) {
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(s)); throw new Error('shader'); }
+    return s;
+  }
+  function prog(vs, fs) {
+    const p = gl.createProgram(); gl.attachShader(p, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(p)); throw new Error('link'); }
+    p.u = {}; const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS);
+    for (let i = 0; i < n; i++) { const inf = gl.getActiveUniform(p, i); p.u[inf.name] = gl.getUniformLocation(p, inf.name); }
+    return p;
+  }
+  function init() {
+    try {
+      gl = cv.getContext('webgl', { antialias: false, alpha: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' });
+      if (!gl) return false;
+      pSky = prog(VS_TRI, FS_SKY);
+      tri = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, tri); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      ok = true;
+    } catch (e) { console.error(e); ok = false; }
+    return ok;
+  }
+  function resize(s) {
+    const w = Math.max(2, Math.round(innerWidth * s)), h = Math.max(2, Math.round(innerHeight * s));
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    W = w; H = h; if (gl) gl.viewport(0, 0, w, h);
+  }
+  function drawSky(cam, mode, time, bright = 1) {
+    if (!ok) return; const p = pSky; gl.disable(gl.BLEND); gl.useProgram(p);
+    gl.uniform3fv(p.u.uR, cam.right); gl.uniform3fv(p.u.uU, cam.up); gl.uniform3fv(p.u.uF, cam.fwd);
+    gl.uniform1f(p.u.uTan, Math.tan(cam.fov / 2)); gl.uniform1f(p.u.uAsp, W / H); gl.uniform2f(p.u.uRes, W, H);
+    gl.uniform1f(p.u.uPix, 2 * Math.tan(cam.fov / 2) / H);
+    gl.uniform1f(p.u.uMode, mode); gl.uniform1f(p.u.uTime, time); gl.uniform1f(p.u.uBright, bright);
+    const loc = gl.getAttribLocation(p, 'aP'); gl.bindBuffer(gl.ARRAY_BUFFER, tri);
+    gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3); gl.disableVertexAttribArray(loc);
+  }
+  return { init, resize, drawSky, get ok() { return ok; } };
+})();
+
+/* =====================================================================
+ *  Camera (Genesis v4)
+ * ===================================================================== */
+class Camera {
+  constructor() { this.target = [0, 0, 0]; this.yaw = 0; this.pitch = .42; this.dist = 20; this.fov = 50 * DEG; this.near = .01; this.W = 1; this.H = 1; this.ox = 0; this.oy = 0; this.update(1, 1); }
+  update(W, H) {
+    this.W = W; this.H = H;
+    const cp = Math.cos(this.pitch);
+    this.pos = vadd(this.target, [this.dist * cp * Math.sin(this.yaw), this.dist * Math.sin(this.pitch), this.dist * cp * Math.cos(this.yaw)]);
+    this.fwd = vnorm(vsub(this.target, this.pos));
+    this.right = vnorm(vcross(this.fwd, [0, 1, 0]));
+    this.up = vcross(this.right, this.fwd);
+    this.focal = (H / 2) / Math.tan(this.fov / 2);
+  }
+  project(p) {
+    const dx = p[0] - this.pos[0], dy = p[1] - this.pos[1], dz = p[2] - this.pos[2];
+    const z = dx * this.fwd[0] + dy * this.fwd[1] + dz * this.fwd[2];
+    if (z < this.near) return null;
+    const x = dx * this.right[0] + dy * this.right[1] + dz * this.right[2], y = dx * this.up[0] + dy * this.up[1] + dz * this.up[2];
+    return { x: this.W / 2 + this.ox + x / z * this.focal, y: this.H / 2 + this.oy - y / z * this.focal, s: this.focal / z, z };
+  }
+}
+
+/* =====================================================================
+ *  Effects: lightning, sparks, shock rings, flash (Genesis v4)
+ * ===================================================================== */
+function boltPath(x1, y1, x2, y2, disp, branchP, out, depth = 0) {
+  const pts = [[x1, y1], [x2, y2]];
+  let d = disp;
+  for (let it = 0; it < 6; it++) {
+    for (let i = pts.length - 1; i > 0; i--) {
+      const a = pts[i - 1], b = pts[i], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      const off = (Math.random() - .5) * d;
+      pts.splice(i, 0, [mx - dy / l * off, my + dx / l * off]);
+    }
+    d *= .55;
+  }
+  out.push(pts);
+  if (depth < 2) {
+    const nb = Math.random() < branchP ? 1 + (Math.random() < .4 ? 1 : 0) : 0;
+    for (let k = 0; k < nb; k++) {
+      const i = 4 + Math.floor(Math.random() * (pts.length - 8)), p = pts[i], q = pts[Math.min(pts.length - 1, i + 6)];
+      const ang = Math.atan2(q[1] - p[1], q[0] - p[0]) + (Math.random() < .5 ? -1 : 1) * rand(.35, .9);
+      const L = Math.hypot(x2 - x1, y2 - y1) * rand(.2, .45);
+      boltPath(p[0], p[1], p[0] + Math.cos(ang) * L, p[1] + Math.sin(ang) * L, disp * .5, branchP * .6, out, depth + 1);
+    }
+  }
+  return out;
+}
+const FX = {
+  bolts: [], parts: [], rings: [], flash: 0, flashPeak: 1, flashCol: [255, 255, 255], flashAt: null, shake: 0,
+  bolt(x1, y1, x2, y2, col, width = 1.6, life = .14, disp, branch = .5, core = .95) {
+    if (this.bolts.length >= 16) return; // a few at a time: a storm would hide the Moon
+    const L = Math.hypot(x2 - x1, y2 - y1);
+    this.bolts.push({ paths: boltPath(x1, y1, x2, y2, disp ?? L * .35, branch, []), col, width, life, max: life, core });
+  },
+  spark(x, y, vx, vy, col, life = 1, size = 2, drag = .96) { this.parts.push({ x, y, vx, vy, col, life, max: life, size, drag }); },
+  ring(x, y, col, max = 400, life = 1.2, width = 6) { this.rings.push({ x, y, col, max, life, t: 0, width }); },
+  update(dt) {
+    for (let i = this.bolts.length - 1; i >= 0; i--) { const b = this.bolts[i]; b.life -= dt; if (b.life <= 0) this.bolts.splice(i, 1); }
+    for (let i = this.parts.length - 1; i >= 0; i--) {
+      const p = this.parts[i]; p.life -= dt; if (p.life <= 0) { this.parts.splice(i, 1); continue; }
+      p.x += p.vx * dt; p.y += p.vy * dt; const k = Math.pow(p.drag, dt * 60); p.vx *= k; p.vy *= k;
+    }
+    for (let i = this.rings.length - 1; i >= 0; i--) { const r = this.rings[i]; r.t += dt; if (r.t > r.life) this.rings.splice(i, 1); }
+    this.flash = Math.max(0, this.flash - dt * 1.6); if (!this.flash) this.flashPeak = 1;
+    this.shake = Math.max(0, this.shake - dt * 18);
+  },
+  draw(ctx) {
+    const k = DPR;
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const r of this.rings) {
+      const p = r.t / r.life, rad = r.max * easeOut(p), a = (1 - p);
+      ctx.strokeStyle = rgbStr(r.col, .5 * a); ctx.lineWidth = r.width * (1 - p * .7) * 3 * k; ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, TAU); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${.7 * a})`; ctx.lineWidth = Math.max(1, r.width * (1 - p) * k); ctx.beginPath(); ctx.arc(r.x, r.y, rad, 0, TAU); ctx.stroke();
+    }
+    for (const p of this.parts) {
+      const a = clamp(p.life / p.max, 0, 1);
+      ctx.fillStyle = rgbStr(p.col, a); ctx.beginPath(); ctx.arc(p.x, p.y, p.size * k * (.5 + .5 * a), 0, TAU); ctx.fill();
+      if (p.size > 1.5) { ctx.strokeStyle = rgbStr(p.col, a * .5); ctx.lineWidth = p.size * .8 * k; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - p.vx * .03, p.y - p.vy * .03); ctx.stroke(); }
+    }
+    for (const b of this.bolts) {
+      const a = clamp(b.life / b.max, 0, 1) * (.7 + .3 * Math.random());
+      b.paths.forEach((pts, pi) => {
+        const wk = (pi === 0 ? 1 : .55) * k;
+        ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+        ctx.strokeStyle = rgbStr(b.col, .08 * a); ctx.lineWidth = b.width * 12 * wk; ctx.stroke();
+        ctx.strokeStyle = rgbStr(b.col, .3 * a); ctx.lineWidth = b.width * 4 * wk; ctx.stroke();
+        ctx.strokeStyle = `rgba(255,255,255,${b.core * a})`; ctx.lineWidth = Math.max(.8, b.width * 1.1 * wk); ctx.stroke();
+      });
+    }
+    ctx.restore();
+  },
+  drawFlash(ctx, W, H) {
+    if (this.flash <= 0) { this.flashAt = null; return; }
+    const a = clamp(this.flash / Math.max(1, this.flashPeak), 0, 1);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    if (this.flashAt) {
+      const { x, y } = this.flashAt, R = Math.hypot(W, H) * (.45 + .9 * (1 - a));
+      const g = ctx.createRadialGradient(x, y, 0, x, y, R);
+      g.addColorStop(0, `rgba(255,255,255,${a})`); g.addColorStop(.18, rgbStr(mixc(this.flashCol, [255, 255, 255], .5), a * .85)); g.addColorStop(.55, rgbStr(this.flashCol, a * .35)); g.addColorStop(1, rgbStr(this.flashCol, 0));
+      ctx.fillStyle = g;
+    } else ctx.fillStyle = rgbStr(this.flashCol, a * .6);
+    ctx.fillRect(0, 0, W, H); ctx.restore();
+  }
+};
+function strokeGlow(ctx, path, col, w, a = 1) {
+  ctx.strokeStyle = rgbStr(col, .14 * a); ctx.lineWidth = w * 4.5; ctx.stroke(path);
+  ctx.strokeStyle = rgbStr(mixc(col, [255, 255, 255], .45), .9 * a); ctx.lineWidth = w; ctx.stroke(path);
+}
+
+/* =====================================================================
+ *  Earth and Moon: procedural textures + per-pixel sphere renderer (Genesis v4)
+ * ===================================================================== */
+const CONT = [
+  [[-168, 66], [-162, 70], [-140, 70], [-125, 72], [-95, 75], [-80, 73], [-62, 66], [-55, 52], [-66, 45], [-76, 38], [-81, 31], [-80, 25], [-90, 30], [-97, 27], [-97, 21], [-90, 21], [-87, 15], [-83, 10], [-79, 8], [-85, 12], [-92, 15], [-105, 20], [-110, 24], [-112, 31], [-118, 33], [-124, 40], [-124, 48], [-135, 58], [-150, 60], [-158, 57], [-165, 61]],
+  [[-55, 60], [-43, 60], [-22, 70], [-18, 77], [-30, 83], [-60, 82], [-73, 78], [-57, 70]],
+  [[-80, 9], [-72, 12], [-60, 10], [-50, 0], [-35, -6], [-38, -13], [-40, -22], [-48, -26], [-58, -34], [-62, -40], [-65, -47], [-68, -53], [-73, -50], [-74, -42], [-71, -30], [-70, -18], [-76, -14], [-81, -6], [-80, 1]],
+  [[-10, 36], [-9, 43], [-2, 44], [-5, 48], [-2, 50], [5, 53], [8, 57], [5, 62], [12, 66], [20, 70], [30, 71], [42, 67], [55, 70], [70, 73], [80, 73], [100, 78], [115, 74], [130, 72], [142, 72], [160, 70], [170, 70], [180, 68], [180, 65], [175, 62], [163, 58], [156, 51], [143, 59], [135, 55], [141, 46], [132, 43], [128, 35], [121, 31], [121, 25], [110, 20], [108, 12], [100, 13], [103, 1], [98, 8], [94, 16], [90, 22], [80, 15], [78, 8], [72, 20], [67, 25], [57, 25], [56, 27], [50, 30], [48, 29], [51, 24], [56, 25], [59, 22], [55, 17], [44, 12], [42, 16], [35, 28], [32, 31], [35, 36], [27, 37], [24, 40], [22, 37], [20, 40], [14, 45], [18, 40], [16, 38], [12, 44], [8, 44], [3, 43], [-1, 37], [-5, 36]],
+  [[-17, 15], [-17, 21], [-13, 28], [-6, 36], [10, 37], [20, 32], [32, 31], [35, 28], [43, 12], [51, 12], [42, 0], [40, -10], [40, -16], [35, -24], [32, -29], [20, -35], [17, -29], [12, -17], [13, -6], [9, -1], [9, 4], [0, 5], [-8, 4], [-13, 8]],
+  [[114, -22], [122, -18], [131, -12], [137, -12], [142, -11], [146, -19], [153, -25], [150, -37], [141, -38], [131, -31], [115, -34]],
+  [[44, -25], [47, -25], [50, -15], [49, -12]], [[-5, 50], [1, 51], [2, 53], [-3, 58], [-6, 57]], [[130, 31], [135, 34], [141, 36], [142, 43], [140, 41], [133, 35]],
+  [[109, 1], [117, 7], [119, -1], [115, -4], [110, -2]], [[95, 5], [98, 4], [106, -6], [101, -3]], [[131, -1], [141, -3], [150, -10], [141, -9]],
+  [[172, -35], [178, -38], [174, -41], [167, -46], [171, -44]], [[-24, 64], [-14, 64], [-15, 66], [-22, 66]], [[-180, 68], [-170, 66], [-180, 64]]
+];
+const CONT_BB = CONT.map(P => { let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); } return [x0, x1, y0, y1]; });
+function inPoly(x, y, P) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const pi = P[i], pj = P[j], xi = pi[0], yi = pi[1], xj = pj[0], yj = pj[1]; if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) c = !c; } return c; }
+function isLand(lon, lat) {
+  if (lat < -66) return true;
+  for (let k = 0; k < CONT.length; k++) { const b = CONT_BB[k]; if (lon < b[0] || lon > b[1] || lat < b[2] || lat > b[3]) continue; if (inPoly(lon, lat, CONT[k])) return true; }
+  return false;
+}
+function genTex(type, seed, w) { const it = texRows(type, seed, w); let r; while (!(r = it.next()).done); return r.value; }
+// equirect w×w/2: 'earth' (continents, clouds, city lights, ice caps) or 'moon' (maria and craters);
+// yields after each row, so a large texture can be made in the spare time of frames (as the texture queue of Genesis)
+function* texRows(type, seed, w) {
+  const h = w / 2, col = new Uint8Array(w * h * 3), aux = new Uint8Array(w * h);
+  const earth = type === 'earth', cloud = earth ? new Uint8Array(w * h) : null, emis = earth ? new Uint8Array(w * h) : null;
+  const R = mulberry32(seed), s = seed % 9973, crat = [];
+  if (!earth) for (let i = 0; i < 70; i++) { const u = R() * 2 - 1, ph = R() * TAU, q = Math.sqrt(1 - u * u); const rr = .02 + .16 * Math.pow(R(), 3); crat.push([q * Math.cos(ph), u, q * Math.sin(ph), Math.cos(rr), rr]); }
+  for (let j = 0; j < h; j++) {
+    const lat = PI / 2 - (j + .5) / h * PI, cl = Math.cos(lat), y = Math.sin(lat), latD = lat / DEG;
+    for (let i = 0; i < w; i++) {
+      const lon = (i + .5) / w * TAU - PI, x = cl * Math.cos(lon), z = cl * Math.sin(lon), k = j * w + i;
+      let r, g, b;
+      const n1 = fbm(x * 2.2, y * 2.2, z * 2.2, s, 5);
+      aux[k] = (fbm(x * 9, y * 9, z * 9, s + 99, 3) * 255) | 0;
+      if (earth) {
+        const lonD = lon / DEG + (fbm(x * 6, y * 6, z * 6, s + 1, 3) - .5) * 9, latJ = latD + (fbm(x * 6, y * 6, z * 6, s + 2, 3) - .5) * 7;
+        const land = isLand(lonD > 180 ? lonD - 360 : lonD < -180 ? lonD + 360 : lonD, latJ);
+        if (land) {
+          const al = Math.abs(latD), m = fbm(x * 7, y * 7, z * 7, s + 4, 4), mt = ridged(x * 5, y * 5, z * 5, s + 6, 4);
+          let c;
+          if (al > 66 || (lonD < -20 && lonD > -75 && latD > 60)) c = [236, 240, 246];
+          else if (al < 12) c = mixc([30, 82, 34], [60, 100, 40], m);
+          else if (al < 34) c = m > .48 ? mixc([206, 172, 112], [190, 150, 96], m) : mixc([118, 122, 58], [150, 140, 80], m);
+          else if (al < 55) c = mixc([56, 100, 46], [124, 128, 78], m * m);
+          else c = mixc([36, 70, 44], [110, 108, 90], m);
+          if (mt > .62 && al < 66) c = mixc(c, [120, 104, 88], clamp((mt - .62) * 4, 0, .8));
+          [r, g, b] = c;
+          const ci = fbm(x * 26, y * 26, z * 26, s + 8, 3);
+          if (al < 62 && ci > .6) emis[k] = clamp((ci - .6) * 900, 0, 255) * (latD > -40 ? 1 : .3);
+        } else { r = 10 + 14 * n1; g = 34 + 40 * n1; b = 80 + 60 * n1; }
+        const cw = fbm(x * 3 + 1.3, y * 5, z * 3, s + 9, 5), cs = fbm(x * 9, y * 9, z * 9, s + 10, 3);
+        cloud[k] = clamp((cw * .75 + cs * .35 - .55) * 3.2, 0, 1) * 235;
+      } else {
+        let cr = 0;
+        for (const c of crat) { const d = x * c[0] + y * c[1] + z * c[2]; if (d > c[3] * .985) { const ang = Math.acos(Math.min(1, d)), q = ang / c[4]; cr += q < .8 ? -.13 * (1 - q * .4) : q < 1.1 ? .16 * (1 - Math.abs(q - .95) * 6) : 0; } }
+        const m = fbm(x * 3, y * 3, z * 3, s + 4, 5), mare = fbm(x * 1.5, y * 1.5, z * 1.5, s + 5, 4);
+        let v = .52 + .3 * (m - .5);
+        if (mare > .55) v -= clamp((mare - .55) * 2.4, 0, .26);
+        v += cr; r = g = b = 205 * v;
+      }
+      col[k * 3] = clamp(r, 0, 255); col[k * 3 + 1] = clamp(g, 0, 255); col[k * 3 + 2] = clamp(b, 0, 255);
+    }
+    yield;
+  }
+  return { w, h, col, aux, emis, cloud, atm: earth ? [110, 170, 255, .9] : null, cap: earth ? .3 : 0 };
+}
+const SPH = new Map();
+function sphereBuf(id, N) {
+  let c = SPH.get(id);
+  if (!c) { const cv = document.createElement('canvas'); c = { N: 0, cap: 0, cv, cx: cv.getContext('2d'), img: null }; SPH.set(id, c); }
+  if (c.cap < N || c.cap > 2 * N + 64) { c.cap = Math.ceil(N / 32) * 32; c.img = c.cx.createImageData(c.cap, c.cap); c.cv.width = c.cv.height = c.cap; }
+  c.N = N;
+  return c;
+}
+function sphereVis(ctx, sx, sy, Rpx, N) {
+  const m = ctx.getTransform();
+  if (m.a !== 1 || m.b !== 0 || m.c !== 0 || m.d !== 1) return [0, N, 0, N];
+  const k = N / (2 * Rpx), x0 = sx - Rpx + m.e, y0 = sy - Rpx + m.f;
+  return [Math.max(0, Math.floor(-x0 * k) - 3), Math.min(N, Math.ceil((ctx.canvas.width - x0) * k) + 3),
+          Math.max(0, Math.floor(-y0 * k) - 3), Math.min(N, Math.ceil((ctx.canvas.height - y0) * k) + 3)];
+}
+// lit by the Sun from direction L; the axis is upright, the surface turns with spinPh, the clouds with cloudPh
+// reuse = true: the planet has not changed size, the picture of the last frame is drawn again (every other frame: the day turns slowly)
+function drawSphere(ctx, b, sx, sy, Rpx, L, reuse = false) {
+  const tex = b.tex;
+  if (!tex || Rpx < 2.4) { ctx.fillStyle = b.type === 'earth' ? 'rgb(90,140,220)' : 'rgb(180,178,172)'; ctx.beginPath(); ctx.arc(sx, sy, Math.max(1, Rpx), 0, TAU); ctx.fill(); return; }
+  const N = Math.min(Math.ceil(Rpx * 2), 360), zb = vnorm(vsub(cam.pos, b.wp)), old = SPH.get(b.id);
+  if (reuse && old && old.N === N && old.tex === tex) { ctx.drawImage(old.cv, 0, 0, N, N, sx - Rpx, sy - Rpx, Rpx * 2, Rpx * 2); haze(); return; }
+  const buf = sphereBuf(b.id, N), d = buf.img.data; buf.tex = tex; let xb = vsub(cam.right, vmul(zb, vdot(cam.right, zb))); xb = vnorm(xb); const yb = vcross(zb, xb);
+  const tv = v => [vdot(v, xb), vdot(v, yb), vdot(v, zb)];
+  const sp = TAU * (b.spinPh || 0), cs = Math.cos(sp), sn = Math.sin(sp);
+  const e1w = vadd(vmul(b.e1, cs), vmul(b.e2, sn)), e2w = vadd(vmul(b.e1, -sn), vmul(b.e2, cs));
+  const A = tv(b.axis), E1 = tv(e1w), E2 = tv(e2w), Lv = tv(L);
+  const cspA = TAU * (b.cloudPh || 0), ccs = Math.cos(cspA), csn = Math.sin(cspA);
+  const C1 = tv(vadd(vmul(b.e1, ccs), vmul(b.e2, csn))), C2 = tv(vadd(vmul(b.e1, -csn), vmul(b.e2, ccs)));
+  const { w, h, col, aux, emis, cloud, atm, cap } = tex;
+  const decl = Math.asin(clamp(vdot(L, b.axis), -1, 1));
+  let cosN = 2, cosS = 2;
+  if (cap > 0) { cosN = Math.cos(clamp(cap - .8 * decl, .03, 1.0)); cosS = Math.cos(clamp(cap + .8 * decl, .03, 1.0)); }
+  const ar = atm ? atm[0] : 0, ag = atm ? atm[1] : 0, ab = atm ? atm[2] : 0, as = atm ? atm[3] : 0;
+  const inv = 2 / N, half = N / 2, i2p = 1 / TAU, S = buf.cap, vis = sphereVis(ctx, sx, sy, Rpx, N), [i0, i1, j0, j1] = vis;
+  for (let j = j0; j < j1; j++) {
+    const ny = 1 - (j + .5) * inv;
+    for (let i = i0; i < i1; i++) {
+      const nx = (i + .5) * inv - 1, r2 = nx * nx + ny * ny, o = (j * S + i) * 4;
+      if (r2 >= 1) { d[o + 3] = 0; continue; }
+      const nz = Math.sqrt(1 - r2);
+      const sa = nx * A[0] + ny * A[1] + nz * A[2];
+      const c1 = nx * E1[0] + ny * E1[1] + nz * E1[2], c2 = nx * E2[0] + ny * E2[1] + nz * E2[2];
+      // smooth (bilinear) sampling: no blocks when the planet is large
+      const fu = (Math.atan2(c2, c1) * i2p + .5) * w - .5;
+      const lat = Math.asin(sa > 1 ? 1 : sa < -1 ? -1 : sa);
+      let fv = (.5 - lat / PI) * h - .5; if (fv < 0) fv = 0; else if (fv > h - 1.001) fv = h - 1.001;
+      const uf = Math.floor(fu), vf = fv | 0, du = fu - uf, dv = fv - vf;
+      let u0 = uf % w; if (u0 < 0) u0 += w; const u1 = u0 + 1 === w ? 0 : u0 + 1, r0 = vf * w, r1 = r0 + w;
+      const w00 = (1 - du) * (1 - dv), w10 = du * (1 - dv), w01 = (1 - du) * dv, w11 = du * dv;
+      const k00 = (r0 + u0) * 3, k10 = (r0 + u1) * 3, k01 = (r1 + u0) * 3, k11 = (r1 + u1) * 3;
+      let r = col[k00] * w00 + col[k10] * w10 + col[k01] * w01 + col[k11] * w11;
+      let g = col[k00 + 1] * w00 + col[k10 + 1] * w10 + col[k01 + 1] * w01 + col[k11 + 1] * w11;
+      let bl = col[k00 + 2] * w00 + col[k10 + 2] * w10 + col[k01 + 2] * w01 + col[k11 + 2] * w11;
+      const k = (dv < .5 ? r0 : r1) + (du < .5 ? u0 : u1);
+      if (cap > 0) { // ice caps with a soft edge
+        const ed = (aux[k] / 255 - .5) * .09, ic = Math.max(clamp((sa - cosN + ed) / .025, 0, 1), clamp((-sa - cosS + ed) / .025, 0, 1));
+        if (ic > 0) { r += (236 - r) * ic; g += (242 - g) * ic; bl += (250 - bl) * ic; }
+      }
+      if (cloud) {
+        const fc = (Math.atan2(nx * C2[0] + ny * C2[1] + nz * C2[2], nx * C1[0] + ny * C1[1] + nz * C1[2]) * i2p + .5) * w - .5, cf = Math.floor(fc), dc = fc - cf;
+        let c0 = cf % w; if (c0 < 0) c0 += w; const cc1 = c0 + 1 === w ? 0 : c0 + 1;
+        const ca = ((cloud[r0 + c0] * (1 - dc) + cloud[r0 + cc1] * dc) * (1 - dv) + (cloud[r1 + c0] * (1 - dc) + cloud[r1 + cc1] * dc) * dv) / 255;
+        r += (250 - r) * ca; g += (252 - g) * ca; bl += (255 - bl) * ca;
+      }
+      const lam = nx * Lv[0] + ny * Lv[1] + nz * Lv[2];
+      let li = lam * 1.12 + .06; li = li < 0 ? 0 : li > 1 ? 1 : li; li = .03 + .97 * Math.pow(li, .8);
+      r *= li; g *= li; bl *= li;
+      if (as > 0) { const rim = Math.pow(1 - nz, 2.2) * as * (lam > -.25 ? Math.min(1, (lam + .25) * 1.6) : 0); r += ar * rim; g += ag * rim; bl += ab * rim; }
+      if (emis) { const e = emis[k] / 255; if (e > 0) { const night = lam < .12 ? (lam < -.1 ? 1 : (.12 - lam) / .22) : 0; const em = night * .9 * e; r += 255 * em; g += 196 * em; bl += 120 * em; } }
+      const ed = (1 - Math.sqrt(r2)) * half; const al = ed > 1 ? 255 : ed * 255;
+      d[o] = r > 255 ? 255 : r; d[o + 1] = g > 255 ? 255 : g; d[o + 2] = bl > 255 ? 255 : bl; d[o + 3] = al;
+    }
+  }
+  ctx.imageSmoothingEnabled = true;
+  if (i1 > i0 && j1 > j0) { buf.cx.putImageData(buf.img, 0, 0, i0, j0, i1 - i0, j1 - j0); ctx.drawImage(buf.cv, 0, 0, N, N, sx - Rpx, sy - Rpx, Rpx * 2, Rpx * 2); }
+  haze();
+  function haze() { // the outer glow of the air
+    const atm = tex.atm, as = atm ? atm[3] : 0; if (!atm || as <= .3) return;
+    const zl = Math.max(0, vdot(zb, L) * .5 + .5), gr = ctx.createRadialGradient(sx, sy, Rpx * .96, sx, sy, Rpx * 1.16);
+    gr.addColorStop(0, rgbStr(atm, .32 * as * (.3 + .7 * zl))); gr.addColorStop(1, rgbStr(atm, 0));
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(sx, sy, Rpx * 1.16, 0, TAU); ctx.fill();
+  }
+}
+
+/* =====================================================================
+ *  The scene: the planet, its synchronous orbit and the key 3/2
+ * ===================================================================== */
+const $ = id => document.getElementById(id);
+const cv = $('cv'), ctx = cv.getContext('2d');
+let W = 1, H = 1, DPR = 1, PORTRAIT = false;
+const cam = new Camera(), skyCam = new Camera();
+cam.fov = skyCam.fov = 50 * DEG; cam.pitch = .42; // the view of Genesis while a star or a planet is being made
+skyCam.pitch = .18; skyCam.yaw = 2.35; skyCam.dist = 1;
+const SUN_L = vnorm([-.6, .3, .74]);                // sunlight from the upper left, in front
+const C_TOOL = [98, 216, 255];                      // the planet tool of Genesis is cyan: its ring is the orbit at the surface (period T)
+const C_SYNC = [255, 184, 77];                      // the synchronous orbit is amber, as in Genesis
+const C_WARM = [255, 226, 170];
+const EARTH_TV = 1.5;     // one surface orbit of the Earth (T = 84 min) takes 1.5 s on screen; the day keeps the same time scale
+const EARTH_K = .97;      // the planet fills the tool's ring: the ring is the orbit right at the surface
+const X_MAX = 21;         // the longest day on the slider, in T (the synchronous orbit at 7.6 radii; the Earth's day is near the top)
+const X_EARTH = 86164.1 / 5060.837;               // the Earth's sidereal day is 17.03 of its T → the synchronous orbit at 6.62 radii
+const H_FIT = Math.pow(X_MAX, 2 / 3) + .3;        // the widest synchronous orbit must fit the free part of the screen
+const K_SIZE = Math.log(2.3) / Math.log(X_MAX);   // letter size = value^K: the longest day makes t 2.3× larger, r̃ only 1.74× (the 2/3); T never changes
+const pOfX = x => Math.log(x) / Math.log(X_MAX), xOfP = p => Math.pow(X_MAX, clamp(p, 0, 1));
+const P_EARTH = pOfX(X_EARTH);
+const LON0 = .72;         // the point of the equator the synchronous satellite hangs over (seen in front, on the right)
+const EARTH_B = { id: 'earth', type: 'earth', tex: null, axis: [0, 1, 0], e1: [0, 0, 1], e2: [1, 0, 0], spinPh: .04, cloudPh: .04, wp: [0, 0, 0] };
+
+const S = {
+  p: P_EARTH, x: X_EARTH, h: 1, w: 1, hd: 1,      // slider 0…1; x = t/T; h = r̃ = x^{2/3}; w = weight at the equator = 1 − (T/t)²
+  time: 0, dt: 0, keyPh: 0, dashOff: 0, phase: 'title', introT: 0, liveT: 0, keyA: 0, keyFly: 1, flyD: 10, uiOn: false, keyDim: 0, syncA: 0,
+  tailTh: 1.25 * PI, moved: false, hintT: -1, act: 0, tween: null, zeroG: false, zeroA: 0, side: 0,
+  spr: { h: { x: 1, v: 0 }, t: { x: 1, v: 0 } }, frame: 0, reduce: false, tQ: null, sQ: null, nodes: []
+};
+function derive() { S.x = xOfP(S.p); S.h = Math.pow(S.x, 2 / 3); S.w = 1 - 1 / (S.x * S.x); } // r̃ = (t/T)^{2/3}: the 3/2 law read backwards
+const ringPt = (th, rad, c = [0, 0, 0]) => [c[0] + rad * Math.cos(th), c[1], c[2] - rad * Math.sin(th)];
+const tailDir = () => [Math.cos(S.tailTh), 0, -Math.sin(S.tailTh)];
+const depthOf = p => vdot(vsub(p, cam.pos), cam.fwd);
+const syncAng = () => TAU * EARTH_B.spinPh - PI / 2 + LON0; // the satellite turns with the planet: always over the same point
+
+/* ---- layout: the formula on the left above the middle, the slider on the right, the scene in the free space between ---- */
+function layout() {
+  DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+  W = Math.max(2, Math.round(innerWidth * DPR)); H = Math.max(2, Math.round(innerHeight * DPR));
+  cv.width = W; cv.height = H;
+  if (GLR.ok) GLR.resize(Math.min(window.devicePixelRatio || 1, 1.5));
+  const land = innerWidth / innerHeight >= 1.12 && innerWidth > 640;
+  document.body.classList.toggle('portrait', !land);
+  const fr = $('formula').getBoundingClientRect(), sr = $('slider').getBoundingClientRect();
+  PORTRAIT = !land;
+  // the camera backs off until the synchronous orbit (hFit radii) fits; okAt says where a point of it may lie (CSS px)
+  const fitDist = (cx, cy, hFit, okAt) => {
+    cam.ox = cx * DPR - W / 2; cam.oy = cy * DPR - H / 2;
+    let d = 3;
+    for (let it = 0; it < 260; it++, d *= 1.022) {
+      cam.dist = d; cam.update(W, H); let ok = true;
+      for (let k = 0; k < 72 && ok; k++) { const q = cam.project(ringPt(k / 72 * TAU, hFit)); if (!q || !okAt(q.x / DPR, q.y / DPR)) ok = false; }
+      const tp = cam.project([0, 1.25, 0]); if (!tp || !okAt(cx, tp.y / DPR)) ok = false;
+      if (ok) return d;
+    }
+    return d;
+  };
+  let best = null;
+  if (land) {
+    // the orbit may pass under the formula, but only below its legend: try a few centres, keep the one with the largest scene
+    const Rr = sr.left - 14, okAt = (x, y) => x >= 20 && x <= Rr && y >= 64 && y <= innerHeight - 20 && (y > fr.bottom + 20 || x >= fr.right + 14);
+    for (let i = 0; i <= 8; i++) for (const cyk of [.5, .55, .6]) {
+      const cx = lerp((fr.right + 14 + Rr) / 2, (20 + Rr) / 2, i / 8), cy = innerHeight * cyk + 10, d = fitDist(cx, cy, H_FIT, okAt);
+      if (!best || d < best.d) best = { cx, cy, d };
+    }
+    $('hint').style.top = ''; $('toast').style.top = '';
+  } else { // the orbit right under the formula; below it the key runs to the corner, the slider stands on the right
+    const top = fr.bottom + 8, cx = innerWidth / 2 - 6, okAt = (x, y) => x >= 2 && x <= innerWidth - 2 && y >= top;
+    const hFit = Math.pow(X_EARTH * 1.15, 2 / 3); // the Earth's orbit fills the width; the longest days run a little off the sides
+    for (const cyk of [.5, .62, .75]) { const cy = top + (innerWidth / 2) * cyk, d = fitDist(cx, cy, hFit, okAt); if (!best || d < best.d) best = { cx, cy, d }; }
+    $('hint').style.top = (top + 2) + 'px'; $('toast').style.top = (top + 2) + 'px';
+  }
+  cam.ox = best.cx * DPR - W / 2; cam.oy = best.cy * DPR - H / 2; cam.dist = best.d; cam.update(W, H);
+  // the tool's tail, as in Genesis: in the plane, towards the viewer and to the left — turned to come out of the lower-left corner
+  const toV = vnorm([cam.pos[0], 0, cam.pos[2]]), left = vnorm([-cam.right[0], 0, -cam.right[2]]);
+  const pc0 = cam.project([0, 0, 0]), want = Math.atan2(H - pc0.y, -pc0.x);
+  let psiB = .38, bd = 1e9;
+  for (let psi = .3; psi <= 1.1; psi += .005) {
+    const a = vadd(vmul(toV, Math.cos(psi)), vmul(left, Math.sin(psi))), q = cam.project(a);
+    if (!q) continue; const dd = Math.abs(Math.atan2(q.y - pc0.y, q.x - pc0.x) - want);
+    if (dd < bd) { bd = dd; psiB = psi; }
+  }
+  const ax0 = vadd(vmul(toV, Math.cos(psiB)), vmul(left, Math.sin(psiB)));
+  S.tailTh = Math.atan2(-ax0[2], ax0[0]);
+  const ax = tailDir(); let s = 0;
+  for (; s < cam.dist * 1.6; s += .05) { const q = cam.project(vmul(ax, s)); if (!q || q.y > H * 1.08 || q.x < -W * .08) break; }
+  S.flyD = s + 1.6;
+  $('mkE').style.top = ((1 - P_EARTH) * 100) + '%';
+}
+
+/* ---- occlusion: what lies behind the planet (or inside it) is not drawn ---- */
+let PC = { x: 0, y: 0, s: 1 }, PR = 1, PD = 1;
+function occluded(p, q) {
+  if (vlen(p) < EARTH_K * .999) return true;
+  return depthOf(p) > PD && Math.hypot(q.x - PC.x, q.y - PC.y) < PR * .995;
+}
+function path3(pts, keep) {
+  const P = new Path2D(); let st = false;
+  for (const p of pts) {
+    const q = cam.project(p);
+    if (!q || occluded(p, q) || (keep && !keep(p))) { st = false; continue; }
+    if (!st) { P.moveTo(q.x, q.y); st = true; } else P.lineTo(q.x, q.y);
+  }
+  return P;
+}
+function trail(th, om, a, Rm, col, win) { // a narrow tapered ribbon behind a body on a circle of radius a
+  const span = clamp(om * win, .012, 2.2), n = 36, pts = [];
+  for (let i = 0; i <= n; i++) { const w3 = ringPt(th - span * (1 - i / n), a), p = cam.project(w3); pts.push(p && !occluded(w3, p) ? { x: p.x, y: p.y, k: i / n } : null); }
+  const nrm = i => { const p = pts[Math.max(0, i - 1)] || pts[i], q = pts[Math.min(n, i + 1)] || pts[i], dx = q.x - p.x, dy = q.y - p.y, L = Math.hypot(dx, dy) || 1; return [-dy / L, dx / L]; };
+  for (const [wk, ak] of [[.7, .3], [.32, 1]]) {
+    for (let i = 0; i < n; i++) {
+      const p = pts[i], q = pts[i + 1]; if (!p || !q) continue;
+      const np = nrm(i), nq = nrm(i + 1), wp = Rm * wk * (.1 + .9 * p.k * p.k), wq = Rm * wk * (.1 + .9 * q.k * q.k);
+      ctx.fillStyle = rgbStr(col, (.02 + .6 * Math.pow(q.k, 1.6)) * ak);
+      ctx.beginPath(); ctx.moveTo(p.x + np[0] * wp, p.y + np[1] * wp); ctx.lineTo(q.x + nq[0] * wq, q.y + nq[1] * wq); ctx.lineTo(q.x - nq[0] * wq, q.y - nq[1] * wq); ctx.lineTo(p.x - np[0] * wp, p.y - np[1] * wp); ctx.closePath(); ctx.fill();
+    }
+  }
+}
+
+/* ---- a dark stage under the scene: the Milky Way must not swallow the orbit ---- */
+function drawStage() {
+  const q = cam.project([S.hd, 0, 0]), r = q ? Math.abs(q.x - PC.x) * 1.25 : PR * 6;
+  const g = ctx.createRadialGradient(PC.x, PC.y, 0, PC.x, PC.y, r);
+  g.addColorStop(0, `rgba(0,3,12,${.45 * S.syncA})`); g.addColorStop(.7, `rgba(0,3,12,${.3 * S.syncA})`); g.addColorStop(1, 'rgba(0,3,12,0)');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(PC.x, PC.y, r, 0, TAU); ctx.fill();
+}
+/* ---- the synchronous orbit: amber, dashed, as in Genesis; it shrinks to the surface when the day shrinks to T ---- */
+function drawSync() {
+  const a = S.syncA; if (a <= 0) return;
+  const pts = []; for (let k = 0; k <= 180; k++) pts.push(ringPt(k / 180 * TAU, S.hd));
+  const P = path3(pts), hot = S.zeroA;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round';
+  ctx.strokeStyle = rgbStr(C_SYNC, (.07 + .12 * hot) * a); ctx.lineWidth = (10 + 10 * hot) * DPR; ctx.stroke(P);
+  const e = cam.project([S.hd, 0, 0]), rpx = e ? Math.abs(e.x - PC.x) : 100; // dashes run with the satellite: the whole orbit turns with the planet
+  ctx.setLineDash([6 * DPR, 7 * DPR]); ctx.lineDashOffset = -(S.dashOff * rpx) % (13 * DPR);
+  strokeGlow(ctx, P, mixc(C_SYNC, [255, 255, 255], .15 * hot), (1.5 + 1.2 * S.act) * DPR, a);
+  ctx.setLineDash([]); ctx.restore();
+}
+function drawSatellite() {
+  const a = S.syncA; S.sQ = null; if (a <= 0) return;
+  const sa = syncAng(), sw = ringPt(sa, S.hd), q = cam.project(sw), fw = ringPt(sa, EARTH_K), fq = cam.project(fw);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  // the speed of the equator: the point under the satellite leaves a trail as long as its path in 0.45 s —
+  // tiny for the Earth's day, as long as the surface satellite's when the day comes down to T
+  if (fq && depthOf(fw) <= PD) trail(sa, TAU / (EARTH_TV * S.x), EARTH_K * 1.005, PC.s * .3, C_WARM, .45);
+  // the tether down to its point of the equator: the satellite turns with the planet and stays over that point
+  if (S.hd > 1.03) { const t = []; for (let k = 0; k <= 24; k++) t.push(ringPt(sa, lerp(EARTH_K, S.hd, k / 24))); ctx.setLineDash([3 * DPR, 4 * DPR]); ctx.strokeStyle = rgbStr([255, 205, 130], .8 * a); ctx.lineWidth = 1.6 * DPR; ctx.stroke(path3(t)); ctx.setLineDash([]); }
+  if (fq && depthOf(fw) <= PD) { // the point it hangs over, with a soft pulse
+    const pr = (4.2 + .8 * Math.sin(S.time * 4)) * DPR, g2 = ctx.createRadialGradient(fq.x, fq.y, 0, fq.x, fq.y, pr * 3);
+    g2.addColorStop(0, rgbStr(C_SYNC, .55 * a)); g2.addColorStop(1, rgbStr(C_SYNC, 0)); ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(fq.x, fq.y, pr * 3, 0, TAU); ctx.fill();
+    ctx.fillStyle = rgbStr([255, 214, 150], a); ctx.beginPath(); ctx.arc(fq.x, fq.y, pr * .6, 0, TAU); ctx.fill();
+  }
+  if (q && !occluded(sw, q)) {
+    const rr = (4.5 + 2 * S.zeroA) * DPR, gr = (16 + 18 * S.zeroA + 6 * S.act) * DPR, g = ctx.createRadialGradient(q.x, q.y, 0, q.x, q.y, gr);
+    g.addColorStop(0, rgbStr([255, 200, 120], .7 * a)); g.addColorStop(1, rgbStr([255, 190, 90], 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(q.x, q.y, gr, 0, TAU); ctx.fill();
+    ctx.fillStyle = rgbStr([255, 240, 210], a); ctx.beginPath(); ctx.arc(q.x, q.y, rr, 0, TAU); ctx.fill();
+    S.sQ = q;
+  }
+  ctx.restore();
+}
+/* ---- dust on the equator: it lies still while the planet holds it, and floats up as the weight there runs out ---- */
+const MOTES = Array.from({ length: 48 }, (_, i) => ({ a: i / 48 * TAU + rand(-.04, .04), ph: rand(0, TAU), sp: rand(.6, 1.4), up: rand(.4, 1), sz: rand(.8, 1.5) }));
+function drawMotes() {
+  const lift = 1 - S.w, vis = clamp(lift * 3.2, 0, 1) * S.syncA; if (vis <= .01) return;
+  const base = syncAng() - LON0, l2 = lift * lift;
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const m of MOTES) {
+    const bob = Math.sin(S.time * m.sp + m.ph), off = .012 + .3 * l2 * m.up * (.75 + .25 * bob), y = l2 * .1 * m.up * Math.sin(S.time * m.sp * .7 + m.ph * 2);
+    const w3 = ringPt(base + m.a, EARTH_K * (1 + off)); w3[1] = y; const q = cam.project(w3);
+    if (!q || occluded(w3, q)) continue;
+    ctx.fillStyle = rgbStr(C_WARM, (.35 + .55 * Math.sqrt(lift)) * vis); ctx.beginPath(); ctx.arc(q.x, q.y, m.sz * (1 + lift) * DPR * (PORTRAIT ? .65 : 1), 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ---- key 3/2: the planet tool of Genesis — ring n = 1 + arcs n·R of length 2π/n^{3/2};
+        the arc nearest the synchronous orbit turns amber, as in Genesis ---- */
+function drawKey(c, alpha) {
+  const r = 1, th0 = S.tailTh, ax = tailDir(), col = C_TOOL, ph = S.keyPh % 1, dim = S.keyDim;
+  const pc = cam.project(c); if (!pc) return;
+  const P = (th, rad) => [c[0] + rad * Math.cos(th), c[1], c[2] - rad * Math.sin(th)];
+  const lw = clamp(pc.s * r * .03, 1 * DPR, 3.4 * DPR);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  let nMax = 1; S.nodes = [];
+  for (let n = 2; n <= 60; n++) {
+    const nw = vadd(c, vmul(ax, n * r)), node = cam.project(nw);
+    if (!node || node.x < -260 * DPR || node.x > W + 260 * DPR || node.y < -260 * DPR || node.y > H + 260 * DPR) break;
+    nMax = n; S.nodes[n] = node;
+    const al = TAU / Math.pow(n, 1.5), steps = Math.max(10, Math.ceil(al * n * 8)), pts = [];
+    for (let k = 0; k <= steps; k++) pts.push(P(th0 + al * k / steps, n * r));
+    const hl = S.keyFly < .01 ? clamp(1 - Math.abs(n - S.hd), 0, 1) * S.syncA : 0; // the synchronous orbit is near this arc: the two neighbours share the glow
+    const fa = alpha * (.82 - .32 * dim) * (1 - dim * (1 - Math.max(.35, 1 - .06 * (n - 2))));
+    strokeGlow(ctx, path3(pts), mixc(col, C_SYNC, hl), clamp(node.s * r * .024, .8 * DPR, 3.4 * DPR) * (1 + .6 * hl), Math.max(fa, hl));
+    if (!occluded(nw, node)) { ctx.fillStyle = rgbStr([210, 250, 255], fa * 1.15); ctx.beginPath(); ctx.arc(node.x, node.y, clamp(node.s * r * .04, 1.3 * DPR, 4.5 * DPR), 0, TAU); ctx.fill(); }
+    const sw = P(th0 + al * ph, n * r), dq = cam.project(sw);
+    if (dq && !occluded(sw, dq)) { ctx.fillStyle = rgbStr(C_WARM, Math.min(1, fa * 1.25)); ctx.beginPath(); ctx.arc(dq.x, dq.y, clamp(dq.s * r * .05, 1.5 * DPR, 5 * DPR), 0, TAU); ctx.fill(); }
+  }
+  { // the handle along the axis
+    const pts = []; for (let k = 0; k <= 48; k++) pts.push(vadd(c, vmul(ax, r + (nMax - .4) * r * k / 48)));
+    strokeGlow(ctx, path3(pts), col, lw * 1.05, alpha * (.9 - .25 * dim));
+  }
+  const rpts = []; for (let k = 0; k <= 120; k++) rpts.push(P(k / 120 * TAU, r));
+  strokeGlow(ctx, path3(rpts), mixc(col, C_SYNC, S.zeroA * .6), lw * 1.45, alpha);
+  // the dot of the ring is a satellite skimming the surface: one lap is exactly T. When the day equals T, the synchronous satellite is that very satellite
+  const sa = th0 + TAU * ph, dw = P(sa, r), d1 = cam.project(dw), ta = alpha * (1 - S.zeroA); S.tQ = null;
+  if (ta > .02) {
+    if (S.keyFly < .01) trail(sa, TAU / EARTH_TV, r, pc.s * r * .3, C_WARM, .22);
+    if (d1 && !occluded(dw, d1)) {
+      const rr = clamp(pc.s * r * .085, 3 * DPR, 7.5 * DPR), g = ctx.createRadialGradient(d1.x, d1.y, 0, d1.x, d1.y, rr * 3.6);
+      g.addColorStop(0, rgbStr(C_WARM, .65 * ta)); g.addColorStop(1, rgbStr(C_WARM, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(d1.x, d1.y, rr * 3.6, 0, TAU); ctx.fill();
+      ctx.fillStyle = rgbStr([255, 248, 230], ta); ctx.beginPath(); ctx.arc(d1.x, d1.y, rr, 0, TAU); ctx.fill();
+      S.tQ = d1;
+    }
+  }
+  ctx.restore();
+}
+
+/* ---- the letters of the formula live in the scene too: r̃ at the synchronous satellite, T at the satellite of the ring ---- */
+function drawAnchors() {
+  const a0 = S.uiOn ? clamp(S.liveT / 1.5, 0, 1) : 0; if (a0 <= 0) return;
+  const font = px => `italic 600 ${Math.round(px * DPR)}px 'JetBrains Mono', ui-monospace, monospace`;
+  ctx.save(); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let rL = null;
+  if (S.sQ) {
+    const q = S.sQ, dx = q.x - PC.x, dy = q.y - PC.y, L = Math.hypot(dx, dy) || 1, px = 16 + 4 * S.act;
+    const x = q.x + dx / L * 20 * DPR, y = q.y + dy / L * 20 * DPR - 4 * DPR; rL = [x, y];
+    ctx.shadowColor = 'rgba(255,190,90,.9)'; ctx.shadowBlur = (6 + 12 * S.act + 10 * S.zeroA) * DPR; ctx.fillStyle = rgbStr([255, 200, 120], a0);
+    ctx.font = font(px); ctx.fillText('r', x, y);
+    ctx.font = `600 ${Math.round(px * .85 * DPR)}px 'JetBrains Mono', ui-monospace, monospace`; ctx.fillText('~', x + 1.5 * DPR, y - px * .62 * DPR);
+  }
+  if (S.tQ) {
+    const t = S.tQ, dx = t.x - PC.x, dy = t.y - PC.y, L = Math.hypot(dx, dy) || 1;
+    let x = t.x + dx / L * 15 * DPR, y = t.y + dy / L * 15 * DPR;
+    if (rL) { const d = Math.hypot(x - rL[0], y - rL[1]), m = 24 * DPR; if (d < m) y += (y >= rL[1] ? 1 : -1) * (m - d + 4 * DPR); }
+    ctx.shadowColor = 'rgba(98,216,255,.9)'; ctx.shadowBlur = 6 * DPR; ctx.font = font(15); ctx.fillStyle = rgbStr(C_TOOL, .9 * a0 * (1 - S.zeroA));
+    ctx.fillText('T', x, y);
+  }
+  ctx.restore();
+}
+
+/* ---- the sky when there is no WebGL ---- */
+const STARS2D = Array.from({ length: 420 }, () => [Math.random(), Math.random(), Math.random()]);
+function drawStars2D() {
+  ctx.save(); ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  for (const [x, y, m] of STARS2D) { ctx.fillStyle = `rgba(220,230,255,${.25 + .6 * m * m})`; ctx.fillRect(x * W, y * H, DPR * (m > .9 ? 2 : 1), DPR * (m > .9 ? 2 : 1)); }
+  ctx.restore();
+}
+function drawVignette() {
+  let g = ctx.createLinearGradient(0, 0, 0, 120 * DPR); g.addColorStop(0, 'rgba(0,0,0,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, 120 * DPR);
+  g = ctx.createLinearGradient(0, H, 0, H - 100 * DPR); g.addColorStop(0, 'rgba(0,0,0,.4)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(0, H - 100 * DPR, W, 100 * DPR);
+}
+
+/* =====================================================================
+ *  Step and render
+ * ===================================================================== */
+function spring(s, target, dt) { const k = 170, c = 15, n = Math.max(1, Math.ceil(dt / .008)), h = dt / n; for (let i = 0; i < n; i++) { s.v += (k * (target - s.x) - c * s.v) * h; s.x += s.v * h; } }
+function step(dt) {
+  if (S.tween) { // back to the Earth's day
+    const tw = S.tween; tw.t += dt; setP(lerp(tw.p0, P_EARTH, easeIO(clamp(tw.t / tw.dur, 0, 1))), false);
+    if (tw.t >= tw.dur) S.tween = null;
+  }
+  derive();
+  S.hd = lerp(S.hd, S.h, 1 - Math.exp(-dt * 12));
+  // the day: the planet turns once in t; the satellite of the ring laps it in T — one screen time scale for both
+  const day = EARTH_TV * S.x;
+  EARTH_B.spinPh = (EARTH_B.spinPh + dt / day) % 1; EARTH_B.cloudPh = (EARTH_B.cloudPh + dt / (day * 1.18)) % 1;
+  S.keyPh += dt / EARTH_TV;
+  S.dashOff += dt * TAU / day; // the dashes of the synchronous orbit turn with it (and with the planet)
+  // weightless at the equator: the synchronous orbit has come down to the surface — as drawn (hd), with a little hysteresis:
+  // on below t = 1.02 T (4 % of the weight left), off above 1.05 T
+  const xd = Math.pow(S.hd, 1.5), zg = S.phase === 'live' && (S.zeroG ? xd < 1.05 : xd <= 1.02);
+  if (zg !== S.zeroG) { S.zeroG = zg; $('toast').classList.toggle('on', zg); if (zg) zeroBurst(); }
+  S.zeroA = clamp(S.zeroA + (S.zeroG ? dt / .4 : -dt / .5), 0, 1);
+  // the story
+  if (S.phase === 'intro') {
+    S.introT += dt;
+    S.keyA = clamp((S.introT - .15) / .5, 0, 1);
+    const k = clamp((S.introT - .25) / 2.3, 0, 1);
+    S.keyFly = 1 - easeOut(k);
+    if (k >= 1) lockKey();
+  } else if (S.phase === 'live') {
+    S.liveT += dt;
+    S.syncA = Math.min(1, S.syncA + dt / 1.1);
+    if (!S.uiOn && S.liveT > .4) showUI();
+    if (S.hintT < 0 && S.liveT > 2.4 && !S.moved) { S.hintT = S.liveT; $('hint').classList.remove('off'); }
+  }
+  S.keyDim = S.phase === 'live' ? clamp((S.liveT - 1.5) / 1.5, 0, 1) : 0;
+  // sound: the faster the planet turns, the higher the hum and the stronger the wind
+  if (S.phase === 'live') { const sp = 1 / S.x; Snd.setHum(.16 + .34 * Math.sqrt(sp) + .25 * S.act, .6 + .75 * Math.pow(sp, .4)); Snd.setWind(.08 + .92 * Math.pow(sp, .75), 260 + 2300 * Math.pow(sp, .7)); }
+  S.act = Math.max(0, S.act - dt * 1.5);
+  spring(S.spr.h, Math.pow(S.h, K_SIZE), dt);
+  spring(S.spr.t, Math.pow(S.x, K_SIZE), dt);
+  FX.update(dt);
+}
+function zeroBurst() { // the orbit touches the surface: a soft flash on the equator, the dust lets go
+  Snd.chime(); Snd.whoosh(1.2, .35);
+  const q = S.sQ || PC;
+  FX.ring(q.x, q.y, C_WARM, PR * 1.1, 1.1, 3);
+  if (!S.reduce) for (let i = 0; i < 40; i++) { const a = rand(0, TAU), v = rand(30, 180) * DPR; FX.spark(q.x, q.y, Math.cos(a) * v, Math.sin(a) * v * .6 - 40 * DPR, mixc(C_WARM, [255, 255, 255], Math.random() * .5), rand(.6, 1.6), rand(.8, 1.8), .97); }
+}
+function lockKey() {
+  S.phase = 'live'; S.liveT = 0; S.keyFly = 0; S.keyA = 1;
+  FX.ring(PC.x, PC.y, C_TOOL, PR * 6, 1.4, 5);
+  setTimeout(() => FX.ring(PC.x, PC.y, C_SYNC, PR * 3, 1, 4), 90);
+  FX.flash = FX.flashPeak = S.reduce ? .12 : .38; FX.flashCol = [160, 220, 255]; FX.flashAt = { x: PC.x, y: PC.y };
+  FX.shake = S.reduce ? 0 : 4;
+  for (let i = 0; i < 70; i++) { const a = rand(0, TAU), v = rand(80, 520) * DPR; FX.spark(PC.x + Math.cos(a) * PR * 1.1, PC.y + Math.sin(a) * PR * .5, Math.cos(a) * v, Math.sin(a) * v * .45, mixc(C_TOOL, [255, 255, 255], Math.random() * .6), rand(.5, 1.4), rand(1, 2.4), .95); }
+  Snd.zap(.7); Snd.boom(.28); setTimeout(() => Snd.chime(), 320);
+}
+function showUI() {
+  S.uiOn = true;
+  $('formula').classList.remove('off');
+  setTimeout(() => { $('slider').classList.remove('off'); $('crumb').classList.remove('off'); }, 380);
+}
+function render() {
+  if (GLR.ok) { skyCam.yaw = 2.35 + S.time * .004; skyCam.update(W, H); GLR.drawSky(skyCam, 1, S.time, lerp(.8, .68, S.syncA)); }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (GLR.ok) ctx.clearRect(0, 0, W, H); else drawStars2D();
+  if (FX.shake > .05) ctx.translate(rand(-1, 1) * FX.shake * DPR, rand(-1, 1) * FX.shake * DPR);
+  cam.update(W, H);
+  PC = cam.project([0, 0, 0]); PD = vdot(vsub([0, 0, 0], cam.pos), cam.fwd); PR = PC.s * EARTH_K;
+  drawStage();
+  S.frame++; // the planet's picture is recomputed every other frame while it turns slowly
+  drawSphere(ctx, EARTH_B, PC.x, PC.y, PR, SUN_L, (S.frame & 1) === 1 && S.x > 6);
+  drawMotes();
+  if (S.keyA > 0) drawKey(vmul(tailDir(), S.keyFly * S.flyD), S.keyA);
+  drawSync();
+  drawSatellite();
+  FX.draw(ctx);
+  drawAnchors();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  FX.drawFlash(ctx, W, H);
+  drawVignette();
+}
+
+/* ---- DOM: the formula letters and the slider ---- */
+const EL = { h: $('fH'), t: $('ft'), T: $('fT'), th: document.querySelector('#sD .th'), sD: $('sD'), rail: document.querySelector('#sD .rail') };
+function updateDOM() {
+  const z = S.zeroA, g = .7 + 1.4 * S.act + 1.2 * z;
+  EL.h.style.setProperty('--s', S.spr.h.x.toFixed(4)); EL.h.style.setProperty('--g', g.toFixed(3));
+  EL.t.style.setProperty('--s', S.spr.t.x.toFixed(4)); EL.t.style.setProperty('--g', g.toFixed(3));
+  EL.T.style.setProperty('--g', (.7 + 1.2 * z).toFixed(3));
+  // when the day comes down to T, the letter t takes the colour of T: they are the same time now
+  const k = clamp((1.35 - S.x) / .35, 0, 1), c = mixc([255, 226, 170], [98, 216, 255], k);
+  EL.t.style.setProperty('--c', `${c[0] | 0},${c[1] | 0},${c[2] | 0}`);
+  EL.th.style.top = ((1 - S.p) * 100) + '%';
+}
+function ariaText(x) { const D = I18N[LANG]; return Math.abs(x / X_EARTH - 1) < .02 ? D.asEarth : D.xT.replace('{0}', x.toLocaleString(LANG, { maximumFractionDigits: 1 })); }
+function setP(p, user) {
+  p = clamp(p, 0, 1); const old = S.p; if (Math.abs(p - old) < 1e-7) return;
+  if ((old - P_EARTH) * (p - P_EARTH) < 0) Snd.tick(); // a soft click when the day passes the Earth's
+  S.p = p; S.act = 1;
+  if (user) { S.tween = null; if (!S.moved) { S.moved = true; $('hint').classList.add('off'); } }
+  EL.sD.setAttribute('aria-valuenow', Math.round(p * 100)); EL.sD.setAttribute('aria-valuetext', ariaText(xOfP(p)));
+}
+// The whole column takes the finger (the letter, the track, the word), so the thumb can be caught at either end.
+// The value follows the finger; past an end it stops at once, and the first move back moves it back (no dead zone at the ends).
+(function slider() {
+  const vs = EL.sD; let drag = false, pid = null, off = 0;
+  const raw = y => { const r = EL.rail.getBoundingClientRect(); return 1 - (y - r.top) / r.height; };
+  vs.addEventListener('pointerdown', e => {
+    if (drag) return; drag = true; pid = e.pointerId; vs.setPointerCapture(pid); vs.classList.add('drag'); vs.focus({ preventScroll: true }); Snd.init();
+    const r = EL.rail.getBoundingClientRect(), v = raw(e.clientY), half = 22 / Math.max(1, r.height);
+    off = Math.abs(v - S.p) < half ? S.p - v : 0; // caught by the thumb: no jump
+    setP(v + off, true); e.preventDefault();
+  });
+  vs.addEventListener('pointermove', e => {
+    if (!drag || e.pointerId !== pid) return;
+    let v = raw(e.clientY) + off;
+    if (v > 1) { off -= v - 1; v = 1; } else if (v < 0) { off -= v; v = 0; }
+    setP(v, true);
+  });
+  const up = e => { if (e.pointerId !== pid) return; drag = false; pid = null; vs.classList.remove('drag'); };
+  vs.addEventListener('pointerup', up); vs.addEventListener('pointercancel', up);
+  vs.addEventListener('lostpointercapture', () => { drag = false; pid = null; vs.classList.remove('drag'); });
+  vs.addEventListener('keydown', e => {
+    const st = { ArrowUp: .02, ArrowRight: .02, ArrowDown: -.02, ArrowLeft: -.02, PageUp: .1, PageDown: -.1 }[e.key];
+    if (st) { setP(S.p + st, true); e.preventDefault(); }
+    else if (e.key === 'Home') { setP(0, true); e.preventDefault(); }
+    else if (e.key === 'End') { setP(1, true); e.preventDefault(); }
+  });
+})();
+$('btnReset').addEventListener('click', () => { Snd.init(); Snd.tick(); S.tween = { t: 0, dur: .9, p0: S.p }; });
+
+/* =====================================================================
+ *  Languages: EN · DE · ES · RO · UA · RU
+ * ===================================================================== */
+const I18N = {
+  en: { k1: 'BaseReal-OS · LT-System', h1: 'Day · Orbit', sub: 'Above the equator there is a height where a satellite hangs over one spot: the <b>synchronous orbit</b>. It is set by the <b>length of the day t</b>.', start: 'Start', note: 'Sound turns on after the click · move the slider on the right', crumb1: 'LT-System', crumb2: 'Day and synchronous orbit', ftitle: 'Synchronous orbit', legend: '<span><i>r̃</i> — radius of the synchronous orbit, in planet radii: there a satellite hangs over one spot</span><span><i>t</i> — length of the day</span><span><i class="c">T</i> — time of one lap of a satellite right at the surface</span>', longer: 'longer', shorter: 'shorter', legendS: '<i>r̃</i> — orbit in radii · <i>t</i> — day · <i class="c">T</i> — lap at the surface', sD: 'day', reset: 'Reset', toast1: 'Weightless at the equator', toast2: 'the equator moves at orbital speed', hint: 'Move the slider <b>t</b>', title: 'BaseReal-OS · Day and Orbit', aria: 'Length of the day t', asEarth: 'as on Earth', xT: 't = {0} T' },
+  de: { k1: 'BaseReal-OS · LT-System', h1: 'Tag · Bahn', sub: 'Über dem Äquator gibt es eine Höhe, in der ein Satellit über einem Punkt steht: die <b>synchrone Bahn</b>. Sie wird von der <b>Tageslänge t</b> bestimmt.', start: 'Start', note: 'Der Ton startet nach dem Klick · bewege den Regler rechts', crumb1: 'LT-System', crumb2: 'Tag und synchrone Bahn', ftitle: 'Synchrone Bahn', legend: '<span><i>r̃</i> — Radius der synchronen Bahn in Planetenradien: dort steht ein Satellit über einem Punkt</span><span><i>t</i> — Tageslänge</span><span><i class="c">T</i> — Zeit einer Runde eines Satelliten direkt an der Oberfläche</span>', longer: 'länger', shorter: 'kürzer', legendS: '<i>r̃</i> — Bahn in Radien · <i>t</i> — Tag · <i class="c">T</i> — Umlauf an der Oberfläche', sD: 'Tag', reset: 'Ausgangswert', toast1: 'Schwerelos am Äquator', toast2: 'der Äquator bewegt sich mit Kreisbahngeschwindigkeit', hint: 'Bewege den Regler <b>t</b>', title: 'BaseReal-OS · Tag und Bahn', aria: 'Tageslänge t', asEarth: 'wie bei der Erde', xT: 't = {0} T' },
+  es: { k1: 'BaseReal-OS · Sistema LT', h1: 'Día · Órbita', sub: 'Sobre el ecuador hay una altura en la que un satélite queda fijo sobre un punto: la <b>órbita síncrona</b>. La fija la <b>duración del día t</b>.', start: 'Empezar', note: 'El sonido se activa tras el clic · mueve el deslizador de la derecha', crumb1: 'Sistema LT', crumb2: 'Día y órbita síncrona', ftitle: 'Órbita síncrona', legend: '<span><i>r̃</i> — radio de la órbita síncrona en radios del planeta: allí un satélite queda fijo sobre un punto</span><span><i>t</i> — duración del día</span><span><i class="c">T</i> — tiempo de una vuelta de un satélite justo en la superficie</span>', longer: 'más largo', shorter: 'más corto', legendS: '<i>r̃</i> — órbita en radios · <i>t</i> — día · <i class="c">T</i> — vuelta en la superficie', sD: 'día', reset: 'Inicial', toast1: 'Ingravidez en el ecuador', toast2: 'el ecuador se mueve a velocidad orbital', hint: 'Mueve el deslizador <b>t</b>', title: 'BaseReal-OS · Día y órbita', aria: 'Duración del día t', asEarth: 'como la Tierra', xT: 't = {0} T' },
+  ro: { k1: 'BaseReal-OS · Sistemul LT', h1: 'Zi · Orbită', sub: 'Deasupra ecuatorului există o înălțime la care un satelit stă deasupra unui punct: <b>orbita sincronă</b>. O stabilește <b>durata zilei t</b>.', start: 'Start', note: 'Sunetul pornește după clic · mișcă glisorul din dreapta', crumb1: 'Sistemul LT', crumb2: 'Ziua și orbita sincronă', ftitle: 'Orbita sincronă', legend: '<span><i>r̃</i> — raza orbitei sincrone, în raze ale planetei: acolo un satelit stă deasupra unui punct</span><span><i>t</i> — durata zilei</span><span><i class="c">T</i> — timpul unui ocol al unui satelit chiar la suprafață</span>', longer: 'mai lungă', shorter: 'mai scurtă', legendS: '<i>r̃</i> — orbita în raze · <i>t</i> — ziua · <i class="c">T</i> — ocolul la suprafață', sD: 'ziua', reset: 'Inițial', toast1: 'Imponderabilitate la ecuator', toast2: 'ecuatorul se mișcă cu viteza orbitală', hint: 'Mișcă glisorul <b>t</b>', title: 'BaseReal-OS · Ziua și orbita', aria: 'Durata zilei t', asEarth: 'ca Pământul', xT: 't = {0} T' },
+  uk: { k1: 'BaseReal-OS · LT-система', h1: 'Доба · Орбіта', sub: 'Над екватором є висота, на якій супутник висить над однією точкою: <b>синхронна орбіта</b>. Її задає <b>тривалість доби t</b>.', start: 'Почати', note: 'Звук увімкнеться після натискання · рухай повзунок праворуч', crumb1: 'LT-система', crumb2: 'Доба і синхронна орбіта', ftitle: 'Синхронна орбіта', legend: '<span><i>r̃</i> — радіус синхронної орбіти в радіусах планети: на ній супутник висить над однією точкою</span><span><i>t</i> — тривалість доби</span><span><i class="c">T</i> — час одного кола супутника біля самої поверхні</span>', longer: 'довше', shorter: 'коротше', legendS: '<i>r̃</i> — орбіта в радіусах · <i>t</i> — доба · <i class="c">T</i> — обліт біля поверхні', sD: 'доба', reset: 'Початкова', toast1: 'На екваторі невагомість', toast2: 'швидкість екватора = перша космічна', hint: 'Рухай повзунок <b>t</b>', title: 'BaseReal-OS · Доба і орбіта', aria: 'Тривалість доби t', asEarth: 'як у Землі', xT: 't = {0} T' },
+  ru: { k1: 'BaseReal-OS · LT-система', h1: 'Сутки · Орбита', sub: 'Над экватором есть высота, на которой спутник висит над одной точкой: <b>синхронная орбита</b>. Её задаёт <b>длина суток t</b>.', start: 'Начать', note: 'Звук включится после нажатия · двигай ползунок справа', crumb1: 'LT-система', crumb2: 'Сутки и синхронная орбита', ftitle: 'Синхронная орбита', legend: '<span><i>r̃</i> — радиус синхронной орбиты в радиусах планеты: на ней спутник висит над одной точкой</span><span><i>t</i> — длина суток</span><span><i class="c">T</i> — время одного круга спутника у самой поверхности</span>', longer: 'дольше', shorter: 'короче', legendS: '<i>r̃</i> — орбита в радиусах · <i>t</i> — сутки · <i class="c">T</i> — круг у поверхности', sD: 'сутки', reset: 'Исходная', toast1: 'На экваторе невесомость', toast2: 'скорость экватора = первая космическая', hint: 'Двигай ползунок <b>t</b>', title: 'BaseReal-OS · Сутки и орбита', aria: 'Длина суток t', asEarth: 'как у Земли', xT: 't = {0} T' }
+};
+let LANG = 'en';
+function applyLang(l) {
+  LANG = I18N[l] ? l : 'en'; const D = I18N[LANG];
+  document.documentElement.lang = LANG; document.title = D.title;
+  { const hb = document.getElementById('btnHome'); if (hb) { hb.title = HOME[LANG] || HOME.en; hb.setAttribute('aria-label', hb.title); } }
+  document.querySelectorAll('[data-i]').forEach(el => { const v = D[el.dataset.i]; if (v != null) el.innerHTML = v; });
+  document.querySelectorAll('#langs button').forEach(b => b.classList.toggle('on', b.dataset.lang === LANG));
+  try { localStorage.setItem('dsLang', LANG); } catch (e) { }
+  EL.sD.setAttribute('aria-label', D.aria); EL.sD.setAttribute('aria-valuetext', ariaText(S.x));
+  requestAnimationFrame(layout); // the words change the width of the formula
+}
+$('langs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const box = $('langs');
+  if (innerWidth <= 600 && !box.classList.contains('open')) { box.classList.add('open'); return; }
+  box.classList.remove('open'); applyLang(b.dataset.lang); Snd.tick();
+});
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#langs')) $('langs').classList.remove('open'); });
+
+/* ---- the amber arrow of Genesis: back to the page of the site the visitor came from ---- */
+const HOME = { en: 'Back to the site', de: 'Zurück zur Website', es: 'Volver al sitio', ro: 'Înapoi la site', uk: 'Назад на сайт', ru: 'Назад на сайт' };
+function goHome() {
+  let ref = null; try { ref = document.referrer ? new URL(document.referrer) : null; } catch (e) { }
+  if (ref && /^https?:$/.test(ref.protocol) && ref.href.split('#')[0] !== location.href.split('#')[0]) {
+    if (ref.origin === location.origin && history.length > 1) { history.back(); return; } // the site page comes back as it was left
+    location.href = ref.href; return;
+  }
+  location.href = /(^|\.)basereal-os\.dev$/.test(location.hostname) ? location.origin + '/' : 'https://basereal-os.dev/'; // opened directly: the home page of the site
+}
+document.getElementById('btnHome').addEventListener('click', () => { Snd.tick(); goHome(); });
+
+/* ---- sound, full screen, keys ---- */
+$('btnSound').addEventListener('click', () => { Snd.init(); const on = Snd.toggle(); $('btnSound').textContent = on ? '🔊' : '🔇'; });
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+function toggleFS() {
+  const d = document.documentElement;
+  try {
+    if (fsEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const p = (d.requestFullscreen || d.webkitRequestFullscreen).call(d, { navigationUI: 'hide' }); if (p && p.catch) p.catch(() => { }); }
+  } catch (err) { }
+}
+$('btnFS').addEventListener('click', toggleFS);
+for (const ev of ['fullscreenchange', 'webkitfullscreenchange']) document.addEventListener(ev, () => $('btnFS').classList.toggle('on', !!fsEl()));
+document.addEventListener('visibilitychange', () => Snd.sleep(document.hidden));
+const RM = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+S.reduce = !!(RM && RM.matches); if (RM && RM.addEventListener) RM.addEventListener('change', e => { S.reduce = e.matches; });
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('.vs') && /^(Arrow|Page|Home|End)/.test(e.key)) return; // the slider keeps its own keys only
+  if (e.key === 'f' || e.key === 'F' || e.key === 'а' || e.key === 'А') toggleFS();
+  else if (e.key === 'm' || e.key === 'M' || e.key === 'ь' || e.key === 'Ь') $('btnSound').click();
+});
+
+/* ---- start ---- */
+function start() {
+  if (S.phase !== 'title') return;
+  Snd.init(); Snd.setDrone(.55); Snd.whoosh(2.6, .55);
+  $('title').classList.add('off'); $('title').inert = true;
+  S.phase = 'intro'; S.introT = 0;
+}
+$('btnStart').addEventListener('click', start);
+function skipIntro() { // #auto: straight into the live scene (screenshots, kiosks)
+  $('title').classList.add('off'); $('title').style.transition = 'none'; $('title').inert = true;
+  S.phase = 'live'; S.liveT = 3; S.keyA = 1; S.keyFly = 0; S.syncA = 1; S.uiOn = true; S.moved = true;
+  ['formula', 'slider', 'crumb'].forEach(id => { $(id).style.transition = 'none'; $(id).classList.remove('off'); });
+}
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, Math.max(0, (now - last) / 1000)); last = now;
+  S.dt = dt; S.time += dt;
+  step(dt); render(); updateDOM();
+  if (S.texJob) { // the sharp Earth: a few milliseconds of each frame (more before the scene is live)
+    const end = performance.now() + (S.phase === 'live' ? 5 : 14);
+    while (performance.now() < end) { const r = S.texJob.next(); if (r.done) { EARTH_B.tex = r.value; S.texJob = null; S.texFullMs = Math.round(performance.now() - S.texT0); break; } }
+  }
+  requestAnimationFrame(frame);
+}
+function boot() {
+  const hp = new URLSearchParams(location.hash.slice(1));
+  let lang = hp.get('lang');
+  if (!lang) { try { lang = localStorage.getItem('dsLang') || localStorage.getItem('rtLang'); } catch (e) { } }
+  if (!lang) { const nl = (navigator.language || 'en').slice(0, 2).toLowerCase(); lang = I18N[nl] ? nl : nl === 'ua' ? 'uk' : 'en'; }
+  applyLang(lang);
+  GLR.init();
+  const t0 = performance.now();
+  EARTH_B.tex = genTex('earth', 777, 128);   // a quick Earth now; the sharp one (512×256) is made in the spare time of frames
+  S.texMs = Math.round(performance.now() - t0);
+  S.texJob = texRows('earth', 777, 512); S.texT0 = performance.now();
+  const tp = parseFloat(hp.get('t')); if (isFinite(tp)) S.p = clamp(tp, 0, 1);
+  derive(); S.hd = S.h; S.spr.h.x = Math.pow(S.h, K_SIZE); S.spr.t.x = Math.pow(S.x, K_SIZE);
+  EL.sD.setAttribute('aria-valuenow', Math.round(S.p * 100));
+  layout();
+  if (hp.has('auto')) skipIntro();
+  window.addEventListener('resize', layout);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
+  requestAnimationFrame(frame);
+}
+boot();
+</script>
+</body>
+</html>
