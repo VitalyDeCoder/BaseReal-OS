@@ -66,7 +66,7 @@ p.note{font-size:12.5px;color:var(--mut);margin:14px 0 0}
 <main>
 <div class="hd"><div class="k">BaseReal-OS · LT-System v2</div><div id="tools">
 <button id="btnHome" class="rb" data-t="home" aria-label="Back to the site" title="Back to the site"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8H2.5M7 3.2 2.2 8 7 12.8"/></svg></button>
-<div id="langs" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="de" lang="de" title="Deutsch">DE</button><button data-lang="es" lang="es" title="Español">ES</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="uk" lang="uk" title="Українська">UA</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
+<div id="langs" role="group" aria-label="Language"><button data-lang="en" lang="en" title="English">EN</button><button data-lang="de" lang="de" title="Deutsch">DE</button><button data-lang="es" lang="es" title="Español">ES</button><button data-lang="ro" lang="ro" title="Română">RO</button><button data-lang="uk" lang="uk" title="Українська">UA</button><button data-lang="tt" lang="tt" title="Татарча">TT</button><button data-lang="ru" lang="ru" title="Русский">RU</button></div>
 <button id="btnFS" class="rb" data-t="fs" aria-label="Full screen" title="Full screen"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
 </div></div>
 <h1 data-i="h1">Bernoulli's law in the LT cells</h1>
@@ -227,6 +227,28 @@ const I18N = {
     c3: '<i>L²T⁻² · НАПІР</i><span class="f">½v² + p/ρ = const</span>Кінетична частина і тиск живуть в одній комірці й усюди складаються в той самий напір. Де потік швидкий, там тиск низький.',
     note: 'Ідеальна нестислива рідина, усталена течія, без в’язкості. Одиниці: R₀ = 1, v₀ = 1 на вході, напір E = 8,5 v₀². У LT-системі v2 густина має розмірність T⁻², тому p/ρ — це L²T⁻², та сама комірка, що v² і орбітальне M/r. Це класичний баланс енергії, записаний у комірках LT, а не новий закон.',
     cvHead: 'напір  E = ½v² + p/ρ = const   (L²T⁻²)', cvClocks: 'Годинники LT: кільце R, період T = 2πR/v  (показано T / T₀)', cvFlow: 'витрата Q = πR²v = const  (L³T⁻¹)', thSec: 'Переріз', thHead: 'напір E', inlet: 'вхід', throat: 'горло', home: 'Назад на сайт', fs: 'На весь екран (F)' },
+  tt: {
+    wPress: 'басым',
+    wSpeed: 'тизлек',
+    title: 'LT-системада Бернулли законы',
+    h1: 'LT шакмакларында Бернулли законы',
+    sub: 'Торбадагы идеаль сыеклык, ике зурлык белән генә язылган: радиус R һәм вакыт T. Торбаны кыс: тар урында агым тизләнә, ә басым төшә, шул ук вакытта чыгым да, напор да элеккечә кала.',
+    throatR: 'Тар урын радиусы',
+    aria: 'Тарайган торба, энергия баганалары һәм LT сәгатьләре',
+    c1: '<i>L³T⁻¹ · ӨЗЛЕКСЕЗЛЕК</i><span class="f">Q = πR²·v = const</span>Һәр кисем аша бер секундта бер үк күләм уза, шуңа күрә тар урында агым тизрәк: <b>v ∝ 1/R²</b>.',
+    c2: '<i>T¹ · LT СӘГАТЕ</i><span class="f">T = 2πR / v ∝ R³</span>Һәр кисемнең үз периоды бар — агымның бер 2πR әйләнәсен узу вакыты. Радиусны ике тапкыр кечерәйт — сәгать <b>8 тапкыр тизрәк</b> йөри башлый: R ның өченче дәрәҗәсе.',
+    c3: '<i>L²T⁻² · НАПОР</i><span class="f">½v² + p/ρ = const</span>Кинетик өлеш тә, басым да бер шакмакта яши һәм һәр җирдә бер үк напорга кушыла. Агым тиз булган җирдә басым түбән.',
+    note: 'Идеаль кысылмый торган сыеклык, тотрыклы агым, ябышкаклыксыз. Берәмлекләр: R₀ = 1, керүдә v₀ = 1, напор E = 8,5 v₀². LT-система v2 дә тыгызлыкның үлчәме T⁻², шуңа күрә p/ρ — ул L²T⁻², v² һәм орбиталь M/r белән бер үк шакмак. Бу — LT шакмакларында язылган классик энергия балансы, яңа закон түгел.',
+    cvHead: 'напор  E = ½v² + p/ρ = const   (L²T⁻²)',
+    cvClocks: 'LT сәгатьләре: R боҗрасы, период T = 2πR/v  (T / T₀ күрсәтелгән)',
+    cvFlow: 'чыгым Q = πR²v = const  (L³T⁻¹)',
+    thSec: 'Кисем',
+    thHead: 'напор E',
+    inlet: 'керү',
+    throat: 'тар урын',
+    home: 'Сайтка кайту',
+    fs: 'Тулы экранга (F)'
+  },
   ru: { wPress: 'давление', wSpeed: 'скорость', title: 'Закон Бернулли в LT-системе', h1: 'Закон Бернулли в ячейках LT', sub: 'Идеальная жидкость в трубе, записанная всего двумя величинами: радиусом R и временем T. Сожми трубу: в узком месте поток ускоряется, а давление падает, при этом расход и напор остаются прежними.', throatR: 'Радиус горла', aria: 'Труба с сужением, столбики энергии и часы LT',
     c1: '<i>L³T⁻¹ · НЕРАЗРЫВНОСТЬ</i><span class="f">Q = πR²·v = const</span>Через каждое сечение за секунду проходит один и тот же объём, поэтому в узком месте поток быстрее: <b>v ∝ 1/R²</b>.',
     c2: '<i>T¹ · ЧАСЫ LT</i><span class="f">T = 2πR / v ∝ R³</span>У каждого сечения свой период — время, за которое поток проходит одну окружность 2πR. Уменьши радиус вдвое — и часы пойдут <b>в 8 раз быстрее</b>: третья степень R.',
